@@ -1,13 +1,23 @@
 import React from "react";
 import Link from "next/link";
-import DtpLogo from "./DtpLogo";
+import Image from "next/image";
 
 const Header = () => {
     return (
         <header className="bg-surface/90 shadow-soft sticky top-0 z-50 backdrop-blur-md border-b border-brand-emerald/10">
             <div className="container mx-auto px-6 py-3 flex items-center justify-between">
-                <Link href="/" className="group" aria-label="Trang chủ DTP">
-                    <DtpLogo className="w-12 h-12" />
+                <Link
+                    href="/"
+                    className="group flex items-center gap-2"
+                    aria-label="Trang chủ DTP"
+                >
+                    <Image
+                        src="/images/logo.png"
+                        alt="DTP Logo"
+                        width={48}
+                        height={48}
+                        className="object-contain"
+                    />
                 </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                     <Link

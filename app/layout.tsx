@@ -7,8 +7,9 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "MyStore - Cửa hàng trực tuyến",
-    description: "Trang web bán hàng hiện đại sử dụng Next.js và Tailwind CSS",
+    title: "In ly Quảng Ngãi",
+    description:
+        "DTP - Đối tác in ấn bao bì hàng đầu tại Quảng Ngãi. Chuyên cung cấp dịch vụ in ly giấy, in hộp giấy, và các giải pháp đóng gói sáng tạo. Cam kết chất lượng, giá cả cạnh tranh, và giao hàng nhanh chóng. Liên hệ ngay để trải nghiệm dịch vụ in ấn chuyên nghiệp và nâng tầm thương hiệu của bạn với DTP.",
 };
 
 export default function RootLayout({

@@ -1,5 +1,5 @@
 import React from "react";
-import DtpLogo from "./DtpLogo";
+import Image from "next/image";
 
 const Footer = () => {
     return (
@@ -7,8 +7,17 @@ const Footer = () => {
             <div className="container mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                     <div className="col-span-1 md:col-span-1">
-                        <div className="mb-6 invert brightness-0">
-                            <DtpLogo className="w-12 h-12" />
+                        <div className="mb-6 flex items-center gap-2">
+                            <Image
+                                src="/images/logo.png"
+                                alt="DTP Logo"
+                                width={40}
+                                height={40}
+                                className="object-contain brightness-0 invert"
+                            />
+                            <span className="text-xl font-black text-white tracking-tighter">
+                                DTP
+                            </span>
                         </div>
                         <p className="text-brand-sage/60 leading-relaxed">
                             DTP - Giải pháp bao bì chuyên nghiệp nâng tầm thương
@@ -104,5 +113,4 @@ const Footer = () => {
         </footer>
     );
 };
-
 export default Footer;
