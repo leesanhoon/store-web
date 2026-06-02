@@ -18,7 +18,7 @@ const galleryItems = [
         label: "Linen Paper 360",
         src: "/images/mockups/paper-360-linen.png",
         title: "Ly giấy 360ml",
-        description: "Trắng - beige nhẹ, tinh gọn, phù hợp americano, capuchino và take-away.",
+        description: "Trắng - beige nhẹ, tinh gọn, phù hợp americano, cappuccino và take-away.",
     },
     {
         label: "Urban Brew 500",
@@ -49,7 +49,7 @@ export default function GalleryPage() {
                     </div>
                 </section>
 
-                    <section className="section-gap grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <section className="section-gap grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                     {galleryItems.map((item) => (
                         <article key={item.label} className="space-y-4">
                             <CupMockArt src={item.src} label={item.label} />

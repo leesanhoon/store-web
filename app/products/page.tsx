@@ -26,16 +26,12 @@ export default async function ProductsPage() {
                         Ly nhựa, ly giấy và dịch vụ in
                     </h1>
                     <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                        Chọn sản phẩm theo dung tích, đơn vị bán và nhu cầu in logo. Giá hiển thị là giá cơ bản từ API,
-                        báo giá cuối sẽ phụ thuộc số lượng và quy cách in.
+                        Chọn sản phẩm theo dung tích, đơn vị bán và nhu cầu in logo. Giá hiển thị là giá cơ bản từ API, báo giá cuối
+                        sẽ phụ thuộc số lượng và quy cách in.
                     </p>
                 </section>
 
-                {error ? (
-                    <div className="section-gap panel border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">
-                        {error}
-                    </div>
-                ) : null}
+                {error ? <div className="section-gap panel border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">{error}</div> : null}
 
                 {!error && products.length === 0 ? (
                     <div className="section-gap panel p-8 text-center text-sm font-medium text-slate-600">

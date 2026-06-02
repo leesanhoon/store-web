@@ -24,13 +24,7 @@ export default function Header() {
                     className="group flex min-w-0 items-center gap-3 rounded-2xl px-2 py-1 transition hover:bg-slate-50"
                     aria-label="Trang chủ DTP Packaging"
                 >
-                    <Image
-                        src="/images/logo.png"
-                        alt="DTP Logo"
-                        width={48}
-                        height={48}
-                        className="h-auto w-10 rounded-xl md:w-11"
-                    />
+                    <Image src="/images/logo.png" alt="DTP Logo" width={48} height={48} className="h-auto w-10 rounded-xl md:w-11" />
                     <div className="min-w-0 leading-tight">
                         <span className="font-display block truncate text-lg font-semibold tracking-tight text-header md:text-[1.35rem]">
                             DTP Packaging
@@ -60,7 +54,14 @@ export default function Header() {
                         className="relative rounded-full border border-[#ddd6cb] bg-white p-2.5 text-header transition hover:border-slate-900 hover:text-slate-900"
                         aria-label="Giỏ hàng"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.25} stroke="currentColor" className="h-5 w-5 md:h-6 md:w-6">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2.25}
+                            stroke="currentColor"
+                            className="h-5 w-5 md:h-6 md:w-6"
+                        >
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"

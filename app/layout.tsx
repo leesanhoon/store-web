@@ -11,8 +11,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
     title: "DTP Packaging - In ly nhựa, ly giấy",
-    description:
-        "DTP Packaging cung cấp ly nhựa PET, PP, ly giấy và dịch vụ in logo cho quán cà phê, trà sữa, nước ép và chuỗi F&B.",
+    description: "DTP Packaging cung cấp ly nhựa PET, PP, ly giấy và dịch vụ in logo cho quán cà phê, trà sữa, nước ép và chuỗi F&B.",
 };
 
 export default function RootLayout({

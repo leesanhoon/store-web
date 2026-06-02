@@ -226,9 +226,7 @@ export default function AdminProductClient({ initialProducts, initialCategories 
             </div>
 
             <aside className="order-1 min-w-0 rounded-3xl border border-[#e6e0d8] bg-[#fbfaf7] p-5 xl:order-2">
-                <h2 className="text-lg font-semibold text-header">
-                    {selectedId ? `Sửa sản phẩm #${selectedId}` : "Thêm sản phẩm"}
-                </h2>
+                <h2 className="text-lg font-semibold text-header">{selectedId ? `Sửa sản phẩm #${selectedId}` : "Thêm sản phẩm"}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                     {selectedId ? "Cập nhật sản phẩm hiện có bằng API PUT." : "Tạo sản phẩm mới bằng API POST."}
                 </p>

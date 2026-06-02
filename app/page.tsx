@@ -39,8 +39,8 @@ export default async function Home() {
                                     Ly nhựa, ly giấy và in logo cho quán F&B
                                 </h1>
                                 <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-                                    Cung cấp ly PET, PP, ly giấy và dịch vụ in thương hiệu theo số lượng. Tư vấn chọn mẫu,
-                                    báo giá nhanh và hỗ trợ thiết kế cho quán cà phê, trà sữa, nước ép.
+                                    Cung cấp ly PET, PP, ly giấy và dịch vụ in thương hiệu theo số lượng. Tư vấn chọn mẫu, báo giá
+                                    nhanh và hỗ trợ thiết kế cho quán cà phê, trà sữa, nước ép.
                                 </p>
                             </div>
                             <div className="flex flex-col gap-3 sm:flex-row">
@@ -109,9 +109,7 @@ export default async function Home() {
                     </Link>
                 </div>
 
-                {error ? (
-                    <div className="panel border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">{error}</div>
-                ) : null}
+                {error ? <div className="panel border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">{error}</div> : null}
 
                 {!error && products.length === 0 ? (
                     <div className="panel p-8 text-center text-sm font-medium text-slate-600">

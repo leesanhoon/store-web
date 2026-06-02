@@ -42,8 +42,8 @@ export default function CartPage() {
                             Kiểm tra đơn và gửi yêu cầu in
                         </h1>
                         <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                            Dùng localStorage để giữ giỏ hàng và lưu tạm yêu cầu báo giá. Khi backend có API đơn hàng, phần này
-                            sẽ nối sang server.
+                            Dùng localStorage để giữ giỏ hàng và lưu tạm yêu cầu báo giá. Khi backend có API đơn hàng, phần này sẽ
+                            nối sang server.
                         </p>
 
                         <div className="mt-8 space-y-4">

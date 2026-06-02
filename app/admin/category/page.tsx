@@ -151,9 +151,7 @@ export default function AdminCategoryPage() {
 
     const onToggleStatus = (id: number) => {
         setCategories((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, status: item.status === "active" ? "hidden" : "active" } : item,
-            ),
+            prev.map((item) => (item.id === id ? { ...item, status: item.status === "active" ? "hidden" : "active" } : item)),
         );
     };
 
@@ -213,9 +211,7 @@ export default function AdminCategoryPage() {
                                                 type="button"
                                                 onClick={() => onToggleStatus(category.id)}
                                                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                    category.status === "active"
-                                                        ? "bg-slate-900 text-white"
-                                                        : "bg-amber-100 text-amber-900"
+                                                    category.status === "active" ? "bg-slate-900 text-white" : "bg-amber-100 text-amber-900"
                                                 }`}
                                             >
                                                 {category.status === "active" ? "Active" : "Hidden"}

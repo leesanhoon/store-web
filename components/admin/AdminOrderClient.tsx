@@ -60,9 +60,7 @@ export default function AdminOrderClient({ initialOrders }: Props) {
             <section className="panel-strong bg-[#111111] p-7 text-white">
                 <p className="text-xs uppercase tracking-[0.22em] text-white/65">Order Center</p>
                 <h1 className="mt-2 text-3xl font-semibold">Quản lý đơn hàng in</h1>
-                <p className="mt-2 text-sm text-white/70">
-                    Đơn đang được lấy từ localStorage để mô phỏng quy trình giai đoạn 4.
-                </p>
+                <p className="mt-2 text-sm text-white/70">Đơn đang được lấy từ localStorage để mô phỏng quy trình giai đoạn 4.</p>
             </section>
 
             <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
@@ -78,9 +76,7 @@ export default function AdminOrderClient({ initialOrders }: Props) {
                                     type="button"
                                     onClick={() => handleSelect(order)}
                                     className={`w-full rounded-2xl border p-4 text-left transition ${
-                                        order.id === selectedId
-                                            ? "border-slate-900 bg-slate-50"
-                                            : "border-[#e6e0d8] bg-white hover:bg-[#fbfaf7]"
+                                        order.id === selectedId ? "border-slate-900 bg-slate-50" : "border-[#e6e0d8] bg-white hover:bg-[#fbfaf7]"
                                     }`}
                                 >
                                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{order.id}</p>
