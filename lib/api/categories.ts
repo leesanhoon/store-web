@@ -12,8 +12,24 @@ export type CategoryDto = {
     products: unknown[];
 };
 
+type CollectionResponse<T> = T[] | {
+    value?: T[];
+    Value?: T[];
+    count?: number;
+    Count?: number;
+};
+
+function unwrapCollection<T>(response: CollectionResponse<T>): T[] {
+    if (Array.isArray(response)) {
+        return response;
+    }
+
+    return response.value ?? response.Value ?? [];
+}
+
 export async function getCategories() {
-    return apiClient.get<CategoryDto[]>("/api/v1/Categories");
+    const response = await apiClient.get<CollectionResponse<CategoryDto>>("/api/v1/Categories");
+    return unwrapCollection(response);
 }
 
 export async function createCategory(payload: CreateCategoryPayload) {

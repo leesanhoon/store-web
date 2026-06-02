@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
+const beVietnamPro = Be_Vietnam_Pro({
+    subsets: ["latin", "vietnamese"],
+    weight: ["400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
-    title: "In ly Quảng Ngãi",
+    title: "DTP Packaging - In ly nhựa, ly giấy",
     description:
-        "DTP - Đối tác in ấn bao bì hàng đầu tại Quảng Ngãi. Chuyên cung cấp dịch vụ in ly giấy, in hộp giấy, và các giải pháp đóng gói sáng tạo. Cam kết chất lượng, giá cả cạnh tranh, và giao hàng nhanh chóng. Liên hệ ngay để trải nghiệm dịch vụ in ấn chuyên nghiệp và nâng tầm thương hiệu của bạn với DTP.",
+        "DTP Packaging cung cấp ly nhựa PET, PP, ly giấy và dịch vụ in logo cho quán cà phê, trà sữa, nước ép và chuỗi F&B.",
 };
 
 export default function RootLayout({
@@ -19,10 +22,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="vi" suppressHydrationWarning>
-            <body
-                className={`${inter.className} flex flex-col min-h-screen`}
-                suppressHydrationWarning
-            >
+            <body className={`${beVietnamPro.className} flex min-h-screen flex-col bg-background text-foreground antialiased`} suppressHydrationWarning>
                 <Header />
                 <main className="flex-grow">{children}</main>
                 <Footer />

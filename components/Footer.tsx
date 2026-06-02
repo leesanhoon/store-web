@@ -1,132 +1,70 @@
-import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
-const Footer = () => {
+export default function Footer() {
     return (
-        <footer className="bg-header text-white pt-24 pb-12 border-t border-gray-100">
-            <div className="container mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20 text-center md:text-left">
-                    <div className="col-span-1 md:col-span-1 flex flex-col items-center md:items-start">
-                        <div className="mb-8 flex items-center gap-2">
+        <footer className="mt-12 border-t border-[#e6e0d8] bg-[#111111] text-white">
+            <div className="page-shell py-10 lg:py-14">
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
                             <Image
                                 src="/images/logo.png"
                                 alt="DTP Logo"
                                 width={48}
                                 height={48}
-                                className="w-10 h-auto brightness-0 invert"
+                                className="h-auto w-10 rounded-xl bg-white/10 p-1"
                             />
-                            <span className="text-2xl font-black text-white tracking-tighter">
-                                DTP
-                            </span>
+                            <div>
+                                <p className="font-display text-xl font-semibold">DTP Packaging</p>
+                                <p className="text-sm text-white/65">Ly nhựa, ly giấy, in logo</p>
+                            </div>
                         </div>
-                        <p className="text-white/50 leading-relaxed text-[15px] font-medium max-w-xs">
-                            Giải pháp bao bì chuyên nghiệp, kiến tạo thương hiệu
-                            đồ uống hiện đại và bền vững tại Quảng Ngãi.
+                        <p className="max-w-md text-sm leading-7 text-white/65">
+                            Giải pháp bao bì F&B cho quán cà phê, trà sữa và chuỗi đồ uống, tối ưu từ lựa chọn mẫu đến đặt in.
                         </p>
                     </div>
                     <div>
-                        <h4 className="font-extrabold mb-8 text-white uppercase tracking-widest text-xs">
-                            Giải pháp
-                        </h4>
-                        <ul className="space-y-5 text-white/60 font-medium">
+                        <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">Giải pháp</h4>
+                        <ul className="mt-4 space-y-3 text-sm text-white/65">
                             <li>
-                                <a
-                                    href="/"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Ly nhựa cao cấp
-                                </a>
+                                <Link href="/products" className="transition hover:text-white">
+                                    Ly nhựa PET, PP
+                                </Link>
                             </li>
                             <li>
-                                <a
-                                    href="/products"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Ly giấy bảo vệ môi trường
-                                </a>
+                                <Link href="/products" className="transition hover:text-white">
+                                    Ly giấy
+                                </Link>
                             </li>
                             <li>
-                                <a
-                                    href="/about"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Thiết kế thương hiệu
-                                </a>
+                                <Link href="/gallery" className="transition hover:text-white">
+                                    Gallery mẫu ly
+                                </Link>
                             </li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-extrabold mb-8 text-white uppercase tracking-widest text-xs">
-                            Chính sách
-                        </h4>
-                        <ul className="space-y-5 text-white/60 font-medium">
-                            <li>
-                                <a
-                                    href="#"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Quy trình đặt in
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Vận chuyển tận nơi
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="hover:text-brand-primary transition-colors text-sm"
-                                >
-                                    Bảo mật thông tin
-                                </a>
-                            </li>
+                        <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">Đặt hàng</h4>
+                        <ul className="mt-4 space-y-3 text-sm text-white/65">
+                            <li>Chọn mẫu ly</li>
+                            <li>Gửi số lượng và logo</li>
+                            <li>Nhận báo giá và duyệt mẫu</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-extrabold mb-8 text-white uppercase tracking-widest text-xs">
-                            Kết nối
-                        </h4>
-                        <div className="space-y-6 text-white/60">
-                            <p className="flex items-center justify-center md:justify-start gap-4">
-                                <span className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-brand-primary">
-                                    ✉
-                                </span>
-                                <span className="text-sm font-medium">
-                                    contact@dtp-packaging.vn
-                                </span>
-                            </p>
-                            <p className="flex items-center justify-center md:justify-start gap-4">
-                                <span className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-brand-primary font-bold">
-                                    ✆
-                                </span>
-                                <span className="text-sm font-black text-white">
-                                    0900 DTP PACK
-                                </span>
-                            </p>
-                            <p className="flex items-center justify-center md:justify-start gap-4">
-                                <span className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-brand-primary">
-                                    📍
-                                </span>
-                                <span className="text-sm font-medium">
-                                    Tp. Quảng Ngãi, Tỉnh Quảng Ngãi
-                                </span>
-                            </p>
+                        <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">Liên hệ</h4>
+                        <div className="mt-4 space-y-3 text-sm text-white/65">
+                            <p>contact@dtp-packaging.vn</p>
+                            <p className="font-semibold text-white">0900 DTP PACK</p>
+                            <p>TP. Quảng Ngãi, Quảng Ngãi</p>
                         </div>
                     </div>
                 </div>
-                <div className="border-t border-white/5 pt-12 text-center">
-                    <p className="text-white/30 text-[11px] font-bold tracking-[0.2em] uppercase">
-                        © 2026 DTP Packaging Solutions. Excellence in every
-                        package.
-                    </p>
+                <div className="mt-10 border-t border-white/10 pt-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+                    © 2026 DTP Packaging Solutions
                 </div>
             </div>
         </footer>
     );
-};
-
-export default Footer;
+}

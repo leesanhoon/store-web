@@ -23,7 +23,7 @@ function toSlug(value: string) {
         .replace(/-+/g, "-");
 }
 
-export default function AdminPage() {
+export default function AdminCategoryPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -39,10 +39,7 @@ export default function AdminPage() {
     const [editingDescription, setEditingDescription] = useState("");
     const [processingId, setProcessingId] = useState<number | null>(null);
 
-    const activeCount = useMemo(
-        () => categories.filter((item) => item.status === "active").length,
-        [categories],
-    );
+    const activeCount = useMemo(() => categories.filter((item) => item.status === "active").length, [categories]);
 
     useEffect(() => {
         const loadCategories = async () => {
@@ -60,7 +57,7 @@ export default function AdminPage() {
                 }));
                 setCategories(mappedCategories);
             } catch (error) {
-                setLoadError(error instanceof Error ? error.message : "Khong the tai danh sach category.");
+                setLoadError(error instanceof Error ? error.message : "Không thể tải danh sách danh mục.");
             } finally {
                 setIsLoadingCategories(false);
             }
@@ -73,8 +70,7 @@ export default function AdminPage() {
         event.preventDefault();
         const name = newName.trim();
         const description = newDescription.trim();
-        if (!name) return;
-        if (!description) return;
+        if (!name || !description) return;
 
         setIsSubmitting(true);
         setSubmitMessage("");
@@ -82,22 +78,22 @@ export default function AdminPage() {
 
         try {
             await createCategory({ name, description });
-
-            const newCategory: Category = {
-                id: Date.now(),
-                name,
-                description,
-                slug: toSlug(name),
-                productCount: 0,
-                status: "active",
-            };
-
-            setCategories((prev) => [newCategory, ...prev]);
+            setCategories((prev) => [
+                {
+                    id: Date.now(),
+                    name,
+                    description,
+                    slug: toSlug(name),
+                    productCount: 0,
+                    status: "active",
+                },
+                ...prev,
+            ]);
             setNewName("");
             setNewDescription("");
-            setSubmitMessage("Tao category thanh cong.");
+            setSubmitMessage("Đã tạo danh mục.");
         } catch (error) {
-            setSubmitError(error instanceof Error ? error.message : "Co loi xay ra.");
+            setSubmitError(error instanceof Error ? error.message : "Có lỗi xảy ra.");
         } finally {
             setIsSubmitting(false);
         }
@@ -115,9 +111,9 @@ export default function AdminPage() {
                 setEditingName("");
                 setEditingDescription("");
             }
-            setActionMessage("Xoa category thanh cong.");
+            setActionMessage("Đã xóa danh mục.");
         } catch (error) {
-            setActionError(error instanceof Error ? error.message : "Khong the xoa category.");
+            setActionError(error instanceof Error ? error.message : "Không thể xóa danh mục.");
         } finally {
             setProcessingId(null);
         }
@@ -132,8 +128,7 @@ export default function AdminPage() {
     const onEditSave = async (id: number) => {
         const name = editingName.trim();
         const description = editingDescription.trim();
-        if (!name) return;
-        if (!description) return;
+        if (!name || !description) return;
 
         setProcessingId(id);
         setActionMessage("");
@@ -141,16 +136,14 @@ export default function AdminPage() {
         try {
             await updateCategory(id, { name, description });
             setCategories((prev) =>
-                prev.map((item) =>
-                    item.id === id ? { ...item, name, description, slug: toSlug(name) } : item,
-                ),
+                prev.map((item) => (item.id === id ? { ...item, name, description, slug: toSlug(name) } : item)),
             );
             setEditingId(null);
             setEditingName("");
             setEditingDescription("");
-            setActionMessage("Cap nhat category thanh cong.");
+            setActionMessage("Đã cập nhật danh mục.");
         } catch (error) {
-            setActionError(error instanceof Error ? error.message : "Khong the cap nhat category.");
+            setActionError(error instanceof Error ? error.message : "Không thể cập nhật danh mục.");
         } finally {
             setProcessingId(null);
         }
@@ -159,180 +152,158 @@ export default function AdminPage() {
     const onToggleStatus = (id: number) => {
         setCategories((prev) =>
             prev.map((item) =>
-                item.id === id
-                    ? { ...item, status: item.status === "active" ? "hidden" : "active" }
-                    : item,
+                item.id === id ? { ...item, status: item.status === "active" ? "hidden" : "active" } : item,
             ),
         );
     };
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_#dcfce7_0%,_#ecfeff_45%,_#f8fafc_100%)] px-4 py-10 sm:px-8">
-            <section className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-emerald-100 bg-white/80 shadow-xl backdrop-blur">
-                <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700 p-7 text-white sm:p-9">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-100">
-                        Admin Dashboard
-                    </p>
-                    <h1 className="mt-3 text-3xl font-black sm:text-4xl">Quan Ly Category</h1>
-                    <p className="mt-2 text-sm text-emerald-50">
-                        Them, sua, xoa danh muc cho cua hang.
-                    </p>
-                </div>
+        <div className="space-y-6">
+            <section className="panel-strong p-6 sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Admin Dashboard</p>
+                <h1 className="mt-2 text-3xl font-semibold text-header sm:text-4xl">Quản lý danh mục</h1>
+                <p className="mt-2 text-sm text-slate-600">Thêm, sửa, xóa danh mục cho cửa hàng.</p>
+            </section>
 
-                <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_320px]">
-                    <div className="space-y-4">
-                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                            {isLoadingCategories ? (
-                                <p className="p-4 text-sm text-slate-500">Dang tai danh sach category...</p>
-                            ) : null}
-                            {loadError ? (
-                                <p className="p-4 text-sm font-semibold text-rose-700">{loadError}</p>
-                            ) : null}
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-600">
-                                    <tr>
-                                        <th className="px-4 py-3">Ten</th>
-                                        <th className="px-4 py-3">Slug</th>
-                                        <th className="px-4 py-3">San pham</th>
-                                        <th className="px-4 py-3">Trang thai</th>
-                                        <th className="px-4 py-3 text-right">Hanh dong</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                                    {categories.map((category) => (
-                                        <tr key={category.id} className="hover:bg-slate-50">
-                                            <td className="px-4 py-3 font-semibold">
-                                                {editingId === category.id ? (
-                                                    <div className="space-y-2">
-                                                        <input
-                                                            value={editingName}
-                                                            onChange={(event) => setEditingName(event.target.value)}
-                                                            className="w-full rounded-lg border border-emerald-300 px-3 py-2 outline-none ring-emerald-500 focus:ring-2"
-                                                        />
-                                                        <input
-                                                            value={editingDescription}
-                                                            onChange={(event) => setEditingDescription(event.target.value)}
-                                                            placeholder="Mo ta category"
-                                                            className="w-full rounded-lg border border-emerald-300 px-3 py-2 text-xs outline-none ring-emerald-500 focus:ring-2"
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    category.name
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-slate-500">{category.slug}</td>
-                                            <td className="px-4 py-3">{category.productCount}</td>
-                                            <td className="px-4 py-3">
-                                                <button
-                                                    onClick={() => onToggleStatus(category.id)}
-                                                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                                                        category.status === "active"
-                                                            ? "bg-emerald-100 text-emerald-700"
-                                                            : "bg-amber-100 text-amber-700"
-                                                    }`}
-                                                >
-                                                    {category.status === "active" ? "Active" : "Hidden"}
-                                                </button>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    {editingId === category.id ? (
-                                                        <>
-                                                            <button
-                                                                onClick={() => onEditSave(category.id)}
-                                                                disabled={processingId === category.id}
-                                                                className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                                                            >
-                                                                {processingId === category.id ? "Dang luu..." : "Luu"}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingId(null);
-                                                                    setEditingName("");
-                                                                    setEditingDescription("");
-                                                                }}
-                                                                className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
-                                                            >
-                                                                Huy
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => onEditStart(category)}
-                                                            className="rounded-lg border border-cyan-300 px-3 py-2 text-xs font-bold text-cyan-700 hover:bg-cyan-50"
-                                                        >
-                                                            Sua
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => onDelete(category.id)}
-                                                        disabled={processingId === category.id}
-                                                        className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50"
-                                                    >
-                                                        {processingId === category.id ? "Dang xoa..." : "Xoa"}
-                                                    </button>
+            <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
+                <div className="space-y-4">
+                    {isLoadingCategories ? <div className="panel p-4 text-sm text-slate-500">Đang tải danh sách danh mục...</div> : null}
+                    {loadError ? <div className="panel border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{loadError}</div> : null}
+
+                    <div className="panel overflow-hidden">
+                        <table className="w-full text-left">
+                            <thead className="bg-[#fbfaf7] text-xs uppercase tracking-[0.2em] text-slate-500">
+                                <tr>
+                                    <th className="px-4 py-3">Tên</th>
+                                    <th className="px-4 py-3">Slug</th>
+                                    <th className="px-4 py-3">Sản phẩm</th>
+                                    <th className="px-4 py-3">Trạng thái</th>
+                                    <th className="px-4 py-3 text-right">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#eee7de] text-sm text-slate-700">
+                                {categories.map((category) => (
+                                    <tr key={category.id} className="align-top hover:bg-[#fbfaf7]">
+                                        <td className="px-4 py-4 font-medium">
+                                            {editingId === category.id ? (
+                                                <div className="space-y-2">
+                                                    <input
+                                                        value={editingName}
+                                                        onChange={(event) => setEditingName(event.target.value)}
+                                                        className="input-modern"
+                                                    />
+                                                    <input
+                                                        value={editingDescription}
+                                                        onChange={(event) => setEditingDescription(event.target.value)}
+                                                        placeholder="Mô tả danh mục"
+                                                        className="input-modern text-xs"
+                                                    />
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            ) : (
+                                                <div>
+                                                    <p className="font-medium text-header">{category.name}</p>
+                                                    <p className="mt-1 text-xs text-slate-500">{category.description}</p>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 text-slate-500">{category.slug}</td>
+                                        <td className="px-4 py-4">{category.productCount}</td>
+                                        <td className="px-4 py-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => onToggleStatus(category.id)}
+                                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                    category.status === "active"
+                                                        ? "bg-slate-900 text-white"
+                                                        : "bg-amber-100 text-amber-900"
+                                                }`}
+                                            >
+                                                {category.status === "active" ? "Active" : "Hidden"}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {editingId === category.id ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onEditSave(category.id)}
+                                                            disabled={processingId === category.id}
+                                                            className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+                                                        >
+                                                            {processingId === category.id ? "Đang lưu..." : "Lưu"}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingId(null);
+                                                                setEditingName("");
+                                                                setEditingDescription("");
+                                                            }}
+                                                            className="rounded-full border border-[#ddd6cb] bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                                                        >
+                                                            Hủy
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onEditStart(category)}
+                                                        className="rounded-full border border-[#ddd6cb] bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                                                    >
+                                                        Sửa
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onDelete(category.id)}
+                                                    disabled={processingId === category.id}
+                                                    className="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700"
+                                                >
+                                                    {processingId === category.id ? "Đang xóa..." : "Xóa"}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-
-                    <aside className="space-y-4">
-                        <form
-                            onSubmit={onAdd}
-                            className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5"
-                        >
-                            <h2 className="text-lg font-black text-emerald-900">Them Category</h2>
-                            <p className="mt-1 text-xs text-emerald-800">Nhap ten danh muc moi.</p>
-                            <input
-                                value={newName}
-                                onChange={(event) => setNewName(event.target.value)}
-                                placeholder="Vi du: Hop giay cao cap"
-                                className="mt-4 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring-2"
-                            />
-                            <textarea
-                                value={newDescription}
-                                onChange={(event) => setNewDescription(event.target.value)}
-                                placeholder="Mo ta category"
-                                className="mt-3 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring-2"
-                                rows={3}
-                            />
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="mt-3 w-full rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {isSubmitting ? "Dang tao..." : "Them category"}
-                            </button>
-                            {submitMessage ? (
-                                <p className="mt-2 text-xs font-semibold text-emerald-700">{submitMessage}</p>
-                            ) : null}
-                            {submitError ? (
-                                <p className="mt-2 text-xs font-semibold text-rose-700">{submitError}</p>
-                            ) : null}
-                            {actionMessage ? (
-                                <p className="mt-2 text-xs font-semibold text-emerald-700">{actionMessage}</p>
-                            ) : null}
-                            {actionError ? (
-                                <p className="mt-2 text-xs font-semibold text-rose-700">{actionError}</p>
-                            ) : null}
-                        </form>
-
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                Tong quan
-                            </p>
-                            <p className="mt-3 text-3xl font-black text-slate-800">{categories.length}</p>
-                            <p className="text-sm text-slate-500">Tong so category</p>
-                            <p className="mt-4 text-sm font-semibold text-emerald-700">
-                                Dang hoat dong: {activeCount}
-                            </p>
-                        </div>
-                    </aside>
                 </div>
+
+                <aside className="space-y-4">
+                    <form onSubmit={onAdd} className="panel p-5">
+                        <h2 className="text-lg font-semibold text-header">Thêm danh mục</h2>
+                        <p className="mt-1 text-xs text-slate-500">Nhập tên danh mục mới.</p>
+                        <input
+                            value={newName}
+                            onChange={(event) => setNewName(event.target.value)}
+                            placeholder="Ví dụ: Ly giấy"
+                            className="mt-4 input-modern"
+                        />
+                        <textarea
+                            value={newDescription}
+                            onChange={(event) => setNewDescription(event.target.value)}
+                            placeholder="Mô tả danh mục"
+                            className="mt-3 input-modern"
+                            rows={3}
+                        />
+                        <button type="submit" disabled={isSubmitting} className="button-primary mt-3 w-full">
+                            {isSubmitting ? "Đang tạo..." : "Thêm danh mục"}
+                        </button>
+                        {submitMessage ? <p className="mt-2 text-xs font-medium text-emerald-700">{submitMessage}</p> : null}
+                        {submitError ? <p className="mt-2 text-xs font-medium text-rose-700">{submitError}</p> : null}
+                        {actionMessage ? <p className="mt-2 text-xs font-medium text-emerald-700">{actionMessage}</p> : null}
+                        {actionError ? <p className="mt-2 text-xs font-medium text-rose-700">{actionError}</p> : null}
+                    </form>
+
+                    <div className="panel p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tổng quan</p>
+                        <p className="mt-3 text-3xl font-semibold text-header">{categories.length}</p>
+                        <p className="text-sm text-slate-500">Tổng số danh mục</p>
+                        <p className="mt-4 text-sm font-medium text-slate-700">Đang hoạt động: {activeCount}</p>
+                    </div>
+                </aside>
             </section>
         </div>
     );

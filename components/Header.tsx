@@ -1,140 +1,102 @@
 "use client";
 
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-const Header = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+const navLinks = [
+    { href: "/", label: "Trang chủ" },
+    { href: "/products", label: "Sản phẩm" },
+    { href: "/gallery", label: "Gallery" },
+    { href: "/track-order", label: "Tra cứu đơn" },
+    { href: "/cart", label: "Báo giá" },
+];
 
-    const navLinks = [
-        { href: "/", label: "Trang chủ" },
-        { href: "/products", label: "Sản phẩm" },
-        { href: "/about", label: "Giới thiệu" },
-        { href: "/contact", label: "Liên hệ" },
-    ];
+export default function Header() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuItems = useMemo(() => navLinks, []);
 
     return (
-        <header className="bg-white/95 sticky top-0 z-50 backdrop-blur-md border-b border-gray-100 shadow-sm">
-            <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-                {/* Logo Section */}
+        <header className="sticky top-0 z-50 border-b border-[#e6e0d8] bg-white/90 backdrop-blur-xl">
+            <div className="page-shell flex items-center justify-between gap-4 py-3.5">
                 <Link
                     href="/"
-                    className="group flex items-center gap-2 outline-none"
-                    aria-label="Trang chủ DTP"
+                    className="group flex min-w-0 items-center gap-3 rounded-2xl px-2 py-1 transition hover:bg-slate-50"
+                    aria-label="Trang chủ DTP Packaging"
                 >
                     <Image
                         src="/images/logo.png"
                         alt="DTP Logo"
                         width={48}
                         height={48}
-                        className="w-10 h-auto md:w-12 transition-transform duration-300 group-hover:scale-105"
+                        className="h-auto w-10 rounded-xl md:w-11"
                     />
-                    <span className="text-xl md:text-2xl font-black text-header tracking-tighter">
-                        DTP
-                    </span>
+                    <div className="min-w-0 leading-tight">
+                        <span className="font-display block truncate text-lg font-semibold tracking-tight text-header md:text-[1.35rem]">
+                            DTP Packaging
+                        </span>
+                        <span className="block truncate text-xs font-medium text-slate-500">Ly nhựa, ly giấy, in logo</span>
+                    </div>
                 </Link>
 
-                {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center space-x-10">
-                    {navLinks.map((link) => (
+                <nav className="hidden items-center gap-1 lg:flex">
+                    {menuItems.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="text-header font-bold text-[15px] hover:text-brand-primary transition-colors duration-300"
+                            className="rounded-full px-4 py-2 text-[15px] font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
                         >
                             {link.label}
                         </Link>
                     ))}
                 </nav>
 
-                {/* Action Icons & Mobile Menu Toggle */}
-                <div className="flex items-center space-x-3 md:space-x-5">
-                    <button
-                        className="p-2 text-header hover:text-brand-primary transition-colors duration-300 focus:outline-none rounded-lg"
-                        aria-label="Tìm kiếm"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2.5}
-                            stroke="currentColor"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                            />
-                        </svg>
-                    </button>
+                <div className="flex items-center gap-2 md:gap-3">
+                    <Link href="/gallery" className="button-secondary hidden sm:inline-flex">
+                        Gallery
+                    </Link>
                     <Link
                         href="/cart"
-                        className="p-2 text-header hover:text-brand-primary transition-colors duration-300 relative focus:outline-none rounded-lg"
+                        className="relative rounded-full border border-[#ddd6cb] bg-white p-2.5 text-header transition hover:border-slate-900 hover:text-slate-900"
                         aria-label="Giỏ hàng"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2.5}
-                            stroke="currentColor"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.25} stroke="currentColor" className="h-5 w-5 md:h-6 md:w-6">
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 d="M2.25 3.75h2.25l2.462 9.469a2.25 2.25 0 002.203 1.781h9.022a2.25 2.25 0 002.203-1.781l1.407-5.406m-15.821 0h17.341c.553 0 1 .447 1 1s-.447 1-1 1H4.179"
                             />
                         </svg>
-                        <span className="absolute top-1 right-1 bg-brand-accent text-white text-[9px] md:text-[10px] font-bold rounded h-3.5 w-3.5 md:h-4 md:w-4 flex items-center justify-center shadow-sm">
+                        <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-accent text-[9px] font-semibold text-white shadow-sm md:h-4 md:w-4 md:text-[10px]">
                             0
                         </span>
                     </Link>
 
-                    {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden p-2 text-header hover:text-brand-primary transition-colors focus:outline-none"
+                        className="rounded-full border border-[#ddd6cb] bg-white p-2.5 text-header transition hover:border-slate-900 hover:text-slate-900 focus:outline-none lg:hidden"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label={isMenuOpen ? "Đóng menu" : "Mở menu"}
                         aria-expanded={isMenuOpen}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2.5}
-                            stroke="currentColor"
-                            className="w-6 h-6"
-                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.25} stroke="currentColor" className="h-6 w-6">
                             {isMenuOpen ? (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                             ) : (
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                             )}
                         </svg>
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Navigation Dropdown */}
-            {isMenuOpen && (
-                <nav className="md:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
-                    <div className="flex flex-col py-6 px-4 space-y-4">
-                        {navLinks.map((link) => (
+            {isMenuOpen ? (
+                <nav className="border-t border-[#e6e0d8] bg-white/95 lg:hidden">
+                    <div className="page-shell flex flex-col gap-3 py-4">
+                        {menuItems.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className="text-header font-extrabold text-xl hover:text-brand-primary transition-colors py-2 border-b border-gray-50 last:border-0"
+                                className="rounded-2xl border border-[#e6e0d8] bg-slate-50 px-4 py-3 text-base font-semibold text-header transition hover:border-slate-900 hover:bg-white"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 {link.label}
@@ -142,9 +104,7 @@ const Header = () => {
                         ))}
                     </div>
                 </nav>
-            )}
+            ) : null}
         </header>
     );
-};
-
-export default Header;
+}

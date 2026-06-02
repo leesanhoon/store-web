@@ -1,40 +1,79 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #16A34A;
-  --color-brand-accent: #EA580C;
-  --color-brand-emerald: #059669;
-  --color-brand-forest: #064e3b;
-  --color-brand-sage: #86efac;
-  --color-brand-light: #f0fdf4;
-  --color-surface: #F9FAFB;
-  --color-header: #1F2937;
-  --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  --color-brand-primary: #111827;
+  --color-brand-accent: #b45309;
+  --color-brand-emerald: #0f766e;
+  --color-brand-forest: #0f172a;
+  --color-brand-sage: #f3f0ea;
+  --color-brand-light: #faf8f4;
+  --color-surface: #f8f6f2;
+  --color-header: #111111;
+  --shadow-soft: 0 18px 36px -28px rgba(17, 24, 39, 0.28);
+  --shadow-card: 0 14px 32px -26px rgba(17, 24, 39, 0.22);
 }
 
 :root {
-  --background: #f9fafb;
-  --foreground: #1f2937;
+  --background: #f8f6f2;
+  --foreground: #111111;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+  --font-display: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at top left, rgba(17, 24, 39, 0.05), transparent 30%),
+    linear-gradient(180deg, #fbfaf7 0%, #f8f6f2 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-.heading-primary {
-  @apply text-4xl font-extrabold tracking-tight text-header md:text-6xl;
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
 }
 
-.text-premium {
-  @apply text-lg leading-relaxed text-header/70;
+.page-shell {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.section-gap {
+  @apply mt-8 sm:mt-10 lg:mt-12;
+}
+
+.panel {
+  @apply rounded-2xl border border-[#e6e0d8] bg-white shadow-[var(--shadow-card)];
+}
+
+.panel-strong {
+  @apply rounded-3xl border border-[#ddd6cb] bg-white shadow-[var(--shadow-soft)];
+}
+
+.surface-gradient {
+  background:
+    radial-gradient(circle at top left, rgba(17, 24, 39, 0.05), transparent 28%),
+    radial-gradient(circle at top right, rgba(180, 83, 9, 0.06), transparent 24%),
+    linear-gradient(180deg, #fbfaf7 0%, #f8f6f2 100%);
+}
+
+.input-modern {
+  @apply w-full rounded-2xl border border-[#ddd6cb] bg-white px-4 py-3 text-sm text-header outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-header px-5 py-3.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 hover:shadow-md disabled:cursor-wait disabled:opacity-70;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-[#ddd6cb] bg-white px-5 py-3.5 text-sm font-semibold text-header transition hover:border-slate-900 hover:text-slate-900;
 }

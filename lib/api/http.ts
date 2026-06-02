@@ -16,7 +16,10 @@ class ApiError extends Error {
     }
 }
 
-const API_BASE_URL = "https://backend-api-dotnet9.onrender.com";
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    "https://backend-api-dotnet9.onrender.com";
 
 async function parseResponse<TResponse>(response: Response): Promise<TResponse> {
     const contentType = response.headers.get("content-type") ?? "";
@@ -38,6 +41,7 @@ async function request<TResponse, TBody = unknown>(
     const response = await fetch(`${API_BASE_URL}${path}`, {
         method,
         signal,
+        next: method === "GET" ? { revalidate: 60 } : undefined,
         headers: {
             accept: "text/plain",
             ...(body ? { "Content-Type": "application/json" } : {}),

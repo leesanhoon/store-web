@@ -1,242 +1,162 @@
 import Link from "next/link";
+import Image from "next/image";
+import AddToCartButton from "@/components/AddToCartButton";
+import { getProducts, ProductDto } from "@/lib/api/products";
+import { formatCurrency, getFeaturedProducts, getProductDisplayInfo } from "@/lib/products/display";
 
-const products = [
-    {
-        id: 1,
-        name: "Ly Nhựa PET 500ml",
-        price: 1500,
-        image: "🥤",
-        category: "Ly Nhựa",
-        badge: "Bán chạy",
-    },
-    {
-        id: 2,
-        name: "In Logo Thương Hiệu",
-        price: 500,
-        image: "🎨",
-        category: "Dịch Vụ In",
-        badge: "Sáng tạo",
-    },
-    {
-        id: 3,
-        name: "Ly Nhựa PP 700ml",
-        price: 1800,
-        image: "🥤",
-        category: "Ly Nhựa",
-        badge: "Phổ biến",
-    },
-    {
-        id: 4,
-        name: "Thiết Kế Free",
-        price: 0,
-        image: "✏️",
-        category: "Dịch Vụ",
-        badge: "Ưu đãi",
-    },
+async function loadProducts(): Promise<{ products: ProductDto[]; error: string }> {
+    try {
+        const products = await getProducts();
+        return { products: getFeaturedProducts(products), error: "" };
+    } catch (error) {
+        return {
+            products: [],
+            error: error instanceof Error ? error.message : "Không thể tải sản phẩm từ API.",
+        };
+    }
+}
+
+const featureCards = [
+    ["Nguyên liệu an toàn", "Ly nhựa nguyên sinh và giấy thực phẩm phù hợp đồ uống mang đi."],
+    ["In ấn sắc nét", "Tư vấn quy cách in logo, màu in và số lượng phù hợp ngân sách."],
+    ["Bán theo cây/thùng", "Hỗ trợ đặt số lượng nhỏ để dùng thử và số lượng lớn cho chuỗi quán."],
 ];
 
-export default function Home() {
+export default async function Home() {
+    const { products, error } = await loadProducts();
+
     return (
-        <div className="bg-[#F3F4F6] min-h-screen">
-            <div className="container mx-auto px-6 py-12">
-                {/* Hero Section */}
-                <section className="relative overflow-hidden bg-white/40 backdrop-blur-md rounded-[2.5rem] p-8 md:p-24 mb-24 shadow-layered-lg border border-white/60">
-                    {/* Layered Gradient Background */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/10 via-transparent to-brand-accent/5 pointer-events-none"></div>
-                    <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-                    <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-accent/10 rounded-full blur-[100px] pointer-events-none"></div>
-
-                    <div className="relative z-10 md:w-3/5 text-center md:text-left mx-auto md:mx-0">
-                        <span className="inline-block px-4 py-1.5 bg-white/80 text-brand-primary rounded-full text-xs font-black mb-8 uppercase tracking-widest border border-brand-primary/20 shadow-sm backdrop-blur-sm">
-                            ✨ Giải pháp bao bì F&B bền vững
-                        </span>
-                        <h1 className="heading-primary mb-8 leading-tight drop-shadow-sm">
-                            Bao bì sạch cho <br />
-                            <span className="text-brand-primary">
-                                Thương hiệu sạch
+        <div className="surface-gradient">
+            <section className="page-shell pt-6 sm:pt-8">
+                <div className="panel-strong overflow-hidden">
+                    <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.02fr_0.98fr] lg:p-12">
+                        <div className="space-y-6">
+                            <span className="inline-flex rounded-full border border-[#ddd6cb] bg-[#fbfaf7] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700">
+                                DTP Packaging
                             </span>
-                        </h1>
-                        <p className="text-header/70 mb-12 max-w-lg font-semibold text-lg leading-relaxed">
-                            DTP Packaging cung cấp giải pháp in ấn ly nhựa, ly
-                            giấy chất lượng cao, giúp thương hiệu của bạn tỏa
-                            sáng tại Quảng Ngãi.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center gap-5 justify-center md:justify-start">
-                            <button className="w-full sm:w-auto bg-brand-accent text-white px-12 py-5 rounded-2xl font-black shadow-layered-md hover:bg-brand-accent/90 transition-all transform hover:-translate-y-1.5 active:scale-95">
-                                Đặt in ngay
-                            </button>
-                            <button className="w-full sm:w-auto bg-white/80 backdrop-blur-sm text-header px-12 py-5 rounded-2xl font-black border border-white hover:border-brand-primary/30 hover:bg-white transition-all shadow-layered-sm transform hover:-translate-y-1 active:scale-95">
-                                Khám phá mẫu
-                            </button>
+                            <div className="space-y-4">
+                                <h1 className="font-display max-w-3xl text-4xl font-semibold tracking-tight text-header sm:text-5xl lg:text-6xl">
+                                    Ly nhựa, ly giấy và in logo cho quán F&B
+                                </h1>
+                                <p className="max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+                                    Cung cấp ly PET, PP, ly giấy và dịch vụ in thương hiệu theo số lượng. Tư vấn chọn mẫu,
+                                    báo giá nhanh và hỗ trợ thiết kế cho quán cà phê, trà sữa, nước ép.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <Link href="/products" className="button-primary">
+                                    Xem sản phẩm
+                                </Link>
+                                <Link href="/cart" className="button-secondary">
+                                    Yêu cầu báo giá
+                                </Link>
+                                <Link href="/gallery" className="button-secondary bg-[#fbfaf7]">
+                                    Xem gallery mẫu
+                                </Link>
+                            </div>
                         </div>
-                    </div>
-                    {/* Visual elements */}
-                    <div className="hidden lg:block absolute right-24 top-1/2 -translate-y-1/2 text-[20rem] opacity-[0.07] text-header rotate-12 select-none leading-none filter blur-[2px]">
-                        📦
-                    </div>
-                </section>
 
-                {/* Categories */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-32">
-                    <div className="bg-white/70 backdrop-blur-sm p-10 rounded-[2rem] shadow-layered-sm border border-white/50 group hover:-translate-y-2 hover:bg-white hover:shadow-layered-md transition-all duration-500">
-                        <div className="w-20 h-20 bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 rounded-2xl flex items-center justify-center text-4xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner">
-                            🌱
+                        <div className="panel overflow-hidden p-4">
+                            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#fbfaf7]">
+                                <Image
+                                    src="/images/mockups/hero-cups.png"
+                                    alt="Bộ mockup ly nhựa và ly giấy"
+                                    fill
+                                    priority
+                                    className="object-cover"
+                                    sizes="(max-width: 1024px) 100vw, 46vw"
+                                />
+                            </div>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                {["PET 500ml", "PP 700ml", "Ly giấy", "In logo"].map((item, index) => (
+                                    <div
+                                        key={item}
+                                        className={`rounded-2xl border p-4 ${
+                                            index === 0 ? "border-[#ddd6cb] bg-[#fbfaf7]" : "border-[#e6e0d8] bg-white"
+                                        }`}
+                                    >
+                                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                                            {index < 2 ? "Cup" : "Service"}
+                                        </p>
+                                        <p className="font-display mt-2 text-lg font-semibold text-header">{item}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <h3 className="font-black text-2xl text-header mb-4">
-                            Nguyên liệu Sạch
-                        </h3>
-                        <p className="text-header/60 font-semibold leading-relaxed">
-                            Sử dụng nhựa nguyên sinh và giấy cao cấp, an toàn
-                            tuyệt đối cho sức khỏe người dùng.
-                        </p>
-                    </div>
-                    <div className="bg-white/70 backdrop-blur-sm p-10 rounded-[2rem] shadow-layered-sm border border-white/50 group hover:-translate-y-2 hover:bg-white hover:shadow-layered-md transition-all duration-500">
-                        <div className="w-20 h-20 bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 rounded-2xl flex items-center justify-center text-4xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner">
-                            🖌️
-                        </div>
-                        <h3 className="font-black text-2xl text-header mb-4">
-                            In ấn Sắc nét
-                        </h3>
-                        <p className="text-header/60 font-semibold leading-relaxed">
-                            Công nghệ in hiện đại từ Nhật Bản, đảm bảo màu sắc
-                            trung thực và độ bền cao.
-                        </p>
-                    </div>
-                    <div className="bg-white/70 backdrop-blur-sm p-10 rounded-[2rem] shadow-layered-sm border border-white/50 group hover:-translate-y-2 hover:bg-white hover:shadow-layered-md transition-all duration-500">
-                        <div className="w-20 h-20 bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 rounded-2xl flex items-center justify-center text-4xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner">
-                            🤝
-                        </div>
-                        <h3 className="font-black text-2xl text-header mb-4">
-                            Đồng hành Tin cậy
-                        </h3>
-                        <p className="text-header/60 font-semibold leading-relaxed">
-                            Hỗ trợ thiết kế miễn phí và tư vấn chuyên sâu cho
-                            hơn 1000+ quán F&B tại Quảng Ngãi.
-                        </p>
                     </div>
                 </div>
+            </section>
 
-                {/* Product Section */}
-                <section className="mb-32">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16 px-4">
-                        <div className="text-center md:text-left">
-                            <h2 className="text-4xl font-black text-header mb-4 tracking-tight">
-                                Giải pháp Đóng gói
-                            </h2>
-                            <div className="h-1.5 w-20 bg-brand-primary rounded-full mb-6 mx-auto md:mx-0"></div>
-                            <p className="text-header/60 text-lg font-semibold">
-                                Tìm kiếm sản phẩm phù hợp nhất cho quán của bạn.
-                            </p>
-                        </div>
-                        <Link
-                            href="/products"
-                            className="group flex items-center gap-4 px-6 py-3 bg-white rounded-full shadow-layered-sm border border-gray-100 font-extrabold text-brand-primary hover:text-brand-primary/80 transition-all hover:shadow-layered-md"
-                        >
-                            Xem tất cả sản phẩm
-                            <span className="w-8 h-8 rounded-full bg-brand-primary/10 flex items-center justify-center group-hover:translate-x-2 transition-transform">
-                                →
-                            </span>
-                        </Link>
+            <section className="page-shell section-gap grid gap-4 md:grid-cols-3">
+                {featureCards.map(([title, description]) => (
+                    <article key={title} className="panel p-5 sm:p-6">
+                        <h2 className="font-display text-xl font-semibold text-header">{title}</h2>
+                        <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+                    </article>
+                ))}
+            </section>
+
+            <section className="page-shell section-gap">
+                <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <h2 className="font-display text-3xl font-semibold text-header">Sản phẩm nổi bật</h2>
+                        <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                            Dữ liệu được tải trực tiếp từ API sản phẩm .NET Core.
+                        </p>
                     </div>
+                    <Link href="/products" className="text-sm font-semibold text-slate-900 transition hover:text-brand-accent">
+                        Xem tất cả sản phẩm →
+                    </Link>
+                </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-                        {products.map((product) => (
-                            <div
-                                key={product.id}
-                                className="group bg-white rounded-[2rem] p-6 shadow-layered-md border border-gray-50/50 hover:border-brand-primary/30 transition-all duration-500 hover:shadow-layered-lg hover:-translate-y-3"
-                            >
-                                <div className="aspect-square bg-slate-50 rounded-2xl flex items-center justify-center text-8xl mb-8 relative overflow-hidden group-hover:bg-brand-primary/5 transition-all duration-500">
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                    <span className="group-hover:scale-110 transition-transform duration-700 drop-shadow-2xl select-none z-10">
-                                        {product.image}
-                                    </span>
-                                    {product.badge && (
-                                        <div className="absolute top-4 left-4 z-20">
-                                            <span className="px-4 py-1.5 bg-white/95 backdrop-blur-sm text-header rounded-xl font-black text-[10px] shadow-layered-sm uppercase border border-gray-100 italic tracking-tighter">
-                                                {product.badge}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
+                {error ? (
+                    <div className="panel border-rose-200 bg-rose-50 p-5 text-sm font-medium text-rose-700">{error}</div>
+                ) : null}
 
-                                <div className="px-2">
-                                    <span className="text-[11px] font-black text-brand-primary/70 tracking-[0.2em] uppercase mb-3 block">
-                                        {product.category}
-                                    </span>
-                                    <h3 className="text-xl font-black text-header mb-6 group-hover:text-brand-primary transition-colors line-clamp-1">
+                {!error && products.length === 0 ? (
+                    <div className="panel p-8 text-center text-sm font-medium text-slate-600">
+                        Chưa có sản phẩm để hiển thị.
+                    </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    {products.map((product) => {
+                        const info = getProductDisplayInfo(product);
+
+                        return (
+                            <article key={product.id} className="panel overflow-hidden p-4">
+                                <Link
+                                    href={`/product/${product.id}`}
+                                    className="flex aspect-square items-center justify-center rounded-[1.25rem] bg-[#fbfaf7] text-7xl"
+                                >
+                                    {info.icon}
+                                </Link>
+                                <div className="space-y-4 p-1 pt-4">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                                        {product.categoryName || info.cupType}
+                                    </p>
+                                    <h3 className="font-display line-clamp-2 min-h-14 text-xl font-semibold leading-tight text-header">
                                         {product.name}
                                     </h3>
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-2xl font-black text-header tracking-tight">
-                                            {product.price > 0
-                                                ? `${product.price.toLocaleString("vi-VN")}đ`
-                                                : "Miễn phí"}
-                                        </div>
-                                        <button
-                                            className="w-14 h-14 bg-header text-white rounded-2xl flex items-center justify-center group-hover:bg-brand-primary transition-all shadow-layered-md active:scale-90 hover:rotate-6"
-                                            aria-label={`Thêm ${product.name}`}
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                strokeWidth={2.5}
-                                                stroke="currentColor"
-                                                className="w-6 h-6"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    d="M12 4.5v15m7.5-7.5h-15"
-                                                />
-                                            </svg>
-                                        </button>
+                                    <p className="text-2xl font-semibold text-header">{formatCurrency(product.price)}</p>
+                                    <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600">
+                                        <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.volume}</span>
+                                        <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.unit}</span>
+                                        <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.minimumQuantity}</span>
+                                        <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.printOption}</span>
                                     </div>
+                                    <AddToCartButton
+                                        productId={product.id}
+                                        name={product.name}
+                                        price={product.price}
+                                        categoryName={product.categoryName || info.cupType}
+                                    />
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Zalo CTA Section */}
-                <section className="relative overflow-hidden bg-gradient-to-br from-brand-primary via-brand-emerald to-brand-forest rounded-[3rem] p-12 md:p-24 text-center shadow-layered-lg mb-24">
-                    {/* Abstract Shapes */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-accent/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl pointer-events-none"></div>
-                    
-                    <div className="relative z-10 max-w-3xl mx-auto">
-                        <span className="inline-block px-6 py-2 bg-white/10 backdrop-blur-md text-white rounded-full text-sm font-black mb-8 uppercase tracking-[0.3em] border border-white/20">
-                            Liên hệ ngay
-                        </span>
-                        <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight drop-shadow-md">
-                            Nâng tầm Thương hiệu <br /> ngay hôm nay
-                        </h2>
-                        <p className="text-white/90 mb-14 text-xl font-semibold max-w-xl mx-auto leading-relaxed">
-                            Liên hệ tư vấn thiết kế logo miễn phí và nhận báo
-                            giá ưu đãi đặc biệt cho các quán tại Quảng Ngãi.
-                        </p>
-                        <button className="group relative bg-brand-accent text-white px-20 py-7 rounded-2xl font-black text-2xl shadow-layered-md hover:bg-brand-accent/90 transform hover:scale-105 hover:-translate-y-1 transition-all active:scale-95 overflow-hidden">
-                            <span className="relative z-10 flex items-center gap-3">
-                                Tư vấn qua Zalo
-                                <span className="text-3xl group-hover:rotate-12 transition-transform">👋</span>
-                            </span>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
-                        </button>
-                    </div>
-                    
-                    {/* Pattern Overlay */}
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay">
-                        <div
-                            className="absolute top-0 left-0 w-full h-full"
-                            style={{
-                                backgroundImage:
-                                    "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-                                backgroundSize: "32px 32px",
-                            }}
-                        ></div>
-                    </div>
-                </section>
-            </div>
+                            </article>
+                        );
+                    })}
+                </div>
+            </section>
         </div>
     );
 }

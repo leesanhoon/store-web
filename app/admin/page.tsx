@@ -2,52 +2,68 @@ import Link from "next/link";
 
 const modules = [
     {
-        title: "Product",
-        description: "Quan ly san pham: them, sua, xoa, cap nhat gia.",
+        title: "Quản lý sản phẩm",
         href: "/admin/product",
-        count: "128 san pham",
+        summary: "Tạo, sửa, xóa sản phẩm ly nhựa/ly giấy, cập nhật giá, tồn kho và danh mục.",
+        tasks: ["Tạo sản phẩm mới", "Chỉnh sửa thông tin sản phẩm", "Xóa sản phẩm không còn bán", "Cập nhật giá và tồn kho"],
     },
     {
-        title: "Category",
-        description: "Quan ly danh muc san pham va trang thai hien thi.",
+        title: "Quản lý danh mục",
         href: "/admin/category",
-        count: "12 category",
+        summary: "Tạo và chỉnh sửa danh mục sản phẩm để tổ chức catalog theo nhu cầu kinh doanh.",
+        tasks: ["Thêm danh mục mới", "Sửa tên/mô tả danh mục", "Xóa danh mục không dùng", "Theo dõi số lượng sản phẩm"],
     },
     {
-        title: "Order",
-        description: "Theo doi don hang, xu ly trang thai va thanh toan.",
+        title: "Quản lý đơn hàng in",
         href: "/admin/order",
-        count: "36 don moi",
+        summary: "Theo dõi tiến độ đơn in, cập nhật trạng thái, ghi chú nội bộ và file mockup.",
+        tasks: ["Xem toàn bộ đơn hàng", "Cập nhật trạng thái", "Lưu ghi chú nội bộ", "Ghi nhận file mockup đã gửi"],
     },
+];
+
+const quickLinks = [
+    { label: "Trang quản trị sản phẩm", href: "/admin/product" },
+    { label: "Trang quản trị danh mục", href: "/admin/category" },
+    { label: "Trang quản trị đơn hàng", href: "/admin/order" },
 ];
 
 export default function AdminPage() {
     return (
         <div className="space-y-6">
-            <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-900 to-emerald-900 p-7 text-white">
-                <p className="text-xs uppercase tracking-[0.25em] text-cyan-100">Admin Center</p>
-                <h1 className="mt-2 text-3xl font-black">Tong Quan Quan Tri</h1>
-                <p className="mt-2 text-sm text-cyan-50">
-                    Chon mot muc ben duoi de vao man hinh quan ly chi tiet.
+            <section className="panel-strong overflow-hidden bg-[#111111] p-7 text-white sm:p-9">
+                <p className="text-xs uppercase tracking-[0.22em] text-white/65">Admin Center</p>
+                <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Tổng quan chức năng quản trị</h1>
+                <p className="mt-2 max-w-3xl text-sm text-white/70">
+                    Tại URL `/admin`, bạn có thể xem toàn bộ chức năng quản trị và đi thẳng đến từng màn hình xử lý.
                 </p>
             </section>
 
             <section className="grid gap-4 md:grid-cols-3">
                 {modules.map((module) => (
-                    <Link
-                        key={module.title}
-                        href={module.href}
-                        className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-cyan-300 hover:shadow-lg"
-                    >
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            {module.count}
-                        </p>
-                        <h2 className="mt-2 text-2xl font-black text-slate-900 group-hover:text-cyan-700">
-                            {module.title}
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-600">{module.description}</p>
-                    </Link>
+                    <article key={module.title} className="panel p-5">
+                        <h2 className="text-xl font-semibold text-header">{module.title}</h2>
+                        <p className="mt-2 text-sm font-medium leading-6 text-slate-600">{module.summary}</p>
+                        <ul className="mt-4 space-y-2 text-sm font-medium text-slate-700">
+                            {module.tasks.map((task) => (
+                                <li key={task}>- {task}</li>
+                            ))}
+                        </ul>
+                        <Link href={module.href} className="button-primary mt-5">
+                            Mở chức năng
+                        </Link>
+                    </article>
                 ))}
+            </section>
+
+            <section className="panel p-6">
+                <h2 className="text-xl font-semibold text-header">Truy cập nhanh</h2>
+                <div className="mt-4 flex flex-wrap gap-3">
+                    {quickLinks.map((item) => (
+                        <Link key={item.href} href={item.href} className="button-secondary">
+                            {item.label}
+                        </Link>
+                    ))}
+                </div>
             </section>
         </div>
     );
