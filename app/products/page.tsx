@@ -1,11 +1,11 @@
 import Link from "next/link";
 import AddToCartButton from "@/components/AddToCartButton";
-import { getProducts, ProductDto } from "@/lib/api/products";
+import { getCatalogProducts } from "@/lib/data/catalog";
 import { formatCurrency, getProductDisplayInfo } from "@/lib/products/display";
 
-async function loadProducts(): Promise<{ products: ProductDto[]; error: string }> {
+async function loadProducts() {
     try {
-        return { products: await getProducts(), error: "" };
+        return { products: await getCatalogProducts(), error: "" };
     } catch (error) {
         return {
             products: [],
@@ -22,12 +22,10 @@ export default async function ProductsPage() {
             <div className="page-shell py-6 sm:py-8">
                 <section className="panel-strong p-6 sm:p-8">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Danh mục sản phẩm</p>
-                    <h1 className="font-display mt-3 text-3xl font-semibold text-header sm:text-4xl">
-                        Ly nhựa, ly giấy và dịch vụ in
-                    </h1>
+                    <h1 className="font-display mt-3 text-3xl font-semibold text-header sm:text-4xl">Ly nhựa, ly giấy và dịch vụ in</h1>
                     <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                        Chọn sản phẩm theo dung tích, đơn vị bán và nhu cầu in logo. Giá hiển thị là giá cơ bản từ API, báo giá cuối
-                        sẽ phụ thuộc số lượng và quy cách in.
+                        Chọn sản phẩm theo dung tích, đơn vị bán và nhu cầu in logo. Giá hiển thị là giá cơ bản, báo giá cuối sẽ
+                        phụ thuộc số lượng và quy cách in.
                     </p>
                 </section>
 
@@ -48,7 +46,7 @@ export default async function ProductsPage() {
                                 <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
                                     <Link
                                         href={`/product/${product.id}`}
-                                        className="flex aspect-square items-center justify-center rounded-[1.25rem] bg-[#fbfaf7] text-6xl"
+                                        className="flex aspect-square items-center justify-center rounded-[1.25rem] bg-[#fcfaf7] text-6xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15"
                                     >
                                         {info.icon}
                                     </Link>
@@ -62,10 +60,10 @@ export default async function ProductsPage() {
                                     </div>
                                 </div>
                                 <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 md:grid-cols-4">
-                                    <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.cupType}</span>
-                                    <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.volume}</span>
-                                    <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.unit}</span>
-                                    <span className="rounded-full bg-[#fbfaf7] px-3 py-2">{info.printOption}</span>
+                                    <span className="rounded-full bg-[#fcfaf7] px-3 py-2">{info.cupType}</span>
+                                    <span className="rounded-full bg-[#fcfaf7] px-3 py-2">{info.volume}</span>
+                                    <span className="rounded-full bg-[#fcfaf7] px-3 py-2">{info.unit}</span>
+                                    <span className="rounded-full bg-[#fcfaf7] px-3 py-2">{info.printOption}</span>
                                 </div>
                                 <div className="mt-4">
                                     <AddToCartButton

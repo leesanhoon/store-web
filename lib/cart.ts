@@ -1,5 +1,12 @@
 export type CartUnit = "cay" | "thung";
 
+export type CartConfiguration = {
+    cupModel: string;
+    size: string;
+    material: string;
+    printMethod: string;
+};
+
 export type CartItem = {
     productId: number;
     name: string;
@@ -7,6 +14,7 @@ export type CartItem = {
     quantity: number;
     unit: CartUnit;
     categoryName: string;
+    configuration: CartConfiguration;
 };
 
 export type QuoteRequest = {
@@ -20,8 +28,17 @@ export type QuoteRequest = {
     status: "new" | "quote_requested";
 };
 
+export const CART_CHANGED_EVENT = "dtp-cart-changed";
+
 const CART_KEY = "dtp_cart_items";
 const QUOTE_KEY = "dtp_quote_requests";
+
+export const defaultCartConfiguration: CartConfiguration = {
+    cupModel: "PET",
+    size: "500ml",
+    material: "PET",
+    printMethod: "Không in",
+};
 
 function readJson<T>(key: string, fallback: T): T {
     if (typeof window === "undefined") {
@@ -45,51 +62,80 @@ function writeJson<T>(key: string, value: T) {
     window.localStorage.setItem(key, JSON.stringify(value));
 }
 
+function normalizeCartItem(item: CartItem): CartItem {
+    return {
+        ...item,
+        configuration: {
+            ...defaultCartConfiguration,
+            ...(item.configuration ?? {}),
+        },
+    };
+}
+
+function notifyCartChanged() {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    window.dispatchEvent(new Event(CART_CHANGED_EVENT));
+}
+
+export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "configuration">) {
+    const config = {
+        ...defaultCartConfiguration,
+        ...(item.configuration ?? {}),
+    };
+
+    return [item.productId, item.unit, config.cupModel, config.size, config.material, config.printMethod].join("|");
+}
+
 export function getCartItems() {
-    return readJson<CartItem[]>(CART_KEY, []);
+    return readJson<CartItem[]>(CART_KEY, []).map(normalizeCartItem);
+}
+
+export function getCartTotalQuantity(items = getCartItems()) {
+    return items.reduce((total, item) => total + item.quantity, 0);
 }
 
 export function saveCartItems(items: CartItem[]) {
-    writeJson(CART_KEY, items);
+    writeJson(CART_KEY, items.map(normalizeCartItem));
+    notifyCartChanged();
 }
 
-export function addToCart(item: Omit<CartItem, "quantity"> & { quantity?: number }) {
+export function addToCart(item: Omit<CartItem, "quantity" | "configuration"> & { quantity?: number; configuration?: CartConfiguration }) {
     const items = getCartItems();
-    const quantity = item.quantity ?? 1;
-    const existingIndex = items.findIndex(
-        (current) => current.productId === item.productId && current.unit === item.unit,
-    );
+    const nextItem = normalizeCartItem({
+        ...item,
+        quantity: item.quantity ?? 1000,
+        configuration: item.configuration ?? defaultCartConfiguration,
+    });
+    const nextKey = getCartItemKey(nextItem);
+    const existingIndex = items.findIndex((current) => getCartItemKey(current) === nextKey);
 
     if (existingIndex >= 0) {
         items[existingIndex] = {
             ...items[existingIndex],
-            quantity: items[existingIndex].quantity + quantity,
+            quantity: items[existingIndex].quantity + nextItem.quantity,
         };
     } else {
-        items.push({ ...item, quantity });
+        items.push(nextItem);
     }
 
     saveCartItems(items);
     return items;
 }
 
-export function updateCartItemQuantity(productId: number, unit: CartUnit, quantity: number) {
+export function updateCartItemQuantity(itemKey: string, quantity: number) {
     const items = getCartItems()
-        .map((item) =>
-            item.productId === productId && item.unit === unit
-                ? { ...item, quantity: Math.max(1, quantity) }
-                : item,
-        )
+        .map((item) => (getCartItemKey(item) === itemKey ? { ...item, quantity: Math.max(1, quantity) } : item))
         .filter((item) => item.quantity > 0);
 
     saveCartItems(items);
     return items;
 }
 
-export function removeCartItem(productId: number, unit: CartUnit) {
-    const items = getCartItems().filter(
-        (item) => !(item.productId === productId && item.unit === unit),
-    );
+export function removeCartItem(itemKey: string) {
+    const items = getCartItems().filter((item) => getCartItemKey(item) !== itemKey);
     saveCartItems(items);
     return items;
 }

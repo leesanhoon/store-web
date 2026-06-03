@@ -1,34 +1,10 @@
 import Link from "next/link";
 import CupMockArt from "@/components/CupMockArt";
-
-const galleryItems = [
-    {
-        label: "Amber Crest 500",
-        src: "/images/mockups/pet-500-amber.png",
-        title: "Ly PET 500ml",
-        description: "Phong cách quán cà phê chuỗi, tông caramel, phù hợp đồ uống đá và latte mang đi.",
-    },
-    {
-        label: "Velvet Roast 700",
-        src: "/images/mockups/pet-700-velvet.png",
-        title: "Ly PET 700ml",
-        description: "Thiết kế đậm hơn, nhìn chắc tay, hợp trà sữa cỡ lớn hoặc cold brew.",
-    },
-    {
-        label: "Linen Paper 360",
-        src: "/images/mockups/paper-360-linen.png",
-        title: "Ly giấy 360ml",
-        description: "Trắng - beige nhẹ, tinh gọn, phù hợp americano, cappuccino và take-away.",
-    },
-    {
-        label: "Urban Brew 500",
-        src: "/images/mockups/logo-cup-500-urban.png",
-        title: "Ly in logo 500ml",
-        description: "Tông trung tính, dễ dùng cho nhiều thương hiệu đồ uống hiện đại.",
-    },
-];
+import { getGalleryItems } from "@/lib/data/gallery";
 
 export default function GalleryPage() {
+    const galleryItems = getGalleryItems();
+
     return (
         <div className="surface-gradient">
             <div className="page-shell py-6 sm:py-8">

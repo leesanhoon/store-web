@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createCategory, deleteCategory, getCategories, updateCategory } from "@/lib/api/categories";
+import { createCategory, deleteCategory, updateCategory } from "@/lib/api/categories";
+import { getCatalogCategories } from "@/lib/data/catalog";
 
 type Category = {
     id: number;
@@ -46,7 +47,7 @@ export default function AdminCategoryPage() {
             setIsLoadingCategories(true);
             setLoadError("");
             try {
-                const data = await getCategories();
+                const data = await getCatalogCategories();
                 const mappedCategories: Category[] = data.map((item) => ({
                     id: item.id,
                     name: item.name,
@@ -170,7 +171,7 @@ export default function AdminCategoryPage() {
 
                     <div className="panel overflow-hidden">
                         <table className="w-full text-left">
-                            <thead className="bg-[#fbfaf7] text-xs uppercase tracking-[0.2em] text-slate-500">
+                            <thead className="bg-[#fcfaf7] text-xs uppercase tracking-[0.2em] text-slate-500">
                                 <tr>
                                     <th className="px-4 py-3">Tên</th>
                                     <th className="px-4 py-3">Slug</th>
@@ -181,7 +182,7 @@ export default function AdminCategoryPage() {
                             </thead>
                             <tbody className="divide-y divide-[#eee7de] text-sm text-slate-700">
                                 {categories.map((category) => (
-                                    <tr key={category.id} className="align-top hover:bg-[#fbfaf7]">
+                                    <tr key={category.id} className="align-top hover:bg-[#fcfaf7]">
                                         <td className="px-4 py-4 font-medium">
                                             {editingId === category.id ? (
                                                 <div className="space-y-2">

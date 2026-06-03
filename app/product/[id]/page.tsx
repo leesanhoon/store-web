@@ -1,21 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, ProductDto } from "@/lib/api/products";
+import { getCatalogProduct } from "@/lib/data/catalog";
 import { formatCurrency, getProductDisplayInfo } from "@/lib/products/display";
 import ProductPurchasePanel from "@/components/ProductPurchasePanel";
 
-async function loadProduct(id: string): Promise<ProductDto | null> {
+async function loadProduct(id: string) {
     const productId = Number(id);
 
     if (!Number.isInteger(productId) || productId <= 0) {
         return null;
     }
 
-    try {
-        return await getProduct(productId);
-    } catch {
-        return null;
-    }
+    return getCatalogProduct(productId);
 }
 
 export default async function ProductDetailPage({
@@ -37,13 +33,13 @@ export default async function ProductDetailPage({
                     ← Quay lại danh sách sản phẩm
                 </Link>
 
-                <section className="grid gap-8 rounded-3xl border border-[#e6e0d8] bg-white p-6 shadow-soft lg:grid-cols-[0.92fr_1.08fr] lg:p-8">
-                    <div className="flex min-h-[320px] items-center justify-center rounded-2xl bg-[#fbfaf7] p-8 text-9xl">
+                <section className="grid gap-8 rounded-[1.75rem] border border-[#e5ddd1] bg-white p-6 shadow-[var(--shadow-soft)] lg:grid-cols-[0.92fr_1.08fr] lg:p-8">
+                    <div className="flex min-h-[320px] items-center justify-center rounded-2xl bg-[#fcfaf7] p-8 text-9xl">
                         {info.icon}
                     </div>
 
                     <div>
-                        <p className="inline-flex rounded-full border border-[#ddd6cb] bg-[#fbfaf7] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700">
+                        <p className="inline-flex rounded-full border border-[#dbcfc0] bg-[#fcfaf7] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700">
                             {product.categoryName || info.cupType}
                         </p>
                         <h1 className="mt-5 text-3xl font-semibold leading-tight text-header sm:text-4xl">{product.name}</h1>
@@ -59,7 +55,7 @@ export default async function ProductDetailPage({
                                 ["Tùy chọn in", info.printOption],
                                 ["Tồn kho", `${product.stockQuantity.toLocaleString("vi-VN")} sản phẩm`],
                             ].map(([label, value]) => (
-                                <div key={label} className="rounded-2xl bg-[#fbfaf7] p-4">
+                                <div key={label} className="rounded-2xl bg-[#fcfaf7] p-4">
                                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
                                     <p className="mt-2 font-semibold text-header">{value}</p>
                                 </div>
@@ -95,7 +91,7 @@ export default async function ProductDetailPage({
                             ["Chọn số lượng", "Đơn càng nhiều thì đơn giá càng tốt; đơn in logo nên bắt đầu từ 1.000 ly."],
                             ["Duyệt mẫu", "Luôn kiểm tra mockup trước khi sản xuất để tránh sai màu hoặc sai vị trí in."],
                         ].map(([title, description]) => (
-                            <article key={title} className="rounded-2xl bg-[#fbfaf7] p-5">
+                            <article key={title} className="rounded-2xl bg-[#fcfaf7] p-5">
                                 <h3 className="font-semibold text-header">{title}</h3>
                                 <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
                             </article>

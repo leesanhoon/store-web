@@ -53,11 +53,9 @@ export default function TrackOrderPage() {
                                         <p className="mt-1 text-sm font-medium text-slate-600">
                                             {order.fullName} | {order.phone}
                                         </p>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            Tạo lúc: {new Date(order.createdAt).toLocaleString("vi-VN")}
-                                        </p>
+                                        <p className="mt-1 text-sm text-slate-500">Tạo lúc: {new Date(order.createdAt).toLocaleString("vi-VN")}</p>
                                     </div>
-                                    <span className="rounded-full border border-[#ddd6cb] bg-[#fbfaf7] px-4 py-2 text-sm font-semibold text-slate-800">
+                                    <span className="rounded-full border border-[#dbcfc0] bg-[#fcfaf7] px-4 py-2 text-sm font-semibold text-slate-800">
                                         {order.status}
                                     </span>
                                 </div>
@@ -68,7 +66,7 @@ export default function TrackOrderPage() {
 
                                 <div className="mt-6 grid gap-3 md:grid-cols-2">
                                     {order.items.map((item) => (
-                                        <div key={`${item.productId}-${item.unit}`} className="rounded-2xl bg-[#fbfaf7] p-4">
+                                        <div key={`${item.productId}-${item.unit}`} className="rounded-2xl bg-[#fcfaf7] p-4">
                                             <h3 className="font-semibold text-header">{item.name}</h3>
                                             <p className="mt-1 text-sm text-slate-600">
                                                 SL: {item.quantity} | {item.price.toLocaleString("vi-VN")}đ
@@ -78,13 +76,13 @@ export default function TrackOrderPage() {
                                 </div>
 
                                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                                    <div className="rounded-2xl border border-[#e6e0d8] bg-[#fbfaf7] p-4">
+                                    <div className="rounded-2xl border border-[#e5ddd1] bg-[#fcfaf7] p-4">
                                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Ghi chú</p>
                                         <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                                             {order.note || "Chưa có ghi chú thêm."}
                                         </p>
                                     </div>
-                                    <div className="rounded-2xl border border-[#e6e0d8] bg-[#fbfaf7] p-4">
+                                    <div className="rounded-2xl border border-[#e5ddd1] bg-[#fcfaf7] p-4">
                                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Ghi chú nội bộ</p>
                                         <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                                             {order.internalNote || "Đang chờ bộ phận xử lý cập nhật."}
@@ -106,7 +104,7 @@ export default function TrackOrderPage() {
                     </div>
 
                     <aside className="space-y-4">
-                        <div className="panel bg-[#fbfaf7] p-6">
+                        <div className="panel bg-[#fcfaf7] p-6">
                             <h2 className="text-xl font-semibold text-header">Đơn liên quan</h2>
                             <div className="mt-4 space-y-3">
                                 {relatedOrders.length === 0 ? (

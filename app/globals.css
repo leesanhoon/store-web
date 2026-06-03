@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #111827;
-  --color-brand-accent: #b45309;
+  --color-brand-primary: #1f2937;
+  --color-brand-accent: #9a3412;
   --color-brand-emerald: #0f766e;
-  --color-brand-forest: #0f172a;
-  --color-brand-sage: #f3f0ea;
-  --color-brand-light: #faf8f4;
-  --color-surface: #f8f6f2;
+  --color-brand-forest: #111827;
+  --color-brand-sage: #f1ece4;
+  --color-brand-light: #fcfaf7;
+  --color-surface: #f7f2eb;
   --color-header: #111111;
-  --shadow-soft: 0 18px 36px -28px rgba(17, 24, 39, 0.28);
-  --shadow-card: 0 14px 32px -26px rgba(17, 24, 39, 0.22);
+  --shadow-soft: 0 22px 44px -32px rgba(17, 24, 39, 0.28);
+  --shadow-card: 0 18px 38px -30px rgba(17, 24, 39, 0.22);
 }
 
 :root {
-  --background: #f8f6f2;
+  --background: #f7f2eb;
   --foreground: #111111;
 }
 
@@ -31,8 +31,9 @@ html {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(17, 24, 39, 0.05), transparent 30%),
-    linear-gradient(180deg, #fbfaf7 0%, #f8f6f2 100%);
+    radial-gradient(circle at top left, rgba(154, 52, 18, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(17, 24, 39, 0.06), transparent 28%),
+    linear-gradient(180deg, #fcfaf7 0%, #f7f2eb 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -52,28 +53,54 @@ body {
 }
 
 .panel {
-  @apply rounded-2xl border border-[#e6e0d8] bg-white shadow-[var(--shadow-card)];
+  @apply rounded-[1.5rem] border border-[#e5ddd1] bg-white shadow-[var(--shadow-card)];
 }
 
 .panel-strong {
-  @apply rounded-3xl border border-[#ddd6cb] bg-white shadow-[var(--shadow-soft)];
+  @apply rounded-[1.75rem] border border-[#dccfbe] bg-white shadow-[var(--shadow-soft)];
 }
 
 .surface-gradient {
   background:
-    radial-gradient(circle at top left, rgba(17, 24, 39, 0.05), transparent 28%),
-    radial-gradient(circle at top right, rgba(180, 83, 9, 0.06), transparent 24%),
-    linear-gradient(180deg, #fbfaf7 0%, #f8f6f2 100%);
+    radial-gradient(circle at top left, rgba(154, 52, 18, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(17, 24, 39, 0.05), transparent 24%),
+    linear-gradient(180deg, #fcfaf7 0%, #f7f2eb 100%);
 }
 
 .input-modern {
-  @apply w-full rounded-2xl border border-[#ddd6cb] bg-white px-4 py-3 text-sm text-header outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10;
+  @apply w-full rounded-2xl border border-[#dbcfc0] bg-white px-4 py-3 text-sm text-header outline-none transition placeholder:text-slate-400 focus:border-brand-accent focus:ring-4 focus:ring-brand-accent/10;
 }
 
 .button-primary {
-  @apply inline-flex items-center justify-center rounded-full bg-header px-5 py-3.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 hover:shadow-md disabled:cursor-wait disabled:opacity-70;
+  @apply inline-flex items-center justify-center rounded-full bg-header px-5 py-3.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/20 disabled:cursor-wait disabled:opacity-70;
 }
 
 .button-secondary {
-  @apply inline-flex items-center justify-center rounded-full border border-[#ddd6cb] bg-white px-5 py-3.5 text-sm font-semibold text-header transition hover:border-slate-900 hover:text-slate-900;
+  @apply inline-flex items-center justify-center rounded-full border border-[#dbcfc0] bg-white px-5 py-3.5 text-sm font-semibold text-header transition hover:border-slate-900 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15;
+}
+
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-header focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white;
+}
+
+@keyframes fly-to-cart {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--from-x) - 50%), calc(var(--from-y) - 50%)) scale(0.92);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--to-x) - 50%), calc(var(--to-y) - 50%)) scale(0.42);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
 }

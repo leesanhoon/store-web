@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
-import { addToCart, CartUnit } from "@/lib/cart";
+import { useRef } from "react";
+import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
+import type { CartUnit } from "@/lib/cart";
 
 type Props = {
     productId: number;
@@ -12,7 +12,6 @@ type Props = {
     unit?: CartUnit;
     quantity?: number;
     label?: string;
-    hrefAfterAdd?: string;
 };
 
 export default function AddToCartButton({
@@ -21,34 +20,30 @@ export default function AddToCartButton({
     price,
     categoryName,
     unit = "cay",
-    quantity = 1,
+    quantity = 1000,
     label = "Thêm vào giỏ",
-    hrefAfterAdd = "/cart",
 }: Props) {
-    const [isPending, startTransition] = useTransition();
-    const [added, setAdded] = useState(false);
+    const { openConfigurator } = useCartConfigurator();
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     return (
-        <div className="flex flex-col gap-3">
-            <button
-                type="button"
-                disabled={isPending}
-                onClick={() =>
-                    startTransition(() => {
-                        addToCart({ productId, name, price, quantity, unit, categoryName });
-                        setAdded(true);
-                        window.setTimeout(() => setAdded(false), 1400);
-                    })
-                }
-                className="button-primary w-full"
-            >
-                {isPending ? "Đang thêm..." : label}
-            </button>
-            {added ? (
-                <Link href={hrefAfterAdd} className="text-center text-sm font-medium text-slate-700 hover:text-slate-950">
-                    Đã thêm vào giỏ, mở giỏ hàng
-                </Link>
-            ) : null}
-        </div>
+        <button
+            ref={buttonRef}
+            type="button"
+            onClick={() =>
+                openConfigurator({
+                    productId,
+                    name,
+                    price,
+                    categoryName,
+                    unit,
+                    defaultQuantity: quantity,
+                    anchorRect: buttonRef.current?.getBoundingClientRect() ?? null,
+                })
+            }
+            className="button-primary w-full"
+        >
+            {label}
+        </button>
     );
 }
