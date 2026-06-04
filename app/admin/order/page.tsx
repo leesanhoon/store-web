@@ -1,10 +1,7 @@
-"use client";
-
-import { useState } from "react";
-import { syncOrdersFromQuotes } from "@/lib/orders";
+﻿import { getOrders } from "@/lib/api/orders";
 import AdminOrderClient from "@/components/admin/AdminOrderClient";
 
-export default function AdminOrderPage() {
-    const [orders] = useState(() => syncOrdersFromQuotes());
-    return <AdminOrderClient initialOrders={orders} />;
+export default async function AdminOrderPage() {
+  const orders = await getOrders().catch(() => []);
+  return <AdminOrderClient initialOrders={orders} />;
 }

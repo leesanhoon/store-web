@@ -20,7 +20,7 @@ export function formatCurrency(value: number) {
 }
 
 export function getProductDisplayInfo(product: Pick<ProductDto, "name" | "description" | "categoryName">): ProductDisplayInfo {
-    const text = `${product.name} ${product.description} ${product.categoryName}`.toLowerCase();
+    const text = `${product.name} ${product.description ?? ""} ${product.categoryName ?? ""}`.toLowerCase();
     const volume = text.match(VOLUME_PATTERN)?.[0].replace(/\s+/g, "") ?? "Theo mẫu";
     const isPaper = text.includes("giấy") || text.includes("paper");
     const isPet = text.includes("pet");
@@ -39,4 +39,16 @@ export function getProductDisplayInfo(product: Pick<ProductDto, "name" | "descri
 
 export function getFeaturedProducts(products: ProductDto[], limit = 4) {
     return products.slice(0, limit);
+}
+
+export function getProductVariantLabels(product: Pick<ProductDto, "name" | "description" | "categoryName">) {
+    const info = getProductDisplayInfo(product);
+
+    return [
+        { label: "Loại ly", value: info.cupType },
+        { label: "Dung tích", value: info.volume },
+        { label: "Đơn vị bán", value: info.unit },
+        { label: "Tối thiểu", value: info.minimumQuantity },
+        { label: "In ấn", value: info.printOption },
+    ];
 }

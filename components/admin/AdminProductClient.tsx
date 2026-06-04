@@ -1,8 +1,20 @@
-"use client";
+﻿"use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { createProduct, deleteProduct, getProducts, ProductDto, updateProduct } from "@/lib/api/products";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+    addProductMaterialConfiguration,
+    addProductPrintOptionConfiguration,
+    createProduct,
+    deleteProduct,
+    getProductConfigurations,
+    getProducts,
+    ProductConfigurationsDto,
+    ProductDto,
+    updateProduct,
+} from "@/lib/api/products";
 import { CategoryDto } from "@/lib/api/categories";
+import { getMaterials, type MaterialDto } from "@/lib/api/materials";
+import { getPrintTypes, type PrintTypeDto } from "@/lib/api/print-types";
 import { formatCurrency, getProductDisplayInfo } from "@/lib/products/display";
 
 type ProductForm = {
@@ -29,36 +41,64 @@ type Props = {
 export default function AdminProductClient({ initialProducts, initialCategories }: Props) {
     const [products, setProducts] = useState<ProductDto[]>(initialProducts);
     const [categories] = useState<CategoryDto[]>(initialCategories);
+    const [materials, setMaterials] = useState<MaterialDto[]>([]);
+    const [printTypes, setPrintTypes] = useState<PrintTypeDto[]>([]);
+    const [configurations, setConfigurations] = useState<ProductConfigurationsDto | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loadError, setLoadError] = useState("");
     const [submitMessage, setSubmitMessage] = useState("");
     const [submitError, setSubmitError] = useState("");
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [form, setForm] = useState<ProductForm>(initialForm);
+    const [materialId, setMaterialId] = useState("");
+    const [materialExtraPrice, setMaterialExtraPrice] = useState("0");
+    const [printTypeId, setPrintTypeId] = useState("");
+    const [printExtraPrice, setPrintExtraPrice] = useState("0");
 
     const selectedProduct = useMemo(() => products.find((product) => product.id === selectedId) ?? null, [products, selectedId]);
+
+    useEffect(() => {
+        void getMaterials().then(setMaterials).catch(() => setMaterials([]));
+        void getPrintTypes().then(setPrintTypes).catch(() => setPrintTypes([]));
+    }, []);
+
+    const loadConfigurations = async (productId: number) => {
+        try {
+            setConfigurations(await getProductConfigurations(productId));
+        } catch {
+            setConfigurations(null);
+        }
+    };
 
     const editProduct = (product: ProductDto) => {
         setSelectedId(product.id);
         setForm({
             name: product.name,
-            description: product.description,
+            description: product.description ?? "",
             price: String(product.price),
             stockQuantity: String(product.stockQuantity),
             categoryId: String(product.categoryId),
         });
         setSubmitMessage("");
         setSubmitError("");
+        void loadConfigurations(product.id);
     };
 
     const clearForm = () => {
         setSelectedId(null);
         setForm(initialForm);
+        setConfigurations(null);
         setSubmitMessage("");
         setSubmitError("");
     };
 
     const reload = async () => {
-        setProducts(await getProducts());
+        setLoadError("");
+        try {
+            setProducts(await getProducts());
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : "Không thể tải lại danh sách sản phẩm từ API.");
+        }
     };
 
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -70,8 +110,9 @@ export default function AdminProductClient({ initialProducts, initialCategories 
         const stockQuantity = Number(form.stockQuantity);
         const categoryId = Number(form.categoryId);
 
-        if (!name || !description) return;
-        if (Number.isNaN(price) || Number.isNaN(stockQuantity) || Number.isNaN(categoryId)) return;
+        if (!name || !description || Number.isNaN(price) || Number.isNaN(stockQuantity) || Number.isNaN(categoryId)) {
+            return;
+        }
 
         setIsSubmitting(true);
         setSubmitMessage("");
@@ -107,7 +148,7 @@ export default function AdminProductClient({ initialProducts, initialCategories 
 
         try {
             await deleteProduct(productId);
-            setProducts((current) => current.filter((product) => product.id !== productId));
+            await reload();
             if (selectedId === productId) {
                 clearForm();
             }
@@ -119,36 +160,59 @@ export default function AdminProductClient({ initialProducts, initialCategories 
         }
     };
 
+    const handleAddMaterial = async () => {
+        if (!selectedId) return;
+
+        await addProductMaterialConfiguration(selectedId, {
+            materialId: Number(materialId),
+            extraPrice: Number(materialExtraPrice),
+        });
+        await loadConfigurations(selectedId);
+    };
+
+    const handleAddPrint = async () => {
+        if (!selectedId) return;
+
+        await addProductPrintOptionConfiguration(selectedId, {
+            printTypeId: Number(printTypeId),
+            extraPrice: Number(printExtraPrice),
+        });
+        await loadConfigurations(selectedId);
+    };
+
     return (
         <div className="grid w-full gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
             <div className="order-2 min-w-0 rounded-3xl border border-[#e6e0d8] bg-white p-5 xl:order-1">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-semibold text-header">Quản lý sản phẩm</h1>
-                        <p className="mt-1 text-sm text-slate-600">CRUD cho sản phẩm ly nhựa, ly giấy và dịch vụ in.</p>
+                        <p className="mt-1 text-sm text-slate-600">CRUD cho sản phẩm và cấu hình product.</p>
                     </div>
                     <button type="button" onClick={clearForm} className="button-secondary">
-                        Tạo mới
+                        T?o m?i
                     </button>
                 </div>
 
-                <div className="mt-4 hidden w-full overflow-x-auto md:block">
-                    <table className="w-full min-w-[920px] text-left">
-                        <thead className="bg-[#fbfaf7] text-xs uppercase tracking-[0.2em] text-slate-500">
+                {loadError ? <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">{loadError}</p> : null}
+                {submitMessage ? <p className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{submitMessage}</p> : null}
+                {submitError ? <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{submitError}</p> : null}
+
+                <div className="mt-5 hidden overflow-hidden rounded-2xl border border-[#e6e0d8] md:block">
+                    <table className="w-full text-left">
+                        <thead className="bg-[#fcfaf7] text-xs uppercase tracking-[0.2em] text-slate-500">
                             <tr>
                                 <th className="px-3 py-3">ID</th>
                                 <th className="px-3 py-3">Tên</th>
-                                <th className="px-3 py-3">Danh mục</th>
+                                <th className="px-3 py-3">Danh m?c</th>
                                 <th className="px-3 py-3">Giá</th>
-                                <th className="px-3 py-3">Tồn kho</th>
-                                <th className="px-3 py-3">Thông tin in</th>
-                                <th className="px-3 py-3"></th>
+                                <th className="px-3 py-3">T?n kho</th>
+                                <th className="px-3 py-3">Ký hiệu</th>
+                                <th className="px-3 py-3 text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#eee7de] text-sm text-slate-700">
                             {products.map((product) => {
                                 const info = getProductDisplayInfo(product);
-
                                 return (
                                     <tr key={product.id} className={`hover:bg-[#fbfaf7] ${selectedId === product.id ? "bg-slate-50" : ""}`}>
                                         <td className="px-3 py-3">{product.id}</td>
@@ -156,17 +220,11 @@ export default function AdminProductClient({ initialProducts, initialCategories 
                                         <td className="px-3 py-3">{product.categoryName || info.cupType}</td>
                                         <td className="px-3 py-3">{formatCurrency(product.price)}</td>
                                         <td className="px-3 py-3">{product.stockQuantity}</td>
-                                        <td className="px-3 py-3 text-slate-500">
-                                            {info.volume} | {info.printOption}
-                                        </td>
+                                        <td className="px-3 py-3 text-slate-500">{info.volume} | {info.printOption}</td>
                                         <td className="px-3 py-3">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    type="button"
-                                                    className="button-secondary px-3 py-2 text-xs"
-                                                    onClick={() => editProduct(product)}
-                                                >
-                                                    Sửa
+                                            <div className="flex justify-end gap-2">
+                                                <button type="button" className="button-secondary px-3 py-2 text-xs" onClick={() => editProduct(product)}>
+                                                    S?a
                                                 </button>
                                                 <button
                                                     type="button"
@@ -197,17 +255,11 @@ export default function AdminProductClient({ initialProducts, initialCategories 
                                         <h3 className="mt-1 font-semibold text-header">{product.name}</h3>
                                         <p className="mt-1 text-sm text-slate-600">{product.categoryName || info.cupType}</p>
                                         <p className="mt-1 text-sm text-slate-600">{formatCurrency(product.price)}</p>
-                                        <p className="mt-1 text-sm text-slate-600">
-                                            {info.volume} | {info.printOption}
-                                        </p>
+                                        <p className="mt-1 text-sm text-slate-600">{info.volume} | {info.printOption}</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <button
-                                            type="button"
-                                            className="button-secondary px-3 py-2 text-xs"
-                                            onClick={() => editProduct(product)}
-                                        >
-                                            Sửa
+                                        <button type="button" className="button-secondary px-3 py-2 text-xs" onClick={() => editProduct(product)}>
+                                            S?a
                                         </button>
                                         <button
                                             type="button"
@@ -227,15 +279,13 @@ export default function AdminProductClient({ initialProducts, initialCategories 
 
             <aside className="order-1 min-w-0 rounded-3xl border border-[#e6e0d8] bg-[#fbfaf7] p-5 xl:order-2">
                 <h2 className="text-lg font-semibold text-header">{selectedId ? `Sửa sản phẩm #${selectedId}` : "Thêm sản phẩm"}</h2>
-                <p className="mt-1 text-xs text-slate-500">
-                    {selectedId ? "Cập nhật sản phẩm hiện có bằng API PUT." : "Tạo sản phẩm mới bằng API POST."}
-                </p>
+                <p className="mt-1 text-xs text-slate-500">{selectedId ? "Cập nhật sản phẩm hiện có bằng API PUT." : "Tạo sản phẩm mới bằng API POST."}</p>
 
                 <form onSubmit={onSubmit} className="mt-4 space-y-3">
                     <input
                         value={form.name}
                         onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                        placeholder="Tên sản phẩm"
+                        placeholder="Tên s?n ph?m"
                         className="input-modern"
                     />
                     <textarea
@@ -271,28 +321,69 @@ export default function AdminProductClient({ initialProducts, initialCategories 
                             </option>
                         ))}
                     </select>
-
-                    <div className="rounded-2xl bg-white p-4 text-xs font-medium text-slate-600">
-                        {selectedProduct ? (
-                            <>
-                                <p>Đang sửa: {selectedProduct.name}</p>
-                                <p className="mt-1">
-                                    {getProductDisplayInfo(selectedProduct).cupType} | {getProductDisplayInfo(selectedProduct).volume}
-                                </p>
-                            </>
-                        ) : (
-                            <p>Chưa chọn sản phẩm. Form sẽ tạo mới sản phẩm.</p>
-                        )}
-                    </div>
-
                     <button type="submit" disabled={isSubmitting} className="button-primary w-full">
-                        {isSubmitting ? "Đang lưu..." : selectedId ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
+                        {isSubmitting ? "Đang lưu..." : selectedId ? "C?p nh?t s?n ph?m" : "Thêm sản phẩm"}
                     </button>
-
-                    {submitMessage ? <p className="text-xs font-medium text-emerald-700">{submitMessage}</p> : null}
-                    {submitError ? <p className="text-xs font-medium text-rose-700">{submitError}</p> : null}
                 </form>
+
+                {selectedProduct ? (
+                    <div className="mt-6 space-y-3 rounded-2xl border border-[#e6e0d8] bg-white p-4">
+                        <h3 className="font-semibold text-header">Cấu hình sản phẩm</h3>
+                        <div className="space-y-2 text-sm text-slate-700">
+                            {configurations?.materials?.map((item) => (
+                                <div key={item.id} className="rounded-xl bg-[#fcfaf7] p-3">
+                                    Material: {item.materialName} | +{formatCurrency(item.extraPrice)}
+                                </div>
+                            ))}
+                            {configurations?.printOptions?.map((item) => (
+                                <div key={item.id} className="rounded-xl bg-[#fcfaf7] p-3">
+                                    Print: {item.printTypeName} | +{formatCurrency(item.extraPrice)}
+                                </div>
+                            ))}
+                        </div>
+
+                        <select value={materialId} onChange={(e) => setMaterialId(e.target.value)} className="input-modern">
+                            <option value="">Chọn material</option>
+                            {materials.map((material) => (
+                                <option key={material.id} value={String(material.id)}>
+                                    {material.name}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            value={materialExtraPrice}
+                            onChange={(e) => setMaterialExtraPrice(e.target.value)}
+                            type="number"
+                            className="input-modern"
+                            placeholder="Phụ thu material"
+                        />
+                        <button type="button" onClick={() => void handleAddMaterial()} className="button-secondary w-full">
+                            Thêm material cho sản phẩm
+                        </button>
+
+                        <select value={printTypeId} onChange={(e) => setPrintTypeId(e.target.value)} className="input-modern">
+                            <option value="">Chọn print type</option>
+                            {printTypes.map((printType) => (
+                                <option key={printType.id} value={String(printType.id)}>
+                                    {printType.name}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            value={printExtraPrice}
+                            onChange={(e) => setPrintExtraPrice(e.target.value)}
+                            type="number"
+                            className="input-modern"
+                            placeholder="Phụ thu print"
+                        />
+                        <button type="button" onClick={() => void handleAddPrint()} className="button-secondary w-full">
+                            Thêm print option cho sản phẩm
+                        </button>
+                    </div>
+                ) : null}
             </aside>
         </div>
     );
 }
+
+

@@ -1,106 +1,59 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #1f2937;
-  --color-brand-accent: #9a3412;
+  --color-brand-primary: #0f172a;
+  --color-brand-accent: #8b5e34;
+  --color-brand-accent-soft: #f1e5d8;
   --color-brand-emerald: #0f766e;
-  --color-brand-forest: #111827;
-  --color-brand-sage: #f1ece4;
-  --color-brand-light: #fcfaf7;
-  --color-surface: #f7f2eb;
-  --color-header: #111111;
-  --shadow-soft: 0 22px 44px -32px rgba(17, 24, 39, 0.28);
-  --shadow-card: 0 18px 38px -30px rgba(17, 24, 39, 0.22);
+  --color-brand-surface: #fbf7f2;
+  --color-brand-surface-2: #f2ece4;
+  --color-surface: #fbf7f2;
+  --color-header: #111827;
+  --shadow-soft: 0 22px 44px -32px rgba(17, 24, 39, 0.22);
+  --shadow-card: 0 18px 38px -30px rgba(17, 24, 39, 0.16);
 }
 
 :root {
-  --background: #f7f2eb;
-  --foreground: #111111;
+  --background: #fbf7f2;
+  --foreground: #111827;
+  --font-sans-stack: "Noto Sans", "Be Vietnam Pro", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
-  --font-display: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-sans-stack);
+  --font-display: var(--font-sans-stack);
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(154, 52, 18, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(17, 24, 39, 0.06), transparent 28%),
-    linear-gradient(180deg, #fcfaf7 0%, #f7f2eb 100%);
+    radial-gradient(circle at top left, rgba(139, 94, 52, 0.08), transparent 26%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.06), transparent 24%),
+    linear-gradient(180deg, #fdfaf6 0%, #fbf7f2 100%);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-.font-display {
-  font-family: var(--font-display), var(--font-sans), sans-serif;
-}
-
-.page-shell {
-  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
-}
-
-.section-gap {
-  @apply mt-8 sm:mt-10 lg:mt-12;
-}
-
-.panel {
-  @apply rounded-[1.5rem] border border-[#e5ddd1] bg-white shadow-[var(--shadow-card)];
-}
-
-.panel-strong {
-  @apply rounded-[1.75rem] border border-[#dccfbe] bg-white shadow-[var(--shadow-soft)];
-}
-
+.font-display { font-family: var(--font-display), var(--font-sans-stack); }
+.page-shell { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+.section-gap { @apply mt-10 sm:mt-12 lg:mt-14; }
+.panel { @apply rounded-[1.5rem] border border-[#e7ddd1] bg-white shadow-[var(--shadow-card)]; }
+.panel-strong { @apply rounded-[1.75rem] border border-[#e7ddd1] bg-white shadow-[var(--shadow-soft)]; }
 .surface-gradient {
   background:
-    radial-gradient(circle at top left, rgba(154, 52, 18, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(17, 24, 39, 0.05), transparent 24%),
-    linear-gradient(180deg, #fcfaf7 0%, #f7f2eb 100%);
+    radial-gradient(circle at top left, rgba(139, 94, 52, 0.08), transparent 26%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.05), transparent 24%),
+    linear-gradient(180deg, #fdfaf6 0%, #fbf7f2 100%);
 }
-
-.input-modern {
-  @apply w-full rounded-2xl border border-[#dbcfc0] bg-white px-4 py-3 text-sm text-header outline-none transition placeholder:text-slate-400 focus:border-brand-accent focus:ring-4 focus:ring-brand-accent/10;
-}
-
-.button-primary {
-  @apply inline-flex items-center justify-center rounded-full bg-header px-5 py-3.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/20 disabled:cursor-wait disabled:opacity-70;
-}
-
-.button-secondary {
-  @apply inline-flex items-center justify-center rounded-full border border-[#dbcfc0] bg-white px-5 py-3.5 text-sm font-semibold text-header transition hover:border-slate-900 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15;
-}
-
-.skip-link {
-  @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-header focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white;
-}
-
-@keyframes fly-to-cart {
-  0% {
-    opacity: 0;
-    transform: translate(calc(var(--from-x) - 50%), calc(var(--from-y) - 50%)) scale(0.92);
-  }
-
-  14% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(calc(var(--to-x) - 50%), calc(var(--to-y) - 50%)) scale(0.42);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    scroll-behavior: auto !important;
-  }
-}
+.input-modern { @apply w-full rounded-2xl border border-[#e7ddd1] bg-white px-4 py-3 text-sm text-header outline-none transition placeholder:text-slate-400 focus:border-brand-accent focus:ring-4 focus:ring-brand-accent/10; }
+.button-primary { @apply inline-flex items-center justify-center rounded-full bg-header px-5 py-3.5 text-sm font-semibold text-white shadow-soft transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/20 disabled:cursor-wait disabled:opacity-70; }
+.button-secondary { @apply inline-flex items-center justify-center rounded-full border border-[#e7ddd1] bg-white px-5 py-3.5 text-sm font-semibold text-header transition hover:border-slate-900 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15; }
+.button-ghost { @apply inline-flex items-center justify-center rounded-full px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15; }
+.skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-header focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
