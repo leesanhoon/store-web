@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { getCatalogProduct } from "@/lib/data/catalog";
 import { getProductConfigurations, type ProductConfigurationsDto } from "@/lib/api/products";
 import ProductPurchasePanel from "@/components/ProductPurchasePanel";
@@ -27,6 +28,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const info = getProductDisplayInfo(product);
   const configurations = await loadProductConfigurations(product.id);
   const variantLabels = getProductVariantLabels(product);
+  const orderedGalleryImages = [...(product.galleryImages ?? [])].sort((left, right) => left.displayOrder - right.displayOrder);
+  const primaryImageSrc = orderedGalleryImages[0]?.imageUrl ?? info.imageSrc;
   const useCases = ["Quán cà phê / trà sữa", "Sự kiện / hội chợ", "Take-away thương hiệu", "Đơn in logo số lượng lớn"];
   const gmailSubject = encodeURIComponent(`Yêu cầu báo giá - ${product.name}`);
   const gmailBody = encodeURIComponent([
@@ -45,8 +48,23 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <section className="grid gap-8 rounded-[2rem] border border-[#e7ddd1] bg-white p-6 shadow-[var(--shadow-soft)] lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
           <div className="space-y-5">
             <div className="overflow-hidden rounded-[1.75rem] border border-[#e7ddd1] bg-[linear-gradient(180deg,#f8f3ec_0%,#fdfaf6_100%)] p-6">
-              <div className="flex min-h-[340px] items-center justify-center rounded-[1.5rem] border border-white/80 bg-white/80 text-[8rem] shadow-[var(--shadow-card)]">{info.icon}</div>
+              <div className="relative flex min-h-[340px] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/80 bg-white/80 shadow-[var(--shadow-card)]">
+                {primaryImageSrc ? (
+                  <Image src={primaryImageSrc} alt={product.name} fill className="object-cover" priority quality={88} sizes="(max-width: 1024px) 100vw, 50vw" />
+                ) : (
+                  <div className="px-6 text-center text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Chua co anh san pham</div>
+                )}
+              </div>
             </div>
+            {orderedGalleryImages.length > 1 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {orderedGalleryImages.slice(1, 4).map((image) => (
+                  <div key={image.id} className="relative aspect-square overflow-hidden rounded-2xl border border-[#e7ddd1] bg-white shadow-[var(--shadow-card)]">
+                    <Image src={image.imageUrl} alt={product.name} fill className="object-cover" loading="lazy" quality={82} sizes="(max-width: 1024px) 33vw, 12vw" />
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {useCases.map((item) => <div key={item} className="rounded-2xl border border-[#e7ddd1] bg-[#fbf7f2] px-3 py-3 text-center text-xs font-semibold text-slate-700">{item}</div>)}
             </div>

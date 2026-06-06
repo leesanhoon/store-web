@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AddToCartButton from "@/components/AddToCartButton";
 import { getCatalogProducts } from "@/lib/data/catalog";
 import { formatCurrency, getFeaturedProducts, getProductDisplayInfo } from "@/lib/products/display";
@@ -46,7 +47,13 @@ export default async function ProductsPage() {
             return (
               <article key={product.id} className="panel overflow-hidden p-4">
                 <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
-                  <Link href={`/product/${product.id}`} className="flex aspect-square items-center justify-center rounded-[1.25rem] bg-[linear-gradient(180deg,#f8f3ec_0%,#fdfaf6_100%)] text-6xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15">{info.icon}</Link>
+                  <Link href={`/product/${product.id}`} className="relative overflow-hidden rounded-[1.25rem] bg-[linear-gradient(180deg,#f8f3ec_0%,#fdfaf6_100%)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-accent/15">
+                    {info.imageSrc ? (
+                      <Image src={info.imageSrc} alt={product.name} width={600} height={600} className="h-full w-full object-cover" loading="lazy" quality={82} />
+                    ) : (
+                      <span className="flex aspect-square h-full w-full items-center justify-center p-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Chua co anh</span>
+                    )}
+                  </Link>
                   <div className="space-y-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{product.categoryName || info.cupType}</p>
                     <h2 className="text-xl font-semibold text-header">{product.name}</h2>
