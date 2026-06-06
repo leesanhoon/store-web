@@ -7,27 +7,31 @@ import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider
 import "./globals.css";
 
 const notoSans = Noto_Sans({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
+    subsets: ["latin", "vietnamese"],
+    weight: ["400", "500", "600", "700", "800"],
+    display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: { default: "Cup Store", template: "%s | Cup Store" },
-  description: "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
+    title: { default: "In ly sờ to", template: "%s | In ly sờ to" },
+    description:
+        "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="vi" suppressHydrationWarning>
-      <body
-        className={`${notoSans.className} min-h-[100dvh] bg-background text-foreground antialiased`}
-        suppressHydrationWarning
-      >
-        <Script id="strip-extension-hydration-attrs" strategy="beforeInteractive">
-          {`
+    return (
+        <html lang="vi" suppressHydrationWarning>
+            <body
+                className={`${notoSans.className} min-h-[100dvh] bg-background text-foreground antialiased`}
+                suppressHydrationWarning
+            >
+                <Script
+                    id="strip-extension-hydration-attrs"
+                    strategy="beforeInteractive"
+                >
+                    {`
             (function () {
               function stripBisAttributes(root) {
                 if (!root || root.nodeType !== 1) return;
@@ -58,18 +62,21 @@ export default function RootLayout({
               });
             })();
           `}
-        </Script>
-        <CartConfiguratorProvider>
-          <a href="#main-content" className="skip-link">
-            Bỏ qua tới nội dung chính
-          </a>
-          <Header />
-          <main id="main-content" className="min-h-[calc(100dvh-80px)]">
-            {children}
-          </main>
-          <Footer />
-        </CartConfiguratorProvider>
-      </body>
-    </html>
-  );
+                </Script>
+                <CartConfiguratorProvider>
+                    <a href="#main-content" className="skip-link">
+                        Bỏ qua tới nội dung chính
+                    </a>
+                    <Header />
+                    <main
+                        id="main-content"
+                        className="min-h-[calc(100dvh-80px)]"
+                    >
+                        {children}
+                    </main>
+                    <Footer />
+                </CartConfiguratorProvider>
+            </body>
+        </html>
+    );
 }

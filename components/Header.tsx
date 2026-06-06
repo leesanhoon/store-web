@@ -44,14 +44,14 @@ export default function Header() {
                 >
                     <Image
                         src="/images/logo.png"
-                        alt="Cup Store logo"
+                        alt="In ly sờ to logo"
                         width={48}
                         height={48}
                         className="h-auto w-10 rounded-xl md:w-11"
                     />
                     <div className="min-w-0 leading-tight">
                         <span className="font-display block truncate text-lg font-semibold tracking-tight text-header md:text-[1.35rem]">
-                            Cup Store
+                            In ly sờ to
                         </span>
                         <span className="block truncate text-xs font-medium text-slate-500">
                             ly in logo theo yêu cầu
