@@ -1,31 +1,45 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const mobileMockupRoutes = new Set(["/", "/products", "/cart"]);
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (mobileMockupRoutes.has(pathname)) {
+    return null;
+  }
+
   return (
-    <footer id="footer" className="mt-16 border-t border-[#e7ddd1] bg-slate-950 text-white">
-      <div className="page-shell py-12">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_.9fr_.9fr]">
+    <footer id="footer" className="mt-16 border-t border-[#eadfce] bg-slate-950 text-white">
+      <div className="page-shell py-10">
+        <div className="grid gap-8 sm:grid-cols-2">
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-2">
-                <span className="font-display text-xl font-semibold">cup store</span>
-              </div>
-            </div>
-            <p className="max-w-xl text-sm leading-7 text-white/70">A premium showroom experience for PET, PP, and paper cups with clear ordering, printing, and Gmail quote handoff.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">
+              Cup Store
+            </p>
+            <p className="max-w-xl text-sm leading-7 text-white/72">
+              Giao diện mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.
+            </p>
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">Quick links</h4>
-            <ul className="mt-4 space-y-3 text-sm text-white/70">
-              <li><Link href="/products">Danh sách sản phẩm</Link></li>
-              <li><Link href="/cart">Giỏ hàng</Link></li>
-              <li><Link href="/track-order">Tra cứu đơn</Link></li>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">
+              Điều hướng
+            </h4>
+            <ul className="mt-4 space-y-3 text-sm text-white/72">
+              <li>
+                <Link href="/">Trang chủ</Link>
+              </li>
+              <li>
+                <Link href="/products">Danh mục sản phẩm</Link>
+              </li>
+              <li>
+                <Link href="/admin">Admin</Link>
+              </li>
             </ul>
-          </div>
-
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">Liên hệ</h4>
-            <p className="mt-4 text-sm leading-7 text-white/70">Gửi brief qua Gmail để được báo giá và xác nhận mẫu in nhanh hơn.</p>
           </div>
         </div>
       </div>

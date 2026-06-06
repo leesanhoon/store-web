@@ -1,22 +1,31 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import Script from "next/script";
-import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider";
+import "./globals.css";
 
-const notoSans = Noto_Sans({ subsets: ["latin", "vietnamese"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
+const notoSans = Noto_Sans({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: { default: "Store-web", template: "%s | Store-web" },
-  description: "Nền tảng bán hàng và in ấn cho ly PET, PP và ly giấy, với quy trình đặt hàng rõ ràng và theo dõi đơn minh bạch.",
+  title: { default: "Cup Store", template: "%s | Cup Store" },
+  description: "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${notoSans.className} flex min-h-screen flex-col bg-background text-foreground antialiased`} suppressHydrationWarning>
+      <body
+        className={`${notoSans.className} min-h-[100dvh] bg-background text-foreground antialiased`}
+        suppressHydrationWarning
+      >
         <Script id="strip-extension-hydration-attrs" strategy="beforeInteractive">
           {`
             (function () {
@@ -51,9 +60,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           `}
         </Script>
         <CartConfiguratorProvider>
-          <a href="#main-content" className="skip-link">Bỏ qua tới nội dung chính</a>
+          <a href="#main-content" className="skip-link">
+            Bỏ qua tới nội dung chính
+          </a>
           <Header />
-          <main id="main-content" className="flex-grow">{children}</main>
+          <main id="main-content" className="min-h-[calc(100dvh-80px)]">
+            {children}
+          </main>
           <Footer />
         </CartConfiguratorProvider>
       </body>

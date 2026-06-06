@@ -10,7 +10,14 @@ const sizeOptions = ["360ml", "500ml", "700ml"];
 const materialOptions = ["PET", "PP", "Giấy kraft", "Giấy trắng"];
 const printMethodOptions = ["Không in", "In 1 màu", "In 2 màu", "In full màu"];
 
-type CartProduct = { productId: number; name: string; price: number; categoryName: string; unit?: CartUnit; defaultQuantity?: number };
+type CartProduct = {
+  productId: number;
+  name: string;
+  price: number;
+  categoryName: string;
+  unit?: CartUnit;
+  defaultQuantity?: number;
+};
 type OpenPayload = CartProduct & { anchorRect?: DOMRect | null };
 type FlyToken = { id: number; name: string; fromX: number; fromY: number; toX: number; toY: number };
 
@@ -39,8 +46,10 @@ export default function CartConfiguratorProvider({ children }: { children: React
     setIsOpen(true);
   };
 
-  const updateConfiguration = <Key extends keyof CartConfiguration>(key: Key, value: CartConfiguration[Key]) =>
-    setConfiguration((current) => ({ ...current, [key]: value }));
+  const updateConfiguration = <Key extends keyof CartConfiguration>(
+    key: Key,
+    value: CartConfiguration[Key],
+  ) => setConfiguration((current) => ({ ...current, [key]: value }));
 
   const setQuantity = (value: number) => setConfiguration((current) => ({ ...current, quantity: value }));
 
@@ -83,13 +92,19 @@ export default function CartConfiguratorProvider({ children }: { children: React
       {children}
       {isOpen && activeProduct ? (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/55 px-4 py-6 sm:items-center">
-          <div className="w-full max-w-2xl rounded-[1.75rem] border border-[#dbe5ef] bg-white p-6 shadow-[var(--shadow-soft)]">
+          <div className="w-full max-w-md rounded-[1.75rem] border border-[#eadfce] bg-[#fffdf8] p-5 shadow-[var(--shadow-soft)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Cấu hình nhanh</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Cấu hình nhanh
+                </p>
                 <h2 className="mt-2 text-2xl font-semibold text-header">{activeProduct.name}</h2>
               </div>
-              <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-[#dbe5ef] px-3 py-2 text-sm font-semibold text-slate-700">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+              >
                 Đóng
               </button>
             </div>
@@ -132,7 +147,17 @@ export default function CartConfiguratorProvider({ children }: { children: React
   );
 }
 
-function OptionGroup<T extends string | number>({ label, options, value, onChange }: { label: string; options: T[]; value: T; onChange: (value: T) => void }) {
+function OptionGroup<T extends string | number>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: T[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
   return (
     <div>
       <p className="text-sm font-semibold text-header">{label}</p>
@@ -142,7 +167,11 @@ function OptionGroup<T extends string | number>({ label, options, value, onChang
             key={String(option)}
             type="button"
             onClick={() => onChange(option)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${value === option ? "border-slate-900 bg-slate-900 text-white" : "border-[#dbe5ef] bg-white text-slate-700 hover:border-slate-400"}`}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+              value === option
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-[#eadfce] bg-white text-slate-700 hover:border-slate-400"
+            }`}
           >
             {option}
           </button>
