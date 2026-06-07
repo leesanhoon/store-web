@@ -14,7 +14,7 @@ type Props = {
 export default function ProductCard({ product, compact = false }: Props) {
   const info = getProductDisplayInfo(product);
   const imageSrc = getProductImageSrc(product);
-  const detailHref = product.id > 0 ? `/product/${product.id}` : "/cart";
+  const detailHref = `/product/${product.id}`;
 
   return (
     <article className={compact ? "mobile-product-card compact" : "mobile-product-card"}>
@@ -40,6 +40,7 @@ export default function ProductCard({ product, compact = false }: Props) {
           name={product.name}
           price={product.price}
           categoryName={product.categoryName || info.cupType}
+          imageSrc={imageSrc}
           label="+ Thêm"
         />
       ) : null}

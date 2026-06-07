@@ -4,7 +4,7 @@ export const demoProducts: ProductDto[] = [
   {
     id: -101,
     name: "Ly PET 16oz",
-    description: "Ly nhựa PET trong cho cà phê, trà sữa và nước ép.",
+    description: "Ly nhựa PET trong suốt, phù hợp đựng cà phê đá, trà sữa và đồ uống lạnh mang đi.",
     price: 850,
     stockQuantity: 10000,
     categoryId: -1,
@@ -14,7 +14,7 @@ export const demoProducts: ProductDto[] = [
   {
     id: -102,
     name: "Ly PET 20oz",
-    description: "Ly PET dung tích lớn, phù hợp đồ uống đá.",
+    description: "Ly PET dung tích lớn, phù hợp đồ uống đá và menu take-away.",
     price: 950,
     stockQuantity: 10000,
     categoryId: -1,
@@ -34,7 +34,7 @@ export const demoProducts: ProductDto[] = [
   {
     id: -104,
     name: "Ly giấy 12oz",
-    description: "Ly giấy kraft có thể in logo thương hiệu.",
+    description: "Ly giấy kraft có thể in logo thương hiệu theo yêu cầu.",
     price: 1200,
     stockQuantity: 10000,
     categoryId: -3,
@@ -44,7 +44,7 @@ export const demoProducts: ProductDto[] = [
   {
     id: -105,
     name: "Nắp cầu PET",
-    description: "Nắp cầu PET trong cho ly lạnh.",
+    description: "Nắp cầu PET trong cho ly lạnh, trà sữa và cà phê đá.",
     price: 350,
     stockQuantity: 10000,
     categoryId: -4,

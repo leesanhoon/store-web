@@ -12,6 +12,7 @@ type Props = {
   unit?: CartUnit;
   quantity?: number;
   label?: string;
+  imageSrc?: string | null;
 };
 
 export default function AddToCartButton({
@@ -22,6 +23,7 @@ export default function AddToCartButton({
   unit = "cay",
   quantity = 1000,
   label = "Thêm vào giỏ",
+  imageSrc,
 }: Props) {
   const { openConfigurator } = useCartConfigurator();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -37,6 +39,7 @@ export default function AddToCartButton({
           price,
           categoryName,
           unit,
+          imageSrc,
           defaultQuantity: quantity,
           anchorRect: buttonRef.current?.getBoundingClientRect() ?? null,
         })

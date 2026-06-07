@@ -26,11 +26,11 @@ export default async function ProductsPage() {
     <MobileAppShell>
       <div className="catalog-screen">
         <header className="mobile-topbar">
-          <Link href="/" className="icon-button" aria-label="Quay lại trang chủ">
+          <Link href="/" className="icon-button ghost" aria-label="Quay lại trang chủ">
             <BackIcon className="h-6 w-6" />
           </Link>
           <h1>Danh mục sản phẩm</h1>
-          <button type="button" className="icon-button" aria-label="Tìm kiếm">
+          <button type="button" className="icon-button ghost" aria-label="Tìm kiếm">
             <SearchIcon className="h-6 w-6" />
           </button>
         </header>

@@ -1,14 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { MinusIcon, PlusIcon } from "@/components/mobile-store/icons";
 import { addToCart, CartConfiguration, CartUnit, defaultCartConfiguration } from "@/lib/cart";
+import { formatCurrency } from "@/lib/products/display";
 
-const quantityOptions = [1000, 2000, 3000, 4000, 5000];
-const cupModelOptions = ["PET", "PP", "Ly giấy", "Ly in logo"];
-const sizeOptions = ["360ml", "500ml", "700ml"];
-const materialOptions = ["PET", "PP", "Giấy kraft", "Giấy trắng"];
-const printMethodOptions = ["Không in", "In 1 màu", "In 2 màu", "In full màu"];
+const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
+const lidOptions = ["Không nắp", "Nắp bằng", "Nắp cầu"];
 
 type CartProduct = {
   productId: number;
@@ -17,6 +17,7 @@ type CartProduct = {
   categoryName: string;
   unit?: CartUnit;
   defaultQuantity?: number;
+  imageSrc?: string | null;
 };
 type OpenPayload = CartProduct & { anchorRect?: DOMRect | null };
 type FlyToken = { id: number; name: string; fromX: number; fromY: number; toX: number; toY: number };
@@ -33,6 +34,25 @@ export function useCartConfigurator() {
 type ConfigState = CartConfiguration & { quantity: number };
 const initialConfiguration: ConfigState = { ...defaultCartConfiguration, quantity: 1000 };
 
+function inferCupModel(product?: OpenPayload | null) {
+  const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
+  if (text.includes("pp")) return "PP";
+  if (text.includes("giấy") || text.includes("giay")) return "Ly giấy";
+  return "PET";
+}
+
+function inferMaterial(product?: OpenPayload | null) {
+  const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
+  if (text.includes("pp")) return "PP";
+  if (text.includes("giấy") || text.includes("giay")) return "Giấy";
+  return "PET";
+}
+
+function inferSize(product?: OpenPayload | null) {
+  const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`;
+  return text.match(/(12|16|20)\s?oz|(360|500|700)\s?ml/i)?.[0].replace(/\s+/g, "") ?? "500ml";
+}
+
 export default function CartConfiguratorProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState<OpenPayload | null>(null);
@@ -42,7 +62,15 @@ export default function CartConfiguratorProvider({ children }: { children: React
 
   const openConfigurator = (product: OpenPayload) => {
     setActiveProduct(product);
-    setConfiguration({ ...defaultCartConfiguration, quantity: product.defaultQuantity ?? 1000 });
+    setConfiguration({
+      cupModel: inferCupModel(product),
+      size: inferSize(product),
+      material: inferMaterial(product),
+      printMethod: "Không in",
+      lidOption: "Không nắp",
+      note: "",
+      quantity: product.defaultQuantity ?? 1000,
+    });
     setIsOpen(true);
   };
 
@@ -51,7 +79,8 @@ export default function CartConfiguratorProvider({ children }: { children: React
     value: CartConfiguration[Key],
   ) => setConfiguration((current) => ({ ...current, [key]: value }));
 
-  const setQuantity = (value: number) => setConfiguration((current) => ({ ...current, quantity: value }));
+  const setQuantity = (value: number) =>
+    setConfiguration((current) => ({ ...current, quantity: Math.max(100, value) }));
 
   const handleConfirm = () => {
     if (!activeProduct) return;
@@ -63,6 +92,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
       categoryName: activeProduct.categoryName,
       unit: activeProduct.unit ?? "cay",
       quantity: configuration.quantity,
+      imageSrc: activeProduct.imageSrc,
       configuration,
     });
 
@@ -91,41 +121,68 @@ export default function CartConfiguratorProvider({ children }: { children: React
     <CartConfiguratorContext.Provider value={{ openConfigurator }}>
       {children}
       {isOpen && activeProduct ? (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/55 px-4 py-6 sm:items-center">
-          <div className="w-full max-w-md rounded-[1.75rem] border border-[#eadfce] bg-[#fffdf8] p-5 shadow-[var(--shadow-soft)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Cấu hình nhanh
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-header">{activeProduct.name}</h2>
+        <div className="cart-configurator-overlay" role="dialog" aria-modal="true" aria-label="Cấu hình sản phẩm">
+          <button
+            type="button"
+            className="cart-configurator-backdrop"
+            aria-label="Đóng cấu hình"
+            onClick={() => setIsOpen(false)}
+          />
+          <section className="product-config-sheet">
+            <div className="sheet-handle" />
+            <div className="sheet-product-summary">
+              <div className="sheet-product-image">
+                {activeProduct.imageSrc ? (
+                  <Image src={activeProduct.imageSrc} alt={activeProduct.name} width={220} height={220} />
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-full border border-[#eadfce] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
-              >
-                Đóng
-              </button>
+              <div>
+                <h2>{activeProduct.name}</h2>
+                <p className="sheet-price">Từ {formatCurrency(activeProduct.price)}</p>
+                <p className="sheet-moq">MOQ 1.000</p>
+              </div>
             </div>
 
-            <div className="mt-6 grid gap-5">
-              <OptionGroup label="Số lượng" options={quantityOptions} value={configuration.quantity} onChange={setQuantity} />
-              <OptionGroup label="Mẫu ly" options={cupModelOptions} value={configuration.cupModel} onChange={(value) => updateConfiguration("cupModel", value)} />
-              <OptionGroup label="Kích thước" options={sizeOptions} value={configuration.size} onChange={(value) => updateConfiguration("size", value)} />
-              <OptionGroup label="Chất liệu" options={materialOptions} value={configuration.material} onChange={(value) => updateConfiguration("material", value)} />
-              <OptionGroup label="Cách in" options={printMethodOptions} value={configuration.printMethod} onChange={(value) => updateConfiguration("printMethod", value)} />
+            <div className="sheet-control-group">
+              <h3>Số lượng</h3>
+              <div className="quantity-stepper">
+                <button type="button" onClick={() => setQuantity(configuration.quantity - 100)} aria-label="Giảm số lượng">
+                  <MinusIcon className="h-5 w-5" />
+                </button>
+                <strong>{configuration.quantity.toLocaleString("vi-VN")}</strong>
+                <button type="button" onClick={() => setQuantity(configuration.quantity + 100)} aria-label="Tăng số lượng">
+                  <PlusIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => setIsOpen(false)} className="button-secondary flex-1">
-                Hủy
-              </button>
-              <button ref={confirmRef} type="button" onClick={handleConfirm} className="button-primary flex-1">
-                Thêm vào giỏ
-              </button>
-            </div>
-          </div>
+            <OptionGroup
+              label="Loại in"
+              options={printMethodOptions}
+              value={configuration.printMethod}
+              onChange={(value) => updateConfiguration("printMethod", value)}
+            />
+            <OptionGroup
+              label="Nắp đi kèm"
+              options={lidOptions}
+              value={configuration.lidOption ?? "Không nắp"}
+              onChange={(value) => updateConfiguration("lidOption", value)}
+            />
+
+            <label className="sheet-note">
+              <span>Ghi chú</span>
+              <textarea
+                rows={3}
+                value={configuration.note ?? ""}
+                onChange={(event) => updateConfiguration("note", event.target.value)}
+                placeholder="Ghi chú thêm..."
+              />
+            </label>
+
+            <button ref={confirmRef} type="button" onClick={handleConfirm} className="sheet-submit">
+              Thêm vào yêu cầu
+            </button>
+          </section>
         </div>
       ) : null}
       {flyToken ? (
@@ -147,7 +204,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
   );
 }
 
-function OptionGroup<T extends string | number>({
+function OptionGroup<T extends string>({
   label,
   options,
   value,
@@ -159,19 +216,15 @@ function OptionGroup<T extends string | number>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div>
-      <p className="text-sm font-semibold text-header">{label}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="sheet-control-group">
+      <h3>{label}</h3>
+      <div className="sheet-segmented-options">
         {options.map((option) => (
           <button
-            key={String(option)}
+            key={option}
             type="button"
             onClick={() => onChange(option)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-              value === option
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-[#eadfce] bg-white text-slate-700 hover:border-slate-400"
-            }`}
+            className={value === option ? "active" : undefined}
           >
             {option}
           </button>

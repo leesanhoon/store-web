@@ -5,6 +5,8 @@ export type CartConfiguration = {
   size: string;
   material: string;
   printMethod: string;
+  lidOption?: string;
+  note?: string;
 };
 
 export type CartItem = {
@@ -15,6 +17,7 @@ export type CartItem = {
   unit: CartUnit;
   categoryName: string;
   configuration: CartConfiguration;
+  imageSrc?: string | null;
 };
 
 export type QuoteRequest = {
@@ -38,6 +41,8 @@ export const defaultCartConfiguration: CartConfiguration = {
   size: "500ml",
   material: "PET",
   printMethod: "Không in",
+  lidOption: "Không nắp",
+  note: "",
 };
 
 function readJson<T>(key: string, fallback: T): T {
@@ -86,7 +91,16 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "conf
     ...(item.configuration ?? {}),
   };
 
-  return [item.productId, item.unit, config.cupModel, config.size, config.material, config.printMethod].join("|");
+  return [
+    item.productId,
+    item.unit,
+    config.cupModel,
+    config.size,
+    config.material,
+    config.printMethod,
+    config.lidOption,
+    config.note,
+  ].join("|");
 }
 
 export function getCartItems() {

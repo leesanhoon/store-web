@@ -144,3 +144,86 @@ export function CloudIcon(props: IconProps) {
     </SvgIcon>
   );
 }
+
+export function HeartIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M19.2 5.4a5 5 0 0 0-7.2.2 5 5 0 0 0-7.2-.2 5.2 5.2 0 0 0 0 7.3L12 20l7.2-7.3a5.2 5.2 0 0 0 0-7.3Z" />
+    </SvgIcon>
+  );
+}
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <circle cx="18" cy="5" r="2.2" />
+      <circle cx="6" cy="12" r="2.2" />
+      <circle cx="18" cy="19" r="2.2" />
+      <path d="m8 11 8-4.8" />
+      <path d="m8 13 8 4.8" />
+    </SvgIcon>
+  );
+}
+
+export function DropletIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M12 3.8s5.2 5.7 5.2 10a5.2 5.2 0 0 1-10.4 0c0-4.3 5.2-10 5.2-10Z" />
+    </SvgIcon>
+  );
+}
+
+export function LayersIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="m12 4 8 4-8 4-8-4z" />
+      <path d="m4 12 8 4 8-4" />
+      <path d="m4 16 8 4 8-4" />
+    </SvgIcon>
+  );
+}
+
+export function BoxIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="m12 3.8 7 3.8v8.8l-7 3.8-7-3.8V7.6z" />
+      <path d="m5.4 7.8 6.6 3.6 6.6-3.6" />
+      <path d="M12 11.4V20" />
+    </SvgIcon>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="m4.5 16.8-.6 3.3 3.3-.6L18.4 8.3l-2.7-2.7z" />
+      <path d="m14.8 6.5 2.7 2.7" />
+      <path d="M4 20h16" />
+    </SvgIcon>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="m9 5 7 7-7 7" />
+    </SvgIcon>
+  );
+}
+
+export function MinusIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M6 12h12" />
+    </SvgIcon>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <SvgIcon {...props}>
+      <path d="M12 6v12" />
+      <path d="M6 12h12" />
+    </SvgIcon>
+  );
+}

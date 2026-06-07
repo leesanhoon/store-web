@@ -6,8 +6,9 @@ export type ProductDisplayInfo = {
   unit: string;
   minimumQuantity: string;
   printOption: string;
+  material: string;
   icon: string;
-  imageSrc: string | null;
+  imageSrc: string;
 };
 
 const VOLUME_PATTERN = /(12|16|20)\s?oz|(360|500|700)\s?ml/i;
@@ -38,7 +39,9 @@ function getProductText(product: Pick<ProductDto, "name" | "description" | "cate
   return normalizeText(`${product.name} ${product.description ?? ""} ${product.categoryName ?? ""}`);
 }
 
-export function getProductImageSrc(product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">) {
+export function getProductImageSrc(
+  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">,
+) {
   if (product.avatarImageUrl) {
     return product.avatarImageUrl;
   }
@@ -61,21 +64,25 @@ export function formatCurrencyWithSymbol(value: number) {
   }).format(value);
 }
 
-export function getProductDisplayInfo(product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">): ProductDisplayInfo {
+export function getProductDisplayInfo(
+  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">,
+): ProductDisplayInfo {
   const text = getProductText(product);
-  const volume = text.match(VOLUME_PATTERN)?.[0].replace(/\s+/g, "") ?? "Theo mẫu";
+  const volume = text.match(VOLUME_PATTERN)?.[0].replace(/\s+/g, "") ?? "500ml";
   const isPaper = text.includes("giay") || text.includes("paper");
   const isPet = text.includes("pet");
   const isPp = text.includes("pp");
   const isLid = text.includes("nap");
   const isPrint = text.includes(" in ") || text.includes("logo");
+  const material = isPaper ? "Giấy" : isPp ? "PP" : isPet ? "PET" : isLid ? "PET" : "PET/PP";
 
   return {
     cupType: isLid ? "Nắp ly" : isPaper ? "Ly giấy" : isPet ? "Ly nhựa PET" : isPp ? "Ly nhựa PP" : "Ly nhựa/giấy",
     volume,
     unit: text.includes("thung") ? "Thùng" : "Cây hoặc thùng",
-    minimumQuantity: isPrint ? "Từ 1.000 ly" : "Từ 1 cây",
+    minimumQuantity: isPrint ? "Từ 1.000 ly" : "Từ 1.000",
     printOption: isPrint ? "Có in logo" : "Có/không in",
+    material,
     icon: isLid ? "N" : isPaper ? "G" : isPrint ? "I" : "C",
     imageSrc: getProductImageSrc(product),
   };
@@ -85,7 +92,9 @@ export function getFeaturedProducts(products: ProductDto[], limit = 4) {
   return products.slice(0, limit);
 }
 
-export function getProductVariantLabels(product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">) {
+export function getProductVariantLabels(
+  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">,
+) {
   const info = getProductDisplayInfo(product);
 
   return [
