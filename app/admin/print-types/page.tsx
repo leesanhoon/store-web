@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { createPrintType, getPrintTypes, type PrintTypeDto } from "@/lib/api/print-types";
+import { AdminCard, AdminField, AdminPrimaryButton, AdminSectionHeader, AdminTextArea, AdminStatusBadge } from "@/components/admin/admin-ui";
 
 export default function AdminPrintTypesPage() {
   const [items, setItems] = useState<PrintTypeDto[]>([]);
@@ -17,7 +18,7 @@ export default function AdminPrintTypesPage() {
       try {
         setItems(await getPrintTypes());
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Không thể tải print types.");
+        setError(err instanceof Error ? err.message : "Kh�ng th? t?i print types.");
       } finally {
         setLoading(false);
       }
@@ -29,51 +30,54 @@ export default function AdminPrintTypesPage() {
     const nextName = name.trim();
     const nextColorCount = Number(colorCount);
     if (!nextName || Number.isNaN(nextColorCount)) return;
+    setError("");
+    setMessage("");
     try {
       await createPrintType({ name: nextName, colorCount: nextColorCount, description: description.trim() });
       setItems(await getPrintTypes());
       setName("");
       setColorCount("1");
       setDescription("");
-      setMessage("Đã tạo print type.");
+      setMessage("�� t?o print type.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể tạo print type.");
+      setError(err instanceof Error ? err.message : "Kh�ng th? t?o print type.");
     }
   };
 
   return (
-    <div className="space-y-6">
-      <section className="panel-strong p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Print types</p>
-        <h1 className="mt-2 text-3xl font-semibold text-header">Quản lý print types</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">Thiết lập các kiểu in để dùng thống nhất trong admin và trên sản phẩm.</p>
+    <div className="space-y-4 text-[#0b1b3b]">
+      <AdminSectionHeader title="Qu?n l� print types" subtitle="Thi?t l?p c�c ki?u in d? d�ng th?ng nh?t trong admin v� tr�n s?n ph?m." />
+
+      {loading ? <AdminCard className="p-4 text-sm text-slate-500">�ang t?i...</AdminCard> : null}
+      {error ? <AdminCard className="border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</AdminCard> : null}
+      {message ? <AdminCard className="border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700">{message}</AdminCard> : null}
+
+      <section className="space-y-3">
+        {items.length === 0 ? <AdminCard className="p-4 text-sm font-medium text-slate-600">Chua c� print type n�o.</AdminCard> : null}
+        {items.map((item) => (
+          <AdminCard key={item.id} className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Print type #{item.id}</p>
+                <h2 className="mt-1 text-lg font-semibold text-[#0b1b3b]">{item.name}</h2>
+              </div>
+              <AdminStatusBadge tone="info">{item.colorCount} m�u</AdminStatusBadge>
+            </div>
+            <p className="mt-2 text-sm text-slate-600">{item.description || "Chua c� m� t?"}</p>
+          </AdminCard>
+        ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="panel p-5 sm:p-6">
-          {loading ? <p className="text-sm text-slate-500">Đang tải...</p> : null}
-          {error ? <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{error}</p> : null}
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <article key={item.id} className="rounded-[1.5rem] border border-[#dbe5ef] bg-white p-4 shadow-[var(--shadow-card)]">
-                <h2 className="font-semibold text-header">{item.name}</h2>
-                <p className="mt-1 text-sm text-slate-600">{item.colorCount} màu</p>
-                <p className="mt-1 text-sm text-slate-600">{item.description || "Chưa có mô tả"}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <aside className="panel p-5 sm:p-6">
-          <form onSubmit={onSubmit} className="space-y-3">
-            <input className="input-modern" placeholder="Tên print type" value={name} onChange={(e) => setName(e.target.value)} />
-            <input className="input-modern" type="number" placeholder="Số màu" value={colorCount} onChange={(e) => setColorCount(e.target.value)} />
-            <textarea className="input-modern" rows={4} placeholder="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} />
-            <button className="button-primary w-full" type="submit">Thêm print type</button>
-            {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-          </form>
-        </aside>
-      </section>
+      <AdminCard className="p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Th�m ki?u in</p>
+        <h2 className="mt-2 text-xl font-semibold text-[#0b1b3b]">T?o print type m?i</h2>
+        <form onSubmit={onSubmit} className="mt-4 space-y-3">
+          <label className="block text-[11px] font-extrabold">T�n print type <AdminField placeholder="T�n print type" value={name} onChange={(e) => setName(e.target.value)} className="mt-1" /></label>
+          <label className="block text-[11px] font-extrabold">S? m�u <AdminField type="number" placeholder="S? m�u" value={colorCount} onChange={(e) => setColorCount(e.target.value)} className="mt-1" /></label>
+          <label className="block text-[11px] font-extrabold">M� t? <AdminTextArea rows={3} placeholder="M� t?" value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" /></label>
+          <AdminPrimaryButton className="w-full" type="submit">Th�m print type</AdminPrimaryButton>
+        </form>
+      </AdminCard>
     </div>
   );
 }

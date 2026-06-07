@@ -1,226 +1,82 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createCategory, deleteCategory, updateCategory } from "@/lib/api/categories";
-import { getCatalogCategories } from "@/lib/data/catalog";
+import Image from "next/image";
+import { useState } from "react";
+import { AdminCard, AdminField, AdminPrimaryButton, AdminSectionHeader, AdminSelect, AdminTextArea } from "@/components/admin/admin-ui";
 
-type Category = {
-  id: number;
-  name: string;
-  description: string;
-  slug: string;
-  productCount: number;
-  status: "active" | "hidden";
-};
+type Banner = { id: number; title: string; description: string; image: string; visible: boolean };
 
-function toSlug(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
+const initialBanners: Banner[] = [
+  { id: 1, title: "Ly nh?a & in logo", description: "Khuy?n m�i in logo", image: "/images/mockups/logo-cup-500-urban.png", visible: true },
+  { id: 2, title: "Ly gi?y th�n thi?n", description: "Th�n thi?n m�i tru?ng", image: "/images/mockups/paper-360-linen.png", visible: true },
+  { id: 3, title: "N?p & ph? ki?n", description: "�a d?ng l?a ch?n", image: "/images/ly/coc-nhua-dung-tau-hu-7.png", visible: true },
+];
 
 export default function AdminCategoryPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [newName, setNewName] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
-  const [submitError, setSubmitError] = useState("");
-  const [actionMessage, setActionMessage] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingName, setEditingName] = useState("");
-  const [editingDescription, setEditingDescription] = useState("");
-  const [processingId, setProcessingId] = useState<number | null>(null);
+  const [banners, setBanners] = useState(initialBanners);
+  const [title, setTitle] = useState("Ly nh?a & in logo");
+  const [description, setDescription] = useState("Khuy?n m�i in logo cho qu�n coffee");
+  const [cta, setCta] = useState("Xem s?n ph?m");
+  const [status, setStatus] = useState("Hi?n th?");
+  const [order, setOrder] = useState(1);
+  const [message, setMessage] = useState("");
 
-  const activeCount = useMemo(() => categories.filter((item) => item.status === "active").length, [categories]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      setIsLoadingCategories(true);
-      setLoadError("");
-      try {
-        const data = await getCatalogCategories();
-        const mappedCategories: Category[] = data.map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          slug: toSlug(item.name),
-          productCount: Array.isArray(item.products) ? item.products.length : 0,
-          status: "active",
-        }));
-        setCategories(mappedCategories);
-      } catch (error) {
-        setLoadError(error instanceof Error ? error.message : "Không thể tải danh sách danh mục.");
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  const onAdd = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const name = newName.trim();
-    const description = newDescription.trim();
-    if (!name || !description) return;
-
-    setIsSubmitting(true);
-    setSubmitMessage("");
-    setSubmitError("");
-
-    try {
-      await createCategory({ name, description });
-      setCategories((prev) => [
-        { id: Date.now(), name, description, slug: toSlug(name), productCount: 0, status: "active" },
-        ...prev,
-      ]);
-      setNewName("");
-      setNewDescription("");
-      setSubmitMessage("Đã tạo danh mục.");
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Có lỗi xảy ra.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const onDelete = async (id: number) => {
-    setProcessingId(id);
-    setActionMessage("");
-    setActionError("");
-    try {
-      await deleteCategory(id);
-      setCategories((prev) => prev.filter((item) => item.id !== id));
-      if (editingId === id) {
-        setEditingId(null);
-        setEditingName("");
-        setEditingDescription("");
-      }
-      setActionMessage("Đã xóa danh mục.");
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Không thể xóa danh mục.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const onEditStart = (category: Category) => {
-    setEditingId(category.id);
-    setEditingName(category.name);
-    setEditingDescription(category.description);
-  };
-
-  const onEditSave = async (id: number) => {
-    const name = editingName.trim();
-    const description = editingDescription.trim();
-    if (!name || !description) return;
-
-    setProcessingId(id);
-    setActionMessage("");
-    setActionError("");
-    try {
-      await updateCategory(id, { name, description });
-      setCategories((prev) => prev.map((item) => (item.id === id ? { ...item, name, description, slug: toSlug(name) } : item)));
-      setEditingId(null);
-      setEditingName("");
-      setEditingDescription("");
-      setActionMessage("Đã cập nhật danh mục.");
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Không thể cập nhật danh mục.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
+  const toggleVisible = (id: number) => setBanners((current) => current.map((banner) => banner.id === id ? { ...banner, visible: !banner.visible } : banner));
+  const save = () => { setMessage("�� luu thay d?i banner."); window.setTimeout(() => setMessage(""), 1800); };
 
   return (
-    <div className="space-y-6">
-      <section className="panel-strong p-6 sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Danh mục</p>
-            <h1 className="mt-2 text-3xl font-semibold text-header">Quản lý danh mục sản phẩm</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">Giữ danh mục ngắn gọn, rõ nghĩa để catalog và điều hướng public thống nhất hơn.</p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm text-slate-700">
-            <span className="rounded-full border border-[#dbe5ef] bg-white px-4 py-2 font-semibold">Tổng: {categories.length}</span>
-            <span className="rounded-full border border-[#dbe5ef] bg-white px-4 py-2 font-semibold">Đang hoạt động: {activeCount}</span>
-          </div>
-        </div>
-      </section>
+    <div className="space-y-3 text-[#0b1b3b]">
+      <AdminSectionHeader title="Banner trang ch?" action={<AdminPrimaryButton type="button">+ Th�m banner</AdminPrimaryButton>} />
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="panel p-5 sm:p-6">
-          {isLoadingCategories ? <p className="text-sm text-slate-500">Đang tải...</p> : null}
-          {loadError ? <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">{loadError}</p> : null}
-          {actionMessage ? <p className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{actionMessage}</p> : null}
-          {actionError ? <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{actionError}</p> : null}
-
-          <div className="mt-5 hidden overflow-hidden rounded-2xl border border-[#dbe5ef] md:block">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Tên</th>
-                  <th className="px-4 py-3">Slug</th>
-                  <th className="px-4 py-3">Sản phẩm</th>
-                  <th className="px-4 py-3 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e5ebf2] text-sm text-slate-700">
-                {categories.map((category) => (
-                  <tr key={category.id} className="hover:bg-slate-50/70">
-                    <td className="px-4 py-4">
-                      <p className="font-semibold text-header">{category.name}</p>
-                      <p className="mt-1 text-sm text-slate-600">{category.description}</p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-500">{category.slug}</td>
-                    <td className="px-4 py-4">{category.productCount}</td>
-                    <td className="px-4 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button type="button" className="button-secondary px-3 py-2 text-xs" onClick={() => onEditStart(category)}>Sửa</button>
-                        <button type="button" className="button-ghost px-3 py-2 text-xs text-rose-700" onClick={() => void onDelete(category.id)} disabled={processingId === category.id}>Xóa</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <aside className="panel p-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-header">Thêm danh mục</h2>
-          <form onSubmit={onAdd} className="mt-4 space-y-3">
-            <input className="input-modern" placeholder="Tên danh mục" value={newName} onChange={(event) => setNewName(event.target.value)} />
-            <textarea className="input-modern" rows={4} placeholder="Mô tả" value={newDescription} onChange={(event) => setNewDescription(event.target.value)} />
-            <button className="button-primary w-full" type="submit" disabled={isSubmitting}>Tạo mới</button>
-          </form>
-          {submitMessage ? <p className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">{submitMessage}</p> : null}
-          {submitError ? <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700">{submitError}</p> : null}
-
-          {editingId ? (
-            <div className="mt-6 rounded-[1.5rem] border border-[#dbe5ef] bg-[#f8fafc] p-4">
-              <h3 className="text-lg font-semibold text-header">Chỉnh sửa</h3>
-              <div className="mt-3 grid gap-3">
-                <input className="input-modern" value={editingName} onChange={(event) => setEditingName(event.target.value)} />
-                <textarea className="input-modern" rows={4} value={editingDescription} onChange={(event) => setEditingDescription(event.target.value)} />
-                <div className="flex gap-3">
-                  <button type="button" className="button-primary flex-1" onClick={() => void onEditSave(editingId)} disabled={processingId === editingId}>Lưu</button>
-                  <button type="button" className="button-secondary flex-1" onClick={() => setEditingId(null)}>Hủy</button>
-                </div>
+      <section className="space-y-2.5">
+        {banners.map((banner) => (
+          <AdminCard key={banner.id} className="grid grid-cols-[18px_1fr_auto_24px] items-center gap-2.5 p-2.5">
+            <span className="text-lg font-bold text-slate-400">=</span>
+            <div className="grid grid-cols-[64px_1fr] gap-2.5">
+              <Image src={banner.image} alt={banner.title} width={90} height={60} className="h-12 w-16 rounded-xl object-cover" />
+              <div className="min-w-0">
+                <h2 className="truncate text-[12px] font-extrabold">{banner.title}</h2>
+                <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">{banner.description}</p>
               </div>
             </div>
-          ) : null}
-        </aside>
+            <label className="grid justify-items-center gap-1 text-[9px] font-bold text-slate-500">
+              Hi?n th?
+              <input type="checkbox" checked={banner.visible} onChange={() => toggleVisible(banner.id)} className="peer sr-only" />
+              <span className="h-5 w-9 rounded-full bg-slate-200 p-0.5 transition peer-checked:bg-emerald-600"><span className={`block h-4 w-4 rounded-full bg-white transition ${banner.visible ? "translate-x-4" : ""}`} /></span>
+            </label>
+            <button type="button" className="text-lg font-extrabold text-slate-500" aria-label="T�y ch?n banner">?</button>
+          </AdminCard>
+        ))}
       </section>
+
+      {message ? <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">{message}</AdminCard> : null}
+
+      <AdminCard className="p-3.5">
+        <div className="space-y-3">
+          <label className="block text-[11px] font-extrabold">Ti�u d? <span className="text-rose-500">*</span><AdminField value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1" /></label>
+          <label className="block text-[11px] font-extrabold">M� t? <span className="text-rose-500">*</span><AdminTextArea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1" /></label>
+          <div className="grid grid-cols-2 gap-2.5"><label className="block text-[11px] font-extrabold">CTA<AdminSelect value={cta} onChange={(event) => setCta(event.target.value)} className="mt-1"><option>Xem s?n ph?m</option><option>Y�u c?u b�o gi�</option><option>Li�n h? ngay</option></AdminSelect></label><label className="block text-[11px] font-extrabold">Tr?ng th�i<AdminSelect value={status} onChange={(event) => setStatus(event.target.value)} className="mt-1"><option>Hi?n th?</option><option>?n</option></AdminSelect></label></div>
+          <div className="grid grid-cols-[1fr_110px] gap-2.5">
+            <div>
+              <p className="text-[11px] font-extrabold">H�nh ?nh <span className="text-rose-500">*</span></p>
+              <div className="mt-1 flex items-center gap-2 rounded-2xl border border-[#eadfce] bg-white p-2">
+                <Image src="/images/mockups/logo-cup-500-urban.png" alt="Banner preview" width={72} height={54} className="h-12 w-16 rounded-xl object-cover" />
+                <button type="button" className="rounded-xl border border-[#eadfce] px-3 py-2 text-[10px] font-extrabold text-slate-600">? �?i ?nh</button>
+              </div>
+              <p className="mt-1 text-[9px] font-semibold text-slate-500">JPG, PNG (t?i da 2MB)</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-extrabold">Th? t?</p>
+              <div className="mt-1 grid grid-cols-3 overflow-hidden rounded-xl border border-[#eadfce] bg-white text-center">
+                <button type="button" onClick={() => setOrder((value) => Math.max(1, value - 1))} className="py-2 text-sm font-bold text-slate-500">-</button>
+                <span className="border-x border-[#eadfce] py-2 text-[12px] font-extrabold">{order}</span>
+                <button type="button" onClick={() => setOrder((value) => value + 1)} className="py-2 text-sm font-bold text-slate-500">+</button>
+              </div>
+            </div>
+          </div>
+          <AdminPrimaryButton type="button" onClick={save} className="w-full">Luu thay d?i</AdminPrimaryButton>
+        </div>
+      </AdminCard>
     </div>
   );
 }

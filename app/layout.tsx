@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import Script from "next/script";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider";
 import "./globals.css";
 
@@ -13,7 +11,7 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-    title: { default: "In ly sờ to", template: "%s | In ly sờ to" },
+    title: { default: "In ly store", template: "%s | In ly store" },
     description:
         "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
 };
@@ -27,10 +25,7 @@ export default function RootLayout({
                 className={`${notoSans.className} min-h-[100dvh] bg-background text-foreground antialiased`}
                 suppressHydrationWarning
             >
-                <Script
-                    id="strip-extension-hydration-attrs"
-                    strategy="beforeInteractive"
-                >
+                <Script id="strip-extension-hydration-attrs" strategy="beforeInteractive">
                     {`
             (function () {
               function stripBisAttributes(root) {
@@ -63,19 +58,7 @@ export default function RootLayout({
             })();
           `}
                 </Script>
-                <CartConfiguratorProvider>
-                    <a href="#main-content" className="skip-link">
-                        Bỏ qua tới nội dung chính
-                    </a>
-                    <Header />
-                    <main
-                        id="main-content"
-                        className="min-h-[calc(100dvh-80px)]"
-                    >
-                        {children}
-                    </main>
-                    <Footer />
-                </CartConfiguratorProvider>
+                <CartConfiguratorProvider>{children}</CartConfiguratorProvider>
             </body>
         </html>
     );
