@@ -1,14 +1,40 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { findOrderByIdAndPhone, findOrdersByPhone } from "@/lib/orders";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import OrderTimeline from "@/components/OrderTimeline";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { findOrderByIdAndPhone, findOrdersByPhone } from "@/lib/orders";
 
 export default function TrackOrderPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const allowed = useSyncExternalStore(
+    () => () => undefined,
+    isAdminAuthenticated,
+    () => false,
+  );
   const [orderId, setOrderId] = useState("");
   const [phone, setPhone] = useState("");
   const [searchToken, setSearchToken] = useState(0);
+
+  useEffect(() => {
+    if (allowed) return;
+    router.replace(`/account?next=${encodeURIComponent(pathname)}`);
+  }, [allowed, pathname, router]);
+
+  if (!allowed) {
+    return (
+      <div className="surface-gradient">
+        <div className="page-shell py-6 sm:py-8">
+          <section className="panel p-6 text-center text-sm font-semibold text-slate-600">
+            Vui lòng đăng nhập để xem đơn hàng.
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   const order = findOrderByIdAndPhone(orderId, phone);
   const relatedOrders = findOrdersByPhone(phone);
@@ -19,12 +45,16 @@ export default function TrackOrderPage() {
         <section className="panel-strong p-6 sm:p-8 md:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Tra cứu đơn</p>
           <h1 className="mt-3 text-4xl font-semibold text-header">Theo dõi trạng thái đơn in</h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">Nhập mã đơn và số điện thoại để xem tiến độ thiết kế, duyệt mẫu, sản xuất và giao hàng.</p>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
+            Nhập mã đơn và số điện thoại để xem tiến độ thiết kế, duyệt mẫu, sản xuất và giao hàng.
+          </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-            <input value={orderId} onChange={(event) => setOrderId(event.target.value)} placeholder="Mã đơn (ví dụ RQ-123456)" className="input-modern" />
+            <input value={orderId} onChange={(event) => setOrderId(event.target.value)} placeholder="Mã đơn ví dụ RQ-123456" className="input-modern" />
             <input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Số điện thoại" className="input-modern" />
-            <button type="button" onClick={() => setSearchToken((value) => value + 1)} className="button-primary">Tra cứu</button>
+            <button type="button" onClick={() => setSearchToken((value) => value + 1)} className="button-primary">
+              Tra cứu
+            </button>
           </div>
         </section>
 
@@ -42,8 +72,14 @@ export default function TrackOrderPage() {
                 </div>
                 <div className="mt-6"><OrderTimeline status={order.status} /></div>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-[#e5ebf2] bg-[#f8fafc] p-4"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Ghi chú</p><p className="mt-2 text-sm leading-7 text-slate-600">{order.note || "Không có ghi chú."}</p></div>
-                  <div className="rounded-2xl border border-[#e5ebf2] bg-[#f8fafc] p-4"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Cập nhật gần nhất</p><p className="mt-2 text-sm leading-7 text-slate-600">Các trạng thái được sắp theo tiến trình thiết kế → duyệt mẫu → sản xuất → giao hàng.</p></div>
+                  <div className="rounded-2xl border border-[#e5ebf2] bg-[#f8fafc] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Ghi chú</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">{order.note || "Không có ghi chú."}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[#e5ebf2] bg-[#f8fafc] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Cập nhật gần nhất</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">Các trạng thái được sắp theo tiến trình thiết kế, duyệt mẫu, sản xuất và giao hàng.</p>
+                  </div>
                 </div>
               </article>
             ) : (
@@ -71,7 +107,9 @@ export default function TrackOrderPage() {
 
             <div className="panel p-6">
               <h2 className="text-xl font-semibold text-header">Gợi ý</h2>
-              <p className="mt-3 text-sm font-medium leading-7 text-slate-600">Nếu chưa có mã đơn, hãy kiểm tra email/Zalo hoặc liên hệ bộ phận tư vấn để nhận mã và mốc cập nhật mới nhất.</p>
+              <p className="mt-3 text-sm font-medium leading-7 text-slate-600">
+                Nếu chưa có mã đơn, hãy kiểm tra email, Zalo hoặc liên hệ bộ phận tư vấn để nhận mã và mốc cập nhật mới nhất.
+              </p>
             </div>
           </aside>
         </section>

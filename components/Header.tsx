@@ -88,33 +88,6 @@ export default function Header() {
                         );
                     })}
                 </nav>
-
-                <div className="flex items-center gap-3">
-                    <Link
-                        href="/products"
-                        className="button-secondary hidden sm:inline-flex"
-                    >
-                        Xem sản phẩm
-                    </Link>
-                    <Link
-                        href="/cart"
-                        className="inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-900"
-                    >
-                        <span>Giỏ</span>
-                        <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs text-white">
-                            {cartQuantity}
-                        </span>
-                    </Link>
-                    <button
-                        type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#eadfce] bg-white text-slate-700 transition hover:border-slate-900 md:hidden"
-                        onClick={() => setIsMenuOpen((current) => !current)}
-                        aria-label="Toggle menu"
-                        aria-expanded={isMenuOpen}
-                    >
-                        <span className="text-xl leading-none">☰</span>
-                    </button>
-                </div>
             </div>
 
             {isMenuOpen ? (

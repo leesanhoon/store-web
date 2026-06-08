@@ -33,35 +33,6 @@ export type ProductUploadPayload = CreateProductPayload & {
     galleryImages?: File[];
 };
 
-export type ProductMaterialDto = {
-    id: number;
-    materialId: number;
-    materialName: string;
-    extraPrice: number;
-};
-
-export type ProductPrintOptionDto = {
-    id: number;
-    printTypeId: number;
-    printTypeName: string;
-    extraPrice: number;
-};
-
-export type ProductConfigurationsDto = {
-    materials: ProductMaterialDto[];
-    printOptions: ProductPrintOptionDto[];
-};
-
-export type AddMaterialConfigurationPayload = {
-    materialId: number;
-    extraPrice: number;
-};
-
-export type AddPrintOptionConfigurationPayload = {
-    printTypeId: number;
-    extraPrice: number;
-};
-
 type CollectionResponse<T> = T[] | { value?: T[]; Value?: T[] };
 
 const SUPPORTED_PRODUCT_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
@@ -130,18 +101,6 @@ export async function getProducts() {
 export async function getProduct(id: number) {
     const product = await apiClient.get<ProductDto>(`/api/v1/Products/${id}`);
     return normalizeProduct(product);
-}
-
-export async function getProductConfigurations(productId: number) {
-    return apiClient.get<ProductConfigurationsDto>(`/api/v1/products/${productId}/configurations`);
-}
-
-export async function addProductMaterialConfiguration(productId: number, payload: AddMaterialConfigurationPayload) {
-    return apiClient.post<unknown, AddMaterialConfigurationPayload>(`/api/v1/products/${productId}/configurations/materials`, payload);
-}
-
-export async function addProductPrintOptionConfiguration(productId: number, payload: AddPrintOptionConfigurationPayload) {
-    return apiClient.post<unknown, AddPrintOptionConfigurationPayload>(`/api/v1/products/${productId}/configurations/print-options`, payload);
 }
 
 export async function createProduct(payload: ProductUploadPayload) {

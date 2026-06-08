@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarIcon,
   DocumentIcon,
   GridIcon,
   HomeIcon,
@@ -18,7 +17,6 @@ const navItems = [
   { href: "/", label: "Trang chủ", icon: HomeIcon },
   { href: "/products", label: "Danh mục", icon: GridIcon },
   { href: "/cart", label: "Yêu cầu", icon: DocumentIcon },
-  { href: "/track-order", label: "Đơn hàng", icon: CalendarIcon },
   { href: "/account", label: "Tài khoản", icon: UserIcon },
 ];
 

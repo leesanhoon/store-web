@@ -184,7 +184,7 @@ body {
   inset: auto 0 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   padding: 10px 14px 16px;
   border-top: 1px solid rgba(234, 223, 206, 0.78);
@@ -805,7 +805,7 @@ body {
 
 .detail-spec-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -1355,7 +1355,7 @@ body {
   border-radius: 13px;
   padding: 7px 2px 7px;
   color: #667085;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1;
 }
