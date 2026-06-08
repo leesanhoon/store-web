@@ -232,7 +232,7 @@ function QuoteListScreen({
 }) {
   const visibleQuotes = quotes.filter((quote) => activeFilter === "Tất cả" || (statuses[quote.id] ?? quote.quoteStatus) === activeFilter);
   return (
-    <div className="space-y-3 text-[#0b1b3b]">
+    <div className="admin-with-fixed-cta space-y-3 text-[#0b1b3b]">
       <h1 className="text-[22px] font-extrabold">Yêu cầu báo giá</h1>
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {quoteFilters.map((filter) => <AdminChip key={filter} active={activeFilter === filter} onClick={() => onChangeFilter(filter)}>{filter}</AdminChip>)}
@@ -263,7 +263,7 @@ function QuoteListScreen({
         })}
         {visibleQuotes.length === 0 ? <AdminCard className="p-4 text-center text-[12px] font-bold text-slate-500">Không có yêu cầu trong trạng thái này.</AdminCard> : null}
       </section>
-      <div className="sticky bottom-2 z-10 pt-1">
+      <div className="admin-fixed-cta">
         <AdminPrimaryButton type="button" className="w-full"><SendIcon />Gửi báo giá</AdminPrimaryButton>
       </div>
     </div>
@@ -354,7 +354,7 @@ function OrderDetailScreen({
   const detailItems = detail?.items ?? [];
   const activeStep = Math.max(orderFlow.indexOf(order.orderStatus), 0);
   return (
-    <div className="space-y-2.5 text-[#0b1b3b]">
+    <div className="admin-with-fixed-cta space-y-2.5 text-[#0b1b3b]">
       <div className="flex items-center gap-3">
         <button type="button" onClick={onBack} className="grid h-8 w-8 place-items-center rounded-full text-[#0b1b3b]" aria-label="Quay lại danh sách đơn hàng"><ArrowLeftIcon /></button>
         <h1 className="text-[18px] font-extrabold">Chi tiết đơn hàng</h1>
@@ -425,7 +425,7 @@ function OrderDetailScreen({
         <h2 className="text-[13px] font-extrabold">Lịch sử hoạt động</h2>
         <div className="mt-2 space-y-2">{history.map((item) => <p key={item} className="rounded-xl bg-[#fffaf2] px-3 py-2 text-[11px] font-semibold text-slate-600">{item}</p>)}</div>
       </AdminCard>
-      <div className="sticky bottom-2 z-10 pt-1">
+      <div className="admin-fixed-cta">
         <AdminPrimaryButton type="button" onClick={onAdvance} className="w-full">Cập nhật tiến độ</AdminPrimaryButton>
       </div>
     </div>
