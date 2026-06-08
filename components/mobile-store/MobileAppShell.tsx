@@ -6,7 +6,7 @@ import {
   DocumentIcon,
   GridIcon,
   HomeIcon,
-  UserIcon,
+  SearchIcon,
 } from "@/components/mobile-store/icons";
 
 type Props = {
@@ -17,7 +17,7 @@ const navItems = [
   { href: "/", label: "Trang chủ", icon: HomeIcon },
   { href: "/products", label: "Danh mục", icon: GridIcon },
   { href: "/cart", label: "Yêu cầu", icon: DocumentIcon },
-  { href: "/account", label: "Tài khoản", icon: UserIcon },
+  { href: "/track-order", label: "Tra cứu đơn", icon: SearchIcon },
 ];
 
 function isActive(pathname: string, href: string) {

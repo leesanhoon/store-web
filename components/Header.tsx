@@ -17,6 +17,8 @@ function isMobileMockupRoute(pathname: string) {
         pathname === "/" ||
         pathname === "/products" ||
         pathname === "/cart" ||
+        pathname === "/account" ||
+        pathname === "/track-order" ||
         pathname.startsWith("/product/")
     );
 }

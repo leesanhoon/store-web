@@ -1,6 +1,6 @@
 import Link from "next/link";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
-import ProductCard from "@/components/mobile-store/ProductCard";
+import ProductCatalog from "@/components/mobile-store/ProductCatalog";
 import { BackIcon, SearchIcon } from "@/components/mobile-store/icons";
 import { getCatalogProducts } from "@/lib/data/catalog";
 import { demoProducts } from "@/lib/data/demo-products";
@@ -15,8 +15,6 @@ async function loadProducts() {
     };
   }
 }
-
-const filters = ["Tất cả", "PET", "PP", "Ly giấy", "Nắp ly"];
 
 export default async function ProductsPage() {
   const { products, error } = await loadProducts();
@@ -35,20 +33,8 @@ export default async function ProductsPage() {
           </button>
         </header>
 
-        <div className="filter-pills" aria-label="Bộ lọc sản phẩm">
-          {filters.map((filter, index) => (
-            <button key={filter} type="button" className={index === 0 ? "active" : undefined}>
-              {filter}
-            </button>
-          ))}
-        </div>
-
         {error ? <p className="mobile-alert">{error}</p> : null}
-        <section className="catalog-grid" aria-label="Danh sách sản phẩm">
-          {displayProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </section>
+        <ProductCatalog products={displayProducts} />
       </div>
     </MobileAppShell>
   );
