@@ -26,11 +26,11 @@ async function loadProducts() {
 }
 
 const categories = [
-    { label: "Ly PET", icon: CupIcon },
-    { label: "Ly PP", icon: CupIcon },
-    { label: "Ly giấy", icon: CupIcon },
-    { label: "Nắp ly", icon: LidIcon },
-    { label: "In logo", icon: BadgeLogoIcon },
+    { label: "Ly PET", icon: CupIcon, filter: "PET" },
+    { label: "Ly PP", icon: CupIcon, filter: "PP" },
+    { label: "Ly giấy", icon: CupIcon, filter: "Ly giấy" },
+    { label: "Nắp ly", icon: LidIcon, filter: "Nắp ly" },
+    { label: "In logo", icon: BadgeLogoIcon, filter: "Tất cả" },
 ];
 
 export default async function Home() {
@@ -94,7 +94,7 @@ export default async function Home() {
                         return (
                             <Link
                                 key={category.label}
-                                href="/products"
+                                href={`/products?category=${encodeURIComponent(category.filter)}`}
                                 className="category-tile"
                             >
                                 <Icon className="h-7 w-7" />

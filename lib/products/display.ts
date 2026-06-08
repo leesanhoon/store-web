@@ -28,7 +28,7 @@ export function formatCurrency(value: number) {
   }).format(value)}đ`;
 }
 
-function normalizeText(value: string) {
+export function normalizeText(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

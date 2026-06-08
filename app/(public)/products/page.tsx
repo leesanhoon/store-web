@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import ProductCatalog from "@/components/mobile-store/ProductCatalog";
-import { BackIcon, SearchIcon } from "@/components/mobile-store/icons";
 import { getCatalogProducts } from "@/lib/data/catalog";
 import { demoProducts } from "@/lib/data/demo-products";
 
@@ -23,18 +23,12 @@ export default async function ProductsPage() {
   return (
     <MobileAppShell>
       <div className="catalog-screen">
-        <header className="mobile-topbar">
-          <Link href="/" className="icon-button ghost" aria-label="Quay lại trang chủ">
-            <BackIcon className="h-6 w-6" />
-          </Link>
-          <h1>Danh mục sản phẩm</h1>
-          <button type="button" className="icon-button ghost" aria-label="Tìm kiếm">
-            <SearchIcon className="h-6 w-6" />
-          </button>
-        </header>
+        <MobileTopBar title="Danh mục sản phẩm" backHref="/" backLabel="Quay lại trang chủ" />
 
         {error ? <p className="mobile-alert">{error}</p> : null}
-        <ProductCatalog products={displayProducts} />
+        <Suspense fallback={<section className="catalog-grid" aria-hidden="true" />}>
+          <ProductCatalog products={displayProducts} />
+        </Suspense>
       </div>
     </MobileAppShell>
   );

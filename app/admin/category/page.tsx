@@ -28,7 +28,7 @@ export default function AdminCategoryPage() {
   };
 
   return (
-    <div className="space-y-3 text-[#0b1b3b]">
+    <div className="space-y-3 text-[#101a36]">
       <AdminSectionHeader title="Cấu hình hiển thị" subtitle="Quản lý banner và nội dung hiển thị trên trang chủ." />
 
       <div className="flex items-center justify-between">

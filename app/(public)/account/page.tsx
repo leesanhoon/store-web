@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import {
     ADMIN_PASSWORD,
     ADMIN_USERNAME,
@@ -71,8 +72,9 @@ function AccountContent() {
 
     return (
         <MobileAppShell>
-            <main className="min-h-full bg-[#fffaf2] px-4 pb-24 pt-5 text-[#0b1b3b]">
-                <section className="rounded-[24px] border border-[#eadfce] bg-white p-4 shadow-[0_22px_45px_-36px_rgba(15,23,42,0.45)]">
+            <div className="catalog-screen text-[#101a36]">
+                <MobileTopBar title="Đăng nhập" backHref="/" backLabel="Quay lại trang chủ" />
+                <section className="rounded-[18px] border border-[#eadfce] bg-white p-4 shadow-[0_22px_45px_-36px_rgba(15,23,42,0.45)]">
                     <div className="flex items-center gap-3">
                         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
                             <LockIcon />
@@ -99,7 +101,7 @@ function AccountContent() {
                                 }
                                 autoComplete="username"
                                 placeholder="Nhập tài khoản"
-                                className="h-12 w-full rounded-[15px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#0b1b3b] focus:ring-2 focus:ring-[#0b1b3b]/10"
+                                className="h-12 w-full rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10"
                             />
                         </label>
 
@@ -115,7 +117,7 @@ function AccountContent() {
                                 type="password"
                                 autoComplete="current-password"
                                 placeholder="Nhập mật khẩu"
-                                className="h-12 w-full rounded-[15px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#0b1b3b] focus:ring-2 focus:ring-[#0b1b3b]/10"
+                                className="h-12 w-full rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10"
                             />
                         </label>
 
@@ -127,13 +129,13 @@ function AccountContent() {
 
                         <button
                             type="submit"
-                            className="mt-2 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-[#061b3d] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(6,27,61,0.9)] transition active:scale-[0.98]"
+                            className="mt-2 inline-flex min-h-12 w-full items-center justify-center rounded-[16px] bg-[#101a36] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(16,26,54,0.9)] transition hover:bg-[#1c2a4d] active:scale-[0.98]"
                         >
                             Đăng nhập
                         </button>
                     </form>
                 </section>
-            </main>
+            </div>
         </MobileAppShell>
     );
 }
@@ -143,7 +145,7 @@ export default function AccountPage() {
         <Suspense
             fallback={
                 <MobileAppShell>
-                    <main className="grid min-h-full place-items-center bg-[#fffaf2] px-4 pb-24 pt-5 text-center text-[#0b1b3b]">
+                    <main className="grid min-h-full place-items-center bg-[#fffaf2] px-4 pb-24 pt-5 text-center text-[#101a36]">
                         <div>
                             <p className="text-[15px] font-extrabold">
                                 Đang mở đăng nhập

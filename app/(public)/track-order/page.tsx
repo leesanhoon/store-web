@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import OrderTimeline from "@/components/OrderTimeline";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
-import { BackIcon, SearchIcon } from "@/components/mobile-store/icons";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
+import { SearchIcon } from "@/components/mobile-store/icons";
 import { findOrderByIdAndPhone, findOrdersByPhone } from "@/lib/orders";
 
 export default function TrackOrderPage() {
@@ -25,13 +26,7 @@ export default function TrackOrderPage() {
   return (
     <MobileAppShell>
       <div className="quote-screen">
-        <header className="mobile-topbar">
-          <Link href="/" className="icon-button ghost" aria-label="Quay lại trang chủ">
-            <BackIcon className="h-6 w-6" />
-          </Link>
-          <h1>Tra cứu đơn hàng</h1>
-          <span className="icon-button ghost" aria-hidden="true" />
-        </header>
+        <MobileTopBar title="Tra cứu đơn hàng" backHref="/" backLabel="Quay lại trang chủ" />
 
         <section className="quote-form-card">
           <p className="text-sm leading-6 text-slate-600">

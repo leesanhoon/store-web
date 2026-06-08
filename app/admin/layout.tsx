@@ -94,7 +94,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
               <LogoutIcon />
             </button>
 
-            <Link href="/admin" className="flex items-center justify-center gap-2 text-[#0b1b3b]">
+            <Link href="/admin" className="flex items-center justify-center gap-2 text-[#101a36]">
               <Image src="/images/logo.png" alt="In ly sờ to" width={42} height={26} className="h-6 w-auto object-contain" priority />
               <span className="text-[19px] font-extrabold leading-none tracking-tight">In ly sờ to</span>
             </Link>
@@ -104,7 +104,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                 <path d="M15 17a3 3 0 0 1-6 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 <path d="M18 16H6c1-1.5 1.5-2.2 1.5-5a4.5 4.5 0 1 1 9 0c0 2.8.5 3.5 1.5 5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
               </svg>
-              <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#0b1b3b] px-1 text-[10px] font-extrabold text-white">
+              <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#101a36] px-1 text-[10px] font-extrabold text-white">
                 3
               </span>
             </button>

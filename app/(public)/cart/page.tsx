@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import QuoteActionButton from "@/components/QuoteActionButton";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import {
-    BackIcon,
     CloudIcon,
     DocumentIcon,
     UploadIcon,
@@ -104,17 +104,11 @@ export default function CartPage() {
     return (
         <MobileAppShell>
             <div className="quote-screen">
-                <header className="mobile-topbar">
-                    <Link
-                        href="/products"
-                        className="icon-button ghost"
-                        aria-label="Quay lại danh mục"
-                    >
-                        <BackIcon className="h-6 w-6" />
-                    </Link>
-                    <h1>Yêu cầu đặt hàng</h1>
-                    <span className="icon-button ghost" aria-hidden="true" />
-                </header>
+                <MobileTopBar
+                    title="Yêu cầu đặt hàng"
+                    backHref="/products"
+                    backLabel="Quay lại danh mục"
+                />
 
                 <section
                     className="quote-stepper"

@@ -1,5 +1,6 @@
-import Link from "next/link";
 import GalleryImageCard from "@/components/GalleryImageCard";
+import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import { getGalleryItems } from "@/lib/data/gallery";
 
 async function loadGalleryItems() {
@@ -11,7 +12,7 @@ async function loadGalleryItems() {
             error:
                 error instanceof Error
                     ? error.message
-                    : "Khong the tai gallery tu API.",
+                    : "Không thể tải gallery từ API.",
         };
     }
 }
@@ -20,62 +21,33 @@ export default async function GalleryPage() {
     const { galleryItems, error } = await loadGalleryItems();
 
     return (
-        <div className="surface-gradient">
-            <div className="page-shell py-6 sm:py-8">
-                <section className="panel-strong p-6 sm:p-8 md:p-10">
-                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
-                        Gallery ly
-                    </p>
-                    <h1 className="mt-3 text-4xl font-semibold text-header md:text-5xl">
-                        Anh that ly nhua va ly giay
-                    </h1>
-                    <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 md:text-lg">
-                        Bo anh that cua san pham, dung de chot mau, chat lieu va
-                        kieu in truoc khi san xuat.
-                    </p>
-                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                        <Link href="/products" className="button-primary">
-                            Xem san pham
-                        </Link>
-                        <Link href="/cart" className="button-secondary">
-                            Gui yeu cau bao gia
-                        </Link>
-                    </div>
-                </section>
+        <MobileAppShell>
+            <div className="catalog-screen">
+                <MobileTopBar title="Gallery ảnh thật" backHref="/" backLabel="Quay lại trang chủ" />
 
-                {error ? (
-                    <div className="section-gap panel p-5 text-sm font-medium text-rose-700">
-                        {error}
-                    </div>
-                ) : null}
+                <p className="text-sm leading-6 text-slate-600">
+                    Bộ ảnh thật của sản phẩm, dùng để chốt mẫu, chất liệu và kiểu in
+                    trước khi sản xuất.
+                </p>
+
+                {error ? <p className="mobile-alert">{error}</p> : null}
                 {!error && galleryItems.length === 0 ? (
-                    <div className="section-gap panel p-8 text-center text-sm font-medium text-slate-600">
-                        Chua co anh gallery trong he thong.
-                    </div>
+                    <p className="mobile-alert">
+                        Chưa có ảnh gallery trong hệ thống.
+                    </p>
                 ) : null}
 
-                <section className="section-gap grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <section className="catalog-grid" aria-label="Danh sách ảnh gallery">
                     {galleryItems.map((item) => (
-                        <article key={item.id} className="space-y-4">
-                            <GalleryImageCard
-                                src={item.imageUrl}
-                                label={item.label}
-                            />
-                            <div className="panel p-5">
-                                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                                    {item.title}
-                                </p>
-                                <h2 className="mt-2 text-xl font-semibold text-header">
-                                    {item.label}
-                                </h2>
-                                <p className="mt-3 text-sm leading-6 text-slate-600">
-                                    {item.description}
-                                </p>
-                            </div>
+                        <article key={item.id} className="space-y-2">
+                            <GalleryImageCard src={item.imageUrl} label={item.label} />
+                            <p className="px-1 text-xs leading-5 text-slate-500">
+                                {item.description}
+                            </p>
                         </article>
                     ))}
                 </section>
             </div>
-        </div>
+        </MobileAppShell>
     );
 }

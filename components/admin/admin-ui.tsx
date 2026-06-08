@@ -17,7 +17,7 @@ export function AdminSectionHeader({
     return (
         <section className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-                <h1 className="text-[21px] font-extrabold leading-tight tracking-tight text-[#0b1b3b]">
+                <h1 className="text-[21px] font-extrabold leading-tight tracking-tight text-[#101a36]">
                     {title}
                 </h1>
                 {subtitle ? (
@@ -46,7 +46,7 @@ export function AdminChip({
             onClick={onClick}
             className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition active:scale-[0.98] ${
                 active
-                    ? "bg-[#061b3d] text-white shadow-[0_14px_30px_-20px_rgba(6,27,61,0.9)]"
+                    ? "bg-[#101a36] text-white shadow-[0_14px_30px_-20px_rgba(6,27,61,0.9)]"
                     : "border border-[#eadfce] bg-white text-[#1f2f46] shadow-sm"
             }`}
         >
@@ -63,7 +63,7 @@ export function AdminPrimaryButton({
     return (
         <button
             {...props}
-            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#061b3d] px-4 py-2.5 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(6,27,61,0.9)] transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#101a36] px-4 py-2.5 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(6,27,61,0.9)] transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
         >
             {children}
         </button>
@@ -87,7 +87,7 @@ export function AdminCard({
 }
 
 const fieldClass =
-    "w-full rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-[14px] font-semibold text-[#0b1b3b] outline-none placeholder:text-slate-400 focus:border-[#0b1b3b] focus:ring-2 focus:ring-[#0b1b3b]/10";
+    "w-full rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-[14px] font-semibold text-[#101a36] outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10";
 
 export function AdminField({
     className = "",
@@ -191,7 +191,7 @@ export function AdminSelect({
             name={name}
         >
             <Select.Trigger
-                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-left text-[14px] font-semibold text-[#0b1b3b] outline-none transition data-[placeholder]:text-slate-400 focus:border-[#0b1b3b] focus:ring-2 focus:ring-[#0b1b3b]/10 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-left text-[14px] font-semibold text-[#101a36] outline-none transition data-[placeholder]:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
             >
                 <Select.Value placeholder={placeholder} />
                 <Select.Icon className="grid h-5 w-5 shrink-0 place-items-center text-[#4c596c]">
@@ -203,7 +203,7 @@ export function AdminSelect({
                     position="popper"
                     sideOffset={6}
                     collisionPadding={12}
-                    className="z-[100] max-h-[260px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[16px] border border-[#eadfce] bg-white p-1.5 text-[#0b1b3b] shadow-[0_20px_45px_-24px_rgba(15,23,42,0.45)]"
+                    className="z-[100] max-h-[260px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[16px] border border-[#eadfce] bg-white p-1.5 text-[#101a36] shadow-[0_20px_45px_-24px_rgba(15,23,42,0.45)]"
                 >
                     <Select.Viewport className="max-h-[248px] overflow-y-auto">
                         {options.map((option) => (
@@ -211,7 +211,7 @@ export function AdminSelect({
                                 key={option.value}
                                 value={option.value}
                                 disabled={option.disabled}
-                                className="relative flex min-h-10 cursor-default select-none items-center rounded-[11px] py-2 pl-9 pr-3 text-[14px] font-semibold outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-[#061b3d] data-[highlighted]:text-white"
+                                className="relative flex min-h-10 cursor-default select-none items-center rounded-[11px] py-2 pl-9 pr-3 text-[14px] font-semibold outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-[#101a36] data-[highlighted]:text-white"
                             >
                                 <Select.ItemIndicator className="absolute left-3 grid h-4 w-4 place-items-center text-emerald-600 data-[highlighted]:text-white">
                                     <CheckIcon />

@@ -22,8 +22,8 @@ function Donut({ total }: { total: number }) {
     <div className="relative grid h-[116px] w-[116px] shrink-0 place-items-center rounded-full bg-[conic-gradient(#08964f_0_25%,#3b8eed_25%_60%,#f2b431_60%_78%,#f15b2f_78%_100%)]">
       <div className="grid h-[70px] w-[70px] place-items-center rounded-full bg-white text-center shadow-[0_1px_0_rgba(0,0,0,0.04)]">
         <div>
-          <p className="text-[13px] font-semibold leading-tight text-[#0b1b3b]">Tổng</p>
-          <p className="text-[13px] font-extrabold leading-tight text-[#0b1b3b]">{total} đơn</p>
+          <p className="text-[13px] font-semibold leading-tight text-[#101a36]">Tổng</p>
+          <p className="text-[13px] font-extrabold leading-tight text-[#101a36]">{total} đơn</p>
         </div>
       </div>
     </div>
@@ -63,7 +63,7 @@ export default async function AdminPage() {
   ];
 
   return (
-    <div className="space-y-3 text-[#0b1b3b]">
+    <div className="space-y-3 text-[#101a36]">
       <AdminSectionHeader
         title="Dashboard tổng quan"
         action={
@@ -81,7 +81,7 @@ export default async function AdminPage() {
             <p className="text-[13px] font-bold leading-tight text-[#1f2f46]">{item.label}</p>
             <div className="mt-3 flex items-end justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-[28px] font-extrabold leading-none tracking-tight text-[#0b1b3b]">{item.value}</p>
+                <p className="truncate text-[28px] font-extrabold leading-none tracking-tight text-[#101a36]">{item.value}</p>
                 <p className="mt-1.5 text-[11px] font-extrabold leading-tight text-emerald-600">{item.delta}</p>
               </div>
               {item.suffix ? <span className="pb-1 text-[12px] font-bold text-[#1f2f46]">{item.suffix}</span> : null}
@@ -91,13 +91,13 @@ export default async function AdminPage() {
       </section>
 
       <section className="grid grid-cols-3 gap-2.5">
-        <Link href="/admin/product?mode=create" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#0b1b3b] shadow-sm">
+        <Link href="/admin/product?mode=create" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
           Thêm sản phẩm
         </Link>
-        <Link href="/admin/order?view=quotes" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#0b1b3b] shadow-sm">
+        <Link href="/admin/order?view=quotes" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
           Báo giá mới
         </Link>
-        <Link href="/admin/order" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#0b1b3b] shadow-sm">
+        <Link href="/admin/order" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
           Đơn cần xử lý
         </Link>
       </section>
@@ -113,7 +113,7 @@ export default async function AdminPage() {
                 <div key={item.name} className="grid grid-cols-[10px_1fr_auto] items-center gap-2 text-[12px]">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
                   <span className="truncate font-semibold text-[#3d4860]">{item.name}</span>
-                  <span className="font-bold text-[#0b1b3b]">{item.value}{orders.length ? ` (${percent}%)` : ""}</span>
+                  <span className="font-bold text-[#101a36]">{item.value}{orders.length ? ` (${percent}%)` : ""}</span>
                 </div>
               );
             })}
@@ -129,10 +129,10 @@ export default async function AdminPage() {
         <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white">
           {fallbackQuotes.map((quote) => (
             <article key={quote.code} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0">
-              <p className="min-w-0 text-[13px] font-extrabold text-[#0b1b3b]">{quote.code}</p>
+              <p className="min-w-0 text-[13px] font-extrabold text-[#101a36]">{quote.code}</p>
               <p className="whitespace-nowrap text-right text-[12px] font-semibold text-[#1f2f46]">{quote.qty}</p>
               <div className="min-w-0">
-                <p className="truncate text-[12px] font-bold text-[#0b1b3b]">{quote.customer}</p>
+                <p className="truncate text-[12px] font-bold text-[#101a36]">{quote.customer}</p>
                 <p className="mt-0.5 text-[12px] font-semibold text-[#3d4860]">{quote.product}</p>
               </div>
               <div className="justify-self-end"><AdminStatusBadge tone="warning">{quote.status}</AdminStatusBadge></div>
@@ -142,7 +142,7 @@ export default async function AdminPage() {
       </AdminCard>
 
       <AdminCard className="border-amber-200 bg-amber-50 p-3.5">
-        <h2 className="text-[14px] font-extrabold text-[#0b1b3b]">Cảnh báo vận hành</h2>
+        <h2 className="text-[14px] font-extrabold text-[#101a36]">Cảnh báo vận hành</h2>
         <ul className="mt-2 space-y-1.5 text-[12px] font-semibold text-[#3d4860]">
           <li>{quoteCount} báo giá cần kiểm tra trong hôm nay.</li>
           <li>{productionOrders} đơn đang trong quy trình sản xuất.</li>

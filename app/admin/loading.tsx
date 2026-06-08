@@ -4,7 +4,7 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 
 export default function AdminLoading() {
   return (
-    <div className="space-y-3 text-[#0b1b3b]" aria-busy="true">
+    <div className="space-y-3 text-[#101a36]" aria-busy="true">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 space-y-2">
           <SkeletonBlock className="h-6 w-40 rounded-full" />

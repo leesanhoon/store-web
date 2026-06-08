@@ -3,16 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/AddToCartButton";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import MobileTopBar from "@/components/mobile-store/MobileTopBar";
+import ProductActions from "@/components/mobile-store/ProductActions";
 import ProductCard from "@/components/mobile-store/ProductCard";
+import ProductOptionButtons from "@/components/mobile-store/ProductOptionButtons";
 import {
-  BackIcon,
   BoxIcon,
-  ChevronRightIcon,
   DropletIcon,
-  HeartIcon,
   LayersIcon,
   PencilIcon,
-  ShareIcon,
 } from "@/components/mobile-store/icons";
 import type { ProductDto } from "@/lib/api/products";
 import { getCatalogProduct, getCatalogProducts } from "@/lib/data/catalog";
@@ -59,20 +58,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   return (
     <MobileAppShell>
       <div className="product-detail-screen">
-        <header className="mobile-topbar detail-topbar">
-          <Link href="/products" className="icon-button ghost" aria-label="Quay lại danh mục">
-            <BackIcon className="h-6 w-6" />
-          </Link>
-          <h1>Chi tiết sản phẩm</h1>
-          <div className="detail-actions">
-            <button type="button" aria-label="Yêu thích">
-              <HeartIcon className="h-6 w-6" />
-            </button>
-            <button type="button" aria-label="Chia sẻ">
-              <ShareIcon className="h-6 w-6" />
-            </button>
-          </div>
-        </header>
+        <MobileTopBar
+          title="Chi tiết sản phẩm"
+          backHref="/products"
+          backLabel="Quay lại danh mục"
+          rightSlot={<ProductActions productId={product.id} name={product.name} />}
+        />
 
         <section className="detail-hero-image">
           <Image
@@ -107,22 +98,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
         <section className="detail-section">
           <h3>Tùy chọn</h3>
-          <div className="detail-option-panel">
-            <button type="button">
-              <span>
-                <strong>Loại in</strong>
-                <em>Không in, In 1 màu, In nhiều màu</em>
-              </span>
-              <ChevronRightIcon className="h-5 w-5" />
-            </button>
-            <button type="button">
-              <span>
-                <strong>Nắp đi kèm</strong>
-                <em>Không nắp, Nắp bằng, Nắp cầu</em>
-              </span>
-              <ChevronRightIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <ProductOptionButtons
+            productId={product.id}
+            name={product.name}
+            price={product.price}
+            categoryName={product.categoryName || info.cupType}
+            imageSrc={imageSrc}
+          />
         </section>
 
         <section className="detail-section">
