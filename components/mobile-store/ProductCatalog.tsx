@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import { SearchIcon } from "@/components/mobile-store/icons";
@@ -26,10 +26,23 @@ function resolveInitialFilter(category: string | null) {
 
 export default function ProductCatalog({ products }: Props) {
   const searchParams = useSearchParams();
-  const [activeFilter, setActiveFilter] = useState(() =>
-    resolveInitialFilter(searchParams.get("category")),
-  );
+  const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const activeFilter = resolveInitialFilter(searchParams.get("category"));
+
+  const updateFilter = (nextFilter: string) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    if (nextFilter === filters[0].label) {
+      nextParams.delete("category");
+    } else {
+      nextParams.set("category", nextFilter);
+    }
+
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  };
 
   const filteredProducts = useMemo(() => {
     const filter = filters.find((item) => item.label === activeFilter) ?? filters[0];
@@ -61,7 +74,7 @@ export default function ProductCatalog({ products }: Props) {
             key={filter.label}
             type="button"
             className={filter.label === activeFilter ? "active" : undefined}
-            onClick={() => setActiveFilter(filter.label)}
+            onClick={() => updateFilter(filter.label)}
           >
             {filter.label}
           </button>
