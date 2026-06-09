@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useCallback } from "react";
 import { getOrder, updateOrderStatus, deleteOrder, OrderDetailDto, OrderSummaryDto, ORDER_STATUS_TRANSITIONS, type OrderStatus as ApiOrderStatus } from "@/lib/api/orders";
+import { getProductImageSrc } from "@/lib/products/display";
 import {
     AdminCard,
     AdminChip,
@@ -91,79 +92,6 @@ const checklistItems = [
     "Giao hàng",
 ];
 
-const fallbackOrders: OrderSummaryDto[] = [
-    {
-        id: 250520001,
-        customerName: "The Daily Café",
-        totalAmount: 1430000,
-        status: "Đang sản xuất",
-        createdAtUtc: "2025-05-20T09:15:00.000Z",
-    },
-    {
-        id: 250520002,
-        customerName: "Green Coffee",
-        totalAmount: 980000,
-        status: "Chờ xác nhận",
-        createdAtUtc: "2025-05-20T10:30:00.000Z",
-    },
-    {
-        id: 250520003,
-        customerName: "Kaffa House",
-        totalAmount: 1350000,
-        status: "Đã báo giá",
-        createdAtUtc: "2025-05-19T14:20:00.000Z",
-    },
-    {
-        id: 250520004,
-        customerName: "Nếp Của PET",
-        totalAmount: 520000,
-        status: "Đã từ chối",
-        createdAtUtc: "2025-05-19T16:45:00.000Z",
-    },
-];
-
-const productProfiles = [
-    {
-        productName: "Ly PET 16oz",
-        productImage: "/images/mockups/pet-500-amber.png",
-        quantity: 500,
-        printMethod: "In 1 màu",
-        printColor: "Đen",
-        printPosition: "Thân ly",
-        note: "Giao trước 05/06",
-        logoFile: "dailycafe_logo.png",
-    },
-    {
-        productName: "Ly giấy 12oz",
-        productImage: "/images/mockups/paper-360-linen.png",
-        quantity: 1000,
-        printMethod: "In 1 màu",
-        printColor: "Đen",
-        printPosition: "Thân ly",
-        note: "Giao trước 05/06",
-        logoFile: "greencoffee_logo.png",
-    },
-    {
-        productName: "Ly PET 20oz",
-        productImage: "/images/mockups/pet-700-velvet.png",
-        quantity: 800,
-        printMethod: "In 2 màu",
-        printColor: "Đen, Xanh lá",
-        printPosition: "Thân ly",
-        note: "Ưu tiên mẫu logo mới",
-        logoFile: "kaffa_logo.png",
-    },
-    {
-        productName: "Nắp cầu PET",
-        productImage: "/images/ly/coc-nhua-dung-tau-hu-7.png",
-        quantity: 1500,
-        printMethod: "Không in",
-        printColor: "-",
-        printPosition: "-",
-        note: "Theo size ly 16oz",
-        logoFile: "no_logo.png",
-    },
-];
 
 function normalizeSearch(value: string) {
     return value
@@ -242,31 +170,38 @@ function buildViewModel(
     order: OrderSummaryDto,
     index: number,
 ): AdminOrderViewModel {
-    const profile = productProfiles[index % productProfiles.length];
-    const designFee = profile.printMethod === "Không in" ? 0 : 50000;
+    const designFee = 50000;
     const shippingFee = 30000;
-    const totalAmount = order.totalAmount > 0 ? order.totalAmount : 1350000;
+    const totalAmount = order.totalAmount > 0 ? order.totalAmount : 0;
     const subtotal = Math.max(totalAmount - designFee - shippingFee, 0);
+    const quantity = subtotal > 0 ? Math.max(Math.round(subtotal / 1000), 1) : 0;
+    const productName = `Don hang #${formatSequence(order.id)}`;
+    const productImage = getProductImageSrc({
+        name: productName,
+        description: "",
+        categoryName: "",
+        avatarImageUrl: null,
+    });
     return {
         id: order.id,
         quoteCode: `RQ250520-${formatSequence(order.id)}`,
         orderCode: `DH250520-${formatSequence(order.id)}`,
-        customerName: order.customerName || "Kaffa House",
-        customerPhone: "0901 234 567",
-        customerEmail: "contact@kaffahouse.vn",
-        customerAddress: "123 Nguyễn Thị Minh Khai, Q.3, TP. HCM",
-        productName: profile.productName,
-        productImage: profile.productImage,
-        quantity: profile.quantity,
-        quantityLabel: `${new Intl.NumberFormat("vi-VN").format(profile.quantity)} sp`,
+        customerName: order.customerName || "",
+        customerPhone: "",
+        customerEmail: "",
+        customerAddress: "",
+        productName,
+        productImage,
+        quantity,
+        quantityLabel: quantity > 0 ? `${new Intl.NumberFormat("vi-VN").format(quantity)} sp` : "Chua co so luong",
         createdLabel: formatDateTime(order.createdAtUtc),
         quoteStatus: normalizeQuoteStatus(order.status, index),
         orderStatus: normalizeOrderStatus(order.status, index),
-        printMethod: profile.printMethod,
-        printColor: profile.printColor,
-        printPosition: profile.printPosition,
-        note: profile.note,
-        logoFile: profile.logoFile,
+        printMethod: "Theo yeu cau",
+        printColor: "1-2 mau",
+        printPosition: "Than ly",
+        note: "Cho cap nhat chi tiet tu backend",
+        logoFile: "Chua co file",
         subtotal,
         designFee,
         shippingFee,
@@ -1056,9 +991,7 @@ export default function AdminOrderClient({
         }
     }, []);
     const rows = useMemo(() => {
-        const orders =
-            initialOrders.length > 0 ? initialOrders : fallbackOrders;
-        return orders.map(buildViewModel).map((row) => ({
+        return initialOrders.map(buildViewModel).map((row) => ({
             ...row,
             quoteStatus: quoteStatuses[row.id] ?? row.quoteStatus,
             orderStatus: orderStatuses[row.id] ?? row.orderStatus,

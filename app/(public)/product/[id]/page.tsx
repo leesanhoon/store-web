@@ -15,27 +15,20 @@ import {
 } from "@/components/mobile-store/icons";
 import type { ProductDto } from "@/lib/api/products";
 import { getCatalogProduct, getCatalogProducts } from "@/lib/data/catalog";
-import { demoProducts } from "@/lib/data/demo-products";
 import { formatCurrency, getProductDisplayInfo, getProductImageSrc } from "@/lib/products/display";
 
 async function loadProduct(id: string) {
   const productId = Number(id);
   if (!Number.isInteger(productId) || productId === 0) return null;
-
-  if (productId < 0) {
-    return demoProducts.find((product) => product.id === productId) ?? null;
-  }
-
   return getCatalogProduct(productId);
 }
 
 async function loadRelatedProducts(currentProduct: ProductDto) {
   try {
     const products = await getCatalogProducts();
-    const source = products.length > 0 ? products : demoProducts;
-    return source.filter((product) => product.id !== currentProduct.id).slice(0, 3);
+    return products.filter((product) => product.id !== currentProduct.id).slice(0, 3);
   } catch {
-    return demoProducts.filter((product) => product.id !== currentProduct.id).slice(0, 3);
+    return [];
   }
 }
 
@@ -49,19 +42,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const relatedProducts = await loadRelatedProducts(product);
 
   const specs = [
-    { label: "Dung tích", value: info.volume, icon: DropletIcon },
-    { label: "Chất liệu", value: info.material, icon: LayersIcon },
+    { label: "Dung tich", value: info.volume, icon: DropletIcon },
+    { label: "Chat lieu", value: info.material, icon: LayersIcon },
     { label: "MOQ", value: "1.000", icon: BoxIcon },
-    { label: "In logo", value: "theo yêu cầu", icon: PencilIcon },
+    { label: "In logo", value: "theo yeu cau", icon: PencilIcon },
   ];
 
   return (
     <MobileAppShell>
       <div className="product-detail-screen">
         <MobileTopBar
-          title="Chi tiết sản phẩm"
+          title="Chi tiet san pham"
           backHref="/products"
-          backLabel="Quay lại danh mục"
+          backLabel="Quay lai danh muc"
           rightSlot={<ProductActions productId={product.id} name={product.name} />}
         />
 
@@ -79,11 +72,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
         <section className="detail-product-copy">
           <h2>{product.name}</h2>
-          <p className="detail-price">Từ {formatCurrency(product.price)}</p>
+          <p className="detail-price">Tu {formatCurrency(product.price)}</p>
           <p className="detail-description">{product.description}</p>
         </section>
 
-        <section className="detail-spec-grid" aria-label="Thông số sản phẩm">
+        <section className="detail-spec-grid" aria-label="Thong so san pham">
           {specs.map((spec) => {
             const Icon = spec.icon;
             return (
@@ -97,7 +90,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         </section>
 
         <section className="detail-section">
-          <h3>Tùy chọn</h3>
+          <h3>Tuy chon</h3>
           <ProductOptionButtons
             productId={product.id}
             name={product.name}
@@ -109,14 +102,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
         <section className="detail-section">
           <div className="mobile-section-heading">
-            <h3>Sản phẩm liên quan</h3>
-            <Link href="/products">Xem tất cả</Link>
+            <h3>San pham lien quan</h3>
+            <Link href="/products">Xem tat ca</Link>
           </div>
-          <div className="related-products">
-            {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} compact />
-            ))}
-          </div>
+          {relatedProducts.length === 0 ? (
+            <p className="mobile-alert">Chua co san pham nao.</p>
+          ) : (
+            <div className="related-products">
+              {relatedProducts.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} compact />
+              ))}
+            </div>
+          )}
         </section>
 
         <div className="detail-sticky-cta">
@@ -126,7 +123,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             price={product.price}
             categoryName={product.categoryName || info.cupType}
             imageSrc={imageSrc}
-            label="Yêu cầu báo giá"
+            label="Yeu cau bao gia"
           />
         </div>
       </div>

@@ -3,7 +3,6 @@ import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import ProductCatalog from "@/components/mobile-store/ProductCatalog";
 import { getCatalogProducts } from "@/lib/data/catalog";
-import { demoProducts } from "@/lib/data/demo-products";
 
 async function loadProducts() {
   try {
@@ -11,24 +10,25 @@ async function loadProducts() {
   } catch (error) {
     return {
       products: [],
-      error: error instanceof Error ? error.message : "Không thể tải danh sách sản phẩm.",
+      error: error instanceof Error ? error.message : "Khong the tai danh sach san pham.",
     };
   }
 }
 
 export default async function ProductsPage() {
   const { products, error } = await loadProducts();
-  const displayProducts = products.length > 0 ? products : demoProducts;
 
   return (
     <MobileAppShell>
       <div className="catalog-screen">
-        <MobileTopBar title="Danh mục sản phẩm" backHref="/" backLabel="Quay lại trang chủ" />
-
+        <MobileTopBar title="Danh muc san pham" backHref="/" backLabel="Quay lai trang chu" />
         {error ? <p className="mobile-alert">{error}</p> : null}
-        <Suspense fallback={<section className="catalog-grid" aria-hidden="true" />}>
-          <ProductCatalog products={displayProducts} />
-        </Suspense>
+        {!error && products.length === 0 ? <p className="mobile-alert">Chua co san pham nao.</p> : null}
+        {products.length > 0 ? (
+          <Suspense fallback={<section className="catalog-grid" aria-hidden="true" />}>
+            <ProductCatalog products={products} />
+          </Suspense>
+        ) : null}
       </div>
     </MobileAppShell>
   );

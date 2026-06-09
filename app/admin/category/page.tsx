@@ -1,44 +1,102 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
-import { AdminCard, AdminField, AdminPrimaryButton, AdminSectionHeader, AdminSelect, AdminStatusBadge, AdminTextArea } from "@/components/admin/admin-ui";
+import { useEffect, useMemo, useState } from "react";
+import { CategoryDto, getCategories } from "@/lib/api/categories";
+import {
+  AdminCard,
+  AdminField,
+  AdminPrimaryButton,
+  AdminSectionHeader,
+  AdminSelect,
+  AdminStatusBadge,
+  AdminTextArea,
+} from "@/components/admin/admin-ui";
 
-type Banner = { id: number; title: string; description: string; image: string; visible: boolean };
+type Banner = {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  visible: boolean;
+};
 
-const initialBanners: Banner[] = [
-  { id: 1, title: "Ly nhựa & in logo", description: "Báo giá nhanh trong 24h", image: "/images/mockups/logo-cup-500-urban.png", visible: true },
-  { id: 2, title: "Ly giấy thân thiện", description: "Phù hợp quán cà phê mang đi", image: "/images/mockups/paper-360-linen.png", visible: true },
-  { id: 3, title: "Nắp & phụ kiện", description: "Đa dạng lựa chọn theo size ly", image: "/images/ly/coc-nhua-dung-tau-hu-7.png", visible: true },
+const categoryImages = [
+  "/images/mockups/logo-cup-500-urban.png",
+  "/images/mockups/paper-360-linen.png",
+  "/images/ly/coc-nhua-dung-tau-hu-7.png",
 ];
 
+function toBanner(category: CategoryDto, index: number): Banner {
+  return {
+    id: category.id,
+    title: category.name,
+    description: category.description || "Chua cap nhat mo ta danh muc.",
+    image: categoryImages[index % categoryImages.length],
+    visible: true,
+  };
+}
+
 export default function AdminCategoryPage() {
-  const [banners, setBanners] = useState(initialBanners);
-  const [title, setTitle] = useState("Ly nhựa & in logo");
-  const [description, setDescription] = useState("Chọn mẫu ly, gửi logo và nhận báo giá nhanh.");
-  const [cta, setCta] = useState("Xem sản phẩm");
-  const [status, setStatus] = useState("Hiển thị");
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [cta, setCta] = useState("Xem san pham");
+  const [status, setStatus] = useState("Hien thi");
   const [order, setOrder] = useState(1);
   const [message, setMessage] = useState("");
 
-  const toggleVisible = (id: number) => setBanners((current) => current.map((banner) => (banner.id === id ? { ...banner, visible: !banner.visible } : banner)));
+  useEffect(() => {
+    let mounted = true;
+
+    void getCategories()
+      .then((result) => {
+        if (!mounted) return;
+        setCategories(result);
+        if (result[0]) {
+          setTitle(result[0].name);
+          setDescription(result[0].description || "Chua cap nhat mo ta danh muc.");
+        }
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        setLoadError(error instanceof Error ? error.message : "Khong the tai danh muc.");
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const banners = useMemo(() => categories.map(toBanner), [categories]);
+
   const save = () => {
-    setMessage("Đã lưu thay đổi banner.");
+    setMessage("Da luu thay doi banner.");
     window.setTimeout(() => setMessage(""), 1800);
   };
 
   return (
     <div className="space-y-3 text-[#101a36]">
-      <AdminSectionHeader title="Cấu hình hiển thị" subtitle="Quản lý banner và nội dung hiển thị trên trang chủ." />
+      <AdminSectionHeader title="Cau hinh hien thi" subtitle="Lay danh muc tu backend de tao danh sach banner trang chu." />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-[16px] font-extrabold">Banner trang chủ</h2>
-        <AdminPrimaryButton type="button" className="h-9 min-h-9 rounded-[13px] px-3 text-[13px]">+ Thêm banner</AdminPrimaryButton>
+        <h2 className="text-[16px] font-extrabold">Banner trang chu</h2>
+        <AdminPrimaryButton type="button" className="h-9 min-h-9 rounded-[13px] px-3 text-[13px]">
+          + Lam moi
+        </AdminPrimaryButton>
       </div>
+
+      {loading ? <AdminCard className="p-3 text-[12px] font-semibold text-slate-500">Dang tai danh muc tu API...</AdminCard> : null}
+      {loadError ? <AdminCard className="p-3 text-[12px] font-semibold text-rose-700">{loadError}</AdminCard> : null}
 
       <section className="space-y-2.5">
         {banners.map((banner) => (
-          <AdminCard key={banner.id} className="grid grid-cols-[18px_1fr_auto_24px] items-center gap-2.5 p-2.5">
+          <AdminCard key={banner.id} className="grid grid-cols-[18px_1fr_auto] items-center gap-2.5 p-2.5">
             <span className="text-lg font-bold text-slate-400">=</span>
             <div className="grid grid-cols-[64px_1fr] gap-2.5">
               <Image src={banner.image} alt={banner.title} width={90} height={60} className="h-12 w-16 rounded-xl object-cover" />
@@ -47,50 +105,59 @@ export default function AdminCategoryPage() {
                 <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">{banner.description}</p>
               </div>
             </div>
-            <label className="grid justify-items-center gap-1 text-[9px] font-bold text-slate-500">
-              Hiển thị
-              <input type="checkbox" checked={banner.visible} onChange={() => toggleVisible(banner.id)} className="peer sr-only" />
-              <span className="h-5 w-9 rounded-full bg-slate-200 p-0.5 transition peer-checked:bg-emerald-600">
-                <span className={`block h-4 w-4 rounded-full bg-white transition ${banner.visible ? "translate-x-4" : ""}`} />
-              </span>
-            </label>
-            <button type="button" className="text-lg font-extrabold text-slate-500" aria-label="Tùy chọn banner">⋯</button>
+            <AdminStatusBadge tone={banner.visible ? "success" : "neutral"}>{banner.visible ? "Hien thi" : "An"}</AdminStatusBadge>
           </AdminCard>
         ))}
+        {!loading && !loadError && banners.length === 0 ? (
+          <AdminCard className="p-4 text-center text-[12px] font-bold text-slate-500">Chua co danh muc nao tu backend.</AdminCard>
+        ) : null}
       </section>
 
       {message ? <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">{message}</AdminCard> : null}
 
       <AdminCard className="p-3.5">
         <div className="space-y-3">
-          <label className="block text-[11px] font-extrabold">Tiêu đề <span className="text-rose-500">*</span><AdminField value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1" /></label>
-          <label className="block text-[11px] font-extrabold">Mô tả <span className="text-rose-500">*</span><AdminTextArea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1" /></label>
+          <label className="block text-[11px] font-extrabold">
+            Tieu de <span className="text-rose-500">*</span>
+            <AdminField value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1" />
+          </label>
+          <label className="block text-[11px] font-extrabold">
+            Mo ta <span className="text-rose-500">*</span>
+            <AdminTextArea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1" />
+          </label>
           <div className="grid grid-cols-2 gap-2.5">
-            <label className="block text-[11px] font-extrabold">CTA
+            <label className="block text-[11px] font-extrabold">
+              CTA
               <AdminSelect value={cta} onChange={(event) => setCta(event.target.value)} className="mt-1">
-                <option>Xem sản phẩm</option>
-                <option>Yêu cầu báo giá</option>
-                <option>Liên hệ ngay</option>
+                <option>Xem san pham</option>
+                <option>Yeu cau bao gia</option>
+                <option>Lien he ngay</option>
               </AdminSelect>
             </label>
-            <label className="block text-[11px] font-extrabold">Trạng thái
+            <label className="block text-[11px] font-extrabold">
+              Trang thai
               <AdminSelect value={status} onChange={(event) => setStatus(event.target.value)} className="mt-1">
-                <option>Hiển thị</option>
-                <option>Ẩn</option>
+                <option>Hien thi</option>
+                <option>An</option>
               </AdminSelect>
             </label>
           </div>
           <div className="grid grid-cols-[1fr_110px] gap-2.5">
             <div>
-              <p className="text-[11px] font-extrabold">Hình ảnh <span className="text-rose-500">*</span></p>
+              <p className="text-[11px] font-extrabold">Hinh anh</p>
               <div className="mt-1 flex items-center gap-2 rounded-2xl border border-[#eadfce] bg-white p-2">
-                <Image src="/images/mockups/logo-cup-500-urban.png" alt="Banner preview" width={72} height={54} className="h-12 w-16 rounded-xl object-cover" />
-                <button type="button" className="rounded-xl border border-[#eadfce] px-3 py-2 text-[10px] font-extrabold text-slate-600">Đổi ảnh</button>
+                <Image
+                  src={banners[0]?.image ?? categoryImages[0]}
+                  alt="Banner preview"
+                  width={72}
+                  height={54}
+                  className="h-12 w-16 rounded-xl object-cover"
+                />
+                <span className="text-[10px] font-extrabold text-slate-600">Anh preview dang duoc map tam tu category.</span>
               </div>
-              <p className="mt-1 text-[9px] font-semibold text-slate-500">JPG, PNG tối đa 2MB</p>
             </div>
             <div>
-              <p className="text-[11px] font-extrabold">Thứ tự</p>
+              <p className="text-[11px] font-extrabold">Thu tu</p>
               <div className="mt-1 grid grid-cols-3 overflow-hidden rounded-xl border border-[#eadfce] bg-white text-center">
                 <button type="button" onClick={() => setOrder((value) => Math.max(1, value - 1))} className="py-2 text-sm font-bold text-slate-500">-</button>
                 <span className="border-x border-[#eadfce] py-2 text-[12px] font-extrabold">{order}</span>
@@ -98,8 +165,8 @@ export default function AdminCategoryPage() {
               </div>
             </div>
           </div>
-          <AdminStatusBadge tone={status === "Hiển thị" ? "success" : "neutral"}>{status}</AdminStatusBadge>
-          <AdminPrimaryButton type="button" onClick={save} className="w-full">Lưu thay đổi</AdminPrimaryButton>
+          <AdminStatusBadge tone={status === "Hien thi" ? "success" : "neutral"}>{status}</AdminStatusBadge>
+          <AdminPrimaryButton type="button" onClick={save} className="w-full">Luu thay doi</AdminPrimaryButton>
         </div>
       </AdminCard>
     </div>

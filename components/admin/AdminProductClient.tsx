@@ -62,61 +62,6 @@ const statusOptions: ProductStatus[] = [
     "Ngừng bán",
 ];
 const lidOptionList = ["Không nắp", "Nắp bằng", "Nắp cầu", "Nắp sip"];
-const fallbackCategories: CategoryDto[] = [
-    { id: 1, name: "Ly nhựa", description: "", products: [] },
-    { id: 2, name: "Ly giấy", description: "", products: [] },
-    { id: 3, name: "Nắp", description: "", products: [] },
-    { id: 4, name: "Phụ kiện", description: "", products: [] },
-];
-const sampleGallery = [
-    "/images/mockups/pet-500-amber.png",
-    "/images/mockups/paper-360-linen.png",
-    "/images/ly/coc-nhua-dung-tau-hu-7.png",
-    "/images/ly/coc-nhua-ly-nhua.png",
-    "/images/ly/ly-nhua-pp-coc-nhua-pp_500x500.png",
-];
-const mockProducts: ProductDto[] = [
-    {
-        id: -1,
-        name: "Ly PET 16oz",
-        description: "Ly nhựa",
-        price: 850,
-        stockQuantity: 1000,
-        categoryId: 1,
-        categoryName: "Ly nhựa",
-        avatarImageUrl: "/images/mockups/pet-500-amber.png",
-    },
-    {
-        id: -2,
-        name: "Ly PET 20oz",
-        description: "Ly nhựa",
-        price: 950,
-        stockQuantity: 1000,
-        categoryId: 1,
-        categoryName: "Ly nhựa",
-        avatarImageUrl: "/images/mockups/pet-700-velvet.png",
-    },
-    {
-        id: -3,
-        name: "Ly giấy 12oz",
-        description: "Ly giấy",
-        price: 1200,
-        stockQuantity: 1000,
-        categoryId: 2,
-        categoryName: "Ly giấy",
-        avatarImageUrl: "/images/mockups/paper-360-linen.png",
-    },
-    {
-        id: -4,
-        name: "Nắp cầu PET",
-        description: "Nắp ly",
-        price: 350,
-        stockQuantity: 1000,
-        categoryId: 3,
-        categoryName: "Nắp",
-        avatarImageUrl: "/images/ly/coc-nhua-dung-tau-hu-7.png",
-    },
-];
 const initialForm: ProductForm = {
     name: "",
     description: "",
@@ -434,14 +379,9 @@ export default function AdminProductClient({
         [avatarImage],
     );
     const galleryPreviews = useObjectUrls(galleryImages);
-    const baseProducts = products.length > 0 ? products : mockProducts;
-    const listProducts = [...localProducts, ...baseProducts];
-    const categoryOptions =
-        categories.length > 0 ? categories : fallbackCategories;
-    const galleryImageSources =
-        galleryPreviews.length > 0
-            ? galleryPreviews.map(({ url }) => url)
-            : sampleGallery;
+    const listProducts = [...localProducts, ...products];
+    const categoryOptions = categories;
+    const galleryImageSources = galleryPreviews.map(({ url }) => url);
     const categorySelectOptions = categoryOptions.map((category) => ({
         value: String(category.id),
         label: category.name,
@@ -899,7 +839,7 @@ export default function AdminProductClient({
             </div>
             {productsError ? (
                 <AdminCard className="p-3 text-[12px] font-semibold text-rose-700">
-                    Không tải được sản phẩm, đang dùng dữ liệu dự phòng.
+                    Không tải được sản phẩm.
                 </AdminCard>
             ) : null}
             {categoriesError ? (

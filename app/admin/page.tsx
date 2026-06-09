@@ -3,12 +3,6 @@ import { getOrders } from "@/lib/api/orders";
 import { getProducts } from "@/lib/api/products";
 import { AdminCard, AdminSectionHeader, AdminStatusBadge, adminFormatMoney } from "@/components/admin/admin-ui";
 
-const fallbackQuotes = [
-  { code: "RQ250520-001", customer: "The Daily Café", product: "Ly PET 16oz", qty: "500 sp", status: "Mới" },
-  { code: "RQ250520-002", customer: "Green Coffee", product: "Ly giấy 12oz", qty: "1.000 sp", status: "Mới" },
-  { code: "RQ250520-003", customer: "Kaffa House", product: "Ly PET 20oz", qty: "800 sp", status: "Mới" },
-];
-
 function CalendarIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
@@ -22,8 +16,8 @@ function Donut({ total }: { total: number }) {
     <div className="relative grid h-[116px] w-[116px] shrink-0 place-items-center rounded-full bg-[conic-gradient(#08964f_0_25%,#3b8eed_25%_60%,#f2b431_60%_78%,#f15b2f_78%_100%)]">
       <div className="grid h-[70px] w-[70px] place-items-center rounded-full bg-white text-center shadow-[0_1px_0_rgba(0,0,0,0.04)]">
         <div>
-          <p className="text-[13px] font-semibold leading-tight text-[#101a36]">Tổng</p>
-          <p className="text-[13px] font-extrabold leading-tight text-[#101a36]">{total} đơn</p>
+          <p className="text-[13px] font-semibold leading-tight text-[#101a36]">Tong</p>
+          <p className="text-[13px] font-extrabold leading-tight text-[#101a36]">{total} don</p>
         </div>
       </div>
     </div>
@@ -40,36 +34,35 @@ export default async function AdminPage() {
     getOrders().catch(() => []),
   ]);
 
-  const productionOrders = statusCount(orders, "sản xuất") || statusCount(orders, "production");
+  const productionOrders = statusCount(orders, "san xuat") || statusCount(orders, "production");
   const deliveredOrders = statusCount(orders, "giao") || statusCount(orders, "delivered");
-  const canceledOrders = statusCount(orders, "hủy") || statusCount(orders, "cancel");
+  const canceledOrders = statusCount(orders, "huy") || statusCount(orders, "cancel");
   const pendingOrders = Math.max(orders.length - productionOrders - deliveredOrders - canceledOrders, 0);
   const estimatedRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const quoteCount = orders.length === 0 ? fallbackQuotes.length : pendingOrders;
   const totalForChart = orders.length || deliveredOrders + productionOrders + pendingOrders + canceledOrders || 1;
 
   const stats = [
-    { label: "Tổng sản phẩm", value: products.length.toString(), delta: products.length ? "Dữ liệu API" : "Chưa có dữ liệu", suffix: "SP" },
-    { label: "Yêu cầu mới", value: quoteCount.toString(), delta: quoteCount ? "Cần xử lý" : "Đã xử lý hết", suffix: "yêu cầu" },
-    { label: "Đơn đang sản xuất", value: productionOrders.toString(), delta: productionOrders ? "Theo API đơn hàng" : "Chưa có đơn", suffix: "đơn hàng" },
-    { label: "Doanh thu tạm tính", value: adminFormatMoney(estimatedRevenue), delta: estimatedRevenue ? "Từ đơn hàng hiện có" : "Chưa phát sinh", suffix: "" },
+    { label: "Tong san pham", value: products.length.toString(), delta: products.length ? "Du lieu API" : "Chua co du lieu", suffix: "SP" },
+    { label: "Yeu cau moi", value: pendingOrders.toString(), delta: pendingOrders ? "Can xu ly" : "Khong co yeu cau", suffix: "yeu cau" },
+    { label: "Don dang san xuat", value: productionOrders.toString(), delta: productionOrders ? "Theo API don hang" : "Chua co don", suffix: "don hang" },
+    { label: "Doanh thu tam tinh", value: adminFormatMoney(estimatedRevenue), delta: estimatedRevenue ? "Tu don hang hien co" : "Chua phat sinh", suffix: "" },
   ];
 
   const orderStatus = [
-    { name: "Đã giao hàng", value: deliveredOrders, color: "bg-emerald-600" },
-    { name: "Đang sản xuất", value: productionOrders, color: "bg-blue-500" },
-    { name: "Chờ xác nhận", value: pendingOrders, color: "bg-amber-400" },
-    { name: "Đã hủy", value: canceledOrders, color: "bg-orange-500" },
+    { name: "Da giao hang", value: deliveredOrders, color: "bg-emerald-600" },
+    { name: "Dang san xuat", value: productionOrders, color: "bg-blue-500" },
+    { name: "Cho xac nhan", value: pendingOrders, color: "bg-amber-400" },
+    { name: "Da huy", value: canceledOrders, color: "bg-orange-500" },
   ];
 
   return (
     <div className="space-y-3 text-[#101a36]">
       <AdminSectionHeader
-        title="Dashboard tổng quan"
+        title="Dashboard tong quan"
         action={
           <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[13px] border border-[#eadfce] bg-white px-3 text-[13px] font-bold text-[#1f2f46] shadow-sm">
             <CalendarIcon />
-            Hôm nay
+            Hom nay
             <span aria-hidden="true" className="text-xl leading-none">›</span>
           </button>
         }
@@ -92,18 +85,18 @@ export default async function AdminPage() {
 
       <section className="grid grid-cols-3 gap-2.5">
         <Link href="/admin/product?mode=create" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Thêm sản phẩm
+          Them san pham
         </Link>
         <Link href="/admin/order?view=quotes" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Báo giá mới
+          Bao gia moi
         </Link>
         <Link href="/admin/order" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Đơn cần xử lý
+          Don can xu ly
         </Link>
       </section>
 
       <AdminCard className="p-3.5">
-        <h2 className="text-[17px] font-extrabold">Tình trạng đơn hàng</h2>
+        <h2 className="text-[17px] font-extrabold">Tinh trang don hang</h2>
         <div className="mt-3 flex items-center gap-3.5">
           <Donut total={orders.length} />
           <div className="min-w-0 flex-1 space-y-2.5">
@@ -123,30 +116,36 @@ export default async function AdminPage() {
 
       <AdminCard className="p-3.5">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-[17px] font-extrabold">Yêu cầu báo giá mới</h2>
-          <Link href="/admin/order?view=quotes" className="text-[12px] font-extrabold text-emerald-700">Xem tất cả</Link>
+          <h2 className="text-[17px] font-extrabold">Yeu cau bao gia moi</h2>
+          <Link href="/admin/order?view=quotes" className="text-[12px] font-extrabold text-emerald-700">Xem tat ca</Link>
         </div>
-        <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white">
-          {fallbackQuotes.map((quote) => (
-            <article key={quote.code} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0">
-              <p className="min-w-0 text-[13px] font-extrabold text-[#101a36]">{quote.code}</p>
-              <p className="whitespace-nowrap text-right text-[12px] font-semibold text-[#1f2f46]">{quote.qty}</p>
-              <div className="min-w-0">
-                <p className="truncate text-[12px] font-bold text-[#101a36]">{quote.customer}</p>
-                <p className="mt-0.5 text-[12px] font-semibold text-[#3d4860]">{quote.product}</p>
-              </div>
-              <div className="justify-self-end"><AdminStatusBadge tone="warning">{quote.status}</AdminStatusBadge></div>
-            </article>
-          ))}
-        </div>
+        {orders.length === 0 ? (
+          <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white px-3 py-4 text-center text-[12px] font-semibold text-slate-500">
+            Chua co yeu cau bao gia nao.
+          </div>
+        ) : (
+          <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white">
+            {orders.slice(0, 3).map((order) => (
+              <article key={order.id} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0">
+                <p className="min-w-0 text-[13px] font-extrabold text-[#101a36]">{`RQ250520-${String(order.id).slice(-3).padStart(3, "0")}`}</p>
+                <p className="whitespace-nowrap text-right text-[12px] font-semibold text-[#1f2f46]">{adminFormatMoney(order.totalAmount)}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-bold text-[#101a36]">{order.customerName || "Khach hang"}</p>
+                  <p className="mt-0.5 text-[12px] font-semibold text-[#3d4860]">{order.status}</p>
+                </div>
+                <div className="justify-self-end"><AdminStatusBadge tone="warning">Moi</AdminStatusBadge></div>
+              </article>
+            ))}
+          </div>
+        )}
       </AdminCard>
 
       <AdminCard className="border-amber-200 bg-amber-50 p-3.5">
-        <h2 className="text-[14px] font-extrabold text-[#101a36]">Cảnh báo vận hành</h2>
+        <h2 className="text-[14px] font-extrabold text-[#101a36]">Canh bao van hanh</h2>
         <ul className="mt-2 space-y-1.5 text-[12px] font-semibold text-[#3d4860]">
-          <li>{quoteCount} báo giá cần kiểm tra trong hôm nay.</li>
-          <li>{productionOrders} đơn đang trong quy trình sản xuất.</li>
-          <li>{products.filter((product) => !product.avatarImageUrl || product.price <= 0).length} sản phẩm thiếu ảnh hoặc giá bán.</li>
+          <li>{pendingOrders} bao gia can kiem tra trong hom nay.</li>
+          <li>{productionOrders} don dang trong quy trinh san xuat.</li>
+          <li>{products.filter((product) => !product.avatarImageUrl || product.price <= 0).length} san pham thieu anh hoac gia ban.</li>
         </ul>
       </AdminCard>
     </div>
