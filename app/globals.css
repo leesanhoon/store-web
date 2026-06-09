@@ -41,6 +41,9 @@
 
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -50,6 +53,9 @@ body {
     linear-gradient(180deg, #fffdf8 0%, #f5efe5 100%);
   color: var(--foreground);
   font-family: var(--font-sans-stack);
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -452,6 +458,8 @@ body {
   gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
   scrollbar-width: none;
 }
 
@@ -621,6 +629,8 @@ body {
   grid-auto-columns: minmax(148px, 44%);
   gap: 10px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
   padding-bottom: 2px;
   scrollbar-width: none;
 }
@@ -777,6 +787,8 @@ body {
   display: flex;
   gap: 9px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
   padding-bottom: 2px;
   scrollbar-width: none;
 }

@@ -55,7 +55,12 @@ export default function HeroSlider() {
     const interval = window.setInterval(() => {
       const nextIndex = (activeIndex + 1) % slides.length;
       const nextSlide = track.children.item(nextIndex) as HTMLElement | null;
-      nextSlide?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+      if (nextSlide) {
+        track.scrollTo({
+          left: nextSlide.offsetLeft,
+          behavior: "smooth",
+        });
+      }
     }, 4800);
 
     return () => window.clearInterval(interval);
@@ -118,7 +123,12 @@ export default function HeroSlider() {
             onClick={() => {
               const track = trackRef.current;
               const nextSlide = track?.children.item(index) as HTMLElement | null;
-              nextSlide?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+              if (track && nextSlide) {
+                track.scrollTo({
+                  left: nextSlide.offsetLeft,
+                  behavior: "smooth",
+                });
+              }
             }}
           />
         ))}
