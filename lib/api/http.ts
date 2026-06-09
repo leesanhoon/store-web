@@ -190,3 +190,23 @@ export const apiClient = {
 };
 
 export { ApiError };
+
+export type PaginationParams = {
+    page?: number;
+    pageSize?: number;
+};
+
+export type PaginatedResponse<T> = {
+    items: T[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+};
+
+export function buildPaginationQuery(params?: PaginationParams): string {
+    if (!params?.page && !params?.pageSize) return "";
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.set("page", String(params.page));
+    if (params.pageSize) searchParams.set("pageSize", String(params.pageSize));
+    return `?${searchParams.toString()}`;
+}

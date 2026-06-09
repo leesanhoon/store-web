@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { getOrder, OrderDetailDto, OrderSummaryDto } from "@/lib/api/orders";
+import { useMemo, useState, useCallback } from "react";
+import { getOrder, updateOrderStatus, deleteOrder, OrderDetailDto, OrderSummaryDto, ORDER_STATUS_TRANSITIONS, type OrderStatus as ApiOrderStatus } from "@/lib/api/orders";
 import {
     AdminCard,
     AdminChip,
@@ -710,6 +710,39 @@ function OrderListScreen({
     );
 }
 
+const API_STATUS_LABEL: Record<string, string> = {
+    draft: "Chờ xác nhận",
+    confirmed: "Đã xác nhận",
+    shipping: "Đang giao",
+    completed: "Đã giao",
+    cancelled: "Đã hủy",
+};
+
+const LABEL_TO_API_STATUS: Record<string, ApiOrderStatus> = {
+    "Chờ xác nhận": "draft",
+    "Đã xác nhận": "confirmed",
+    "Đang giao": "shipping",
+    "Đã giao": "completed",
+    "Đã hủy": "cancelled",
+};
+
+function getApiStatus(label: string): ApiOrderStatus {
+    return LABEL_TO_API_STATUS[label] ?? "draft";
+}
+
+function getNextApiStatuses(label: string): ApiOrderStatus[] {
+    const apiStatus = getApiStatus(label);
+    return ORDER_STATUS_TRANSITIONS[apiStatus] ?? [];
+}
+
+function TrashIcon() {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
 function OrderDetailScreen({
     order,
     detail,
@@ -719,6 +752,8 @@ function OrderDetailScreen({
     onBack,
     onAdvance,
     onToggleChecklist,
+    onStatusChange,
+    onDelete,
 }: {
     order: AdminOrderViewModel;
     detail: OrderDetailDto | null;
@@ -728,6 +763,8 @@ function OrderDetailScreen({
     onBack: () => void;
     onAdvance: () => void;
     onToggleChecklist: (item: string) => void;
+    onStatusChange: (apiStatus: ApiOrderStatus) => Promise<void>;
+    onDelete: () => Promise<void>;
 }) {
     const detailItems = detail?.items ?? [];
     const activeStep = Math.max(orderFlow.indexOf(order.orderStatus), 0);
@@ -917,14 +954,52 @@ function OrderDetailScreen({
                     ))}
                 </div>
             </AdminCard>
-            <div className="admin-fixed-cta">
-                <AdminPrimaryButton
-                    type="button"
-                    onClick={onAdvance}
-                    className="w-full"
-                >
-                    Cập nhật tiến độ
-                </AdminPrimaryButton>
+            <div className="admin-fixed-cta space-y-2">
+                {(() => {
+                    const nextStatuses = getNextApiStatuses(order.orderStatus);
+                    const apiStatus = getApiStatus(order.orderStatus);
+                    const isDraft = apiStatus === "draft";
+                    return (
+                        <>
+                            {nextStatuses.length > 0 && (
+                                <div className={`grid gap-2 ${nextStatuses.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                                    {nextStatuses.map((s) => {
+                                        const isCancelAction = s === "cancelled";
+                                        return isCancelAction ? (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => onStatusChange(s)}
+                                                className="min-h-11 rounded-[14px] border border-rose-200 bg-rose-50 text-[13px] font-extrabold text-rose-700"
+                                            >
+                                                {API_STATUS_LABEL[s]}
+                                            </button>
+                                        ) : (
+                                            <AdminPrimaryButton
+                                                key={s}
+                                                type="button"
+                                                onClick={() => onStatusChange(s)}
+                                                className="min-h-11 w-full rounded-[14px] text-[13px]"
+                                            >
+                                                Chuyển → {API_STATUS_LABEL[s]}
+                                            </AdminPrimaryButton>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {isDraft && (
+                                <button
+                                    type="button"
+                                    onClick={onDelete}
+                                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 text-[13px] font-extrabold text-rose-700"
+                                >
+                                    <TrashIcon />
+                                    Xóa đơn hàng
+                                </button>
+                            )}
+                        </>
+                    );
+                })()}
             </div>
         </div>
     );
@@ -956,6 +1031,30 @@ export default function AdminOrderClient({
     const [history, setHistory] = useState<Record<number, string[]>>({});
     const [detail, setDetail] = useState<OrderDetailDto | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    const [removedIds, setRemovedIds] = useState<Set<number>>(new Set());
+
+    const handleStatusChange = useCallback(async (orderId: number, apiStatus: ApiOrderStatus) => {
+        try {
+            await updateOrderStatus(orderId, apiStatus);
+            const label = API_STATUS_LABEL[apiStatus] ?? apiStatus;
+            setOrderStatuses((current) => ({ ...current, [orderId]: label as OrderStatus }));
+            appendHistory(orderId, `Cập nhật trạng thái thành ${label}.`);
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Không thể cập nhật trạng thái.");
+        }
+    }, []);
+
+    const handleDeleteOrder = useCallback(async (orderId: number) => {
+        if (!confirm("Bạn có chắc muốn xóa đơn hàng này?")) return;
+        try {
+            await deleteOrder(orderId);
+            setRemovedIds((current) => new Set(current).add(orderId));
+            setSelectedOrderId(null);
+            setDetail(null);
+        } catch (error) {
+            alert(error instanceof Error ? error.message : "Không thể xóa đơn hàng.");
+        }
+    }, []);
     const rows = useMemo(() => {
         const orders =
             initialOrders.length > 0 ? initialOrders : fallbackOrders;
@@ -964,7 +1063,7 @@ export default function AdminOrderClient({
             quoteStatus: quoteStatuses[row.id] ?? row.quoteStatus,
             orderStatus: orderStatuses[row.id] ?? row.orderStatus,
         }));
-    }, [initialOrders, orderStatuses, quoteStatuses]);
+    }, [initialOrders, orderStatuses, quoteStatuses]).filter((row) => !removedIds.has(row.id));
     const selectedOrder =
         rows.find((row) => row.id === selectedOrderId) ?? null;
     const selectedQuote =
@@ -1056,6 +1155,8 @@ export default function AdminOrderClient({
                         `Cập nhật trạng thái thành ${next}.`,
                     );
                 }}
+                onStatusChange={(apiStatus) => handleStatusChange(selectedOrder.id, apiStatus)}
+                onDelete={() => handleDeleteOrder(selectedOrder.id)}
                 onToggleChecklist={(item) => {
                     setChecklist((current) => ({
                         ...current,

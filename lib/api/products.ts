@@ -1,4 +1,4 @@
-﻿import { apiClient } from "@/lib/api/http";
+﻿import { apiClient, buildPaginationQuery, type PaginatedResponse, type PaginationParams } from "@/lib/api/http";
 
 export type ProductGalleryImageDto = {
     id: number;
@@ -33,12 +33,12 @@ export type ProductUploadPayload = CreateProductPayload & {
     galleryImages?: File[];
 };
 
-type CollectionResponse<T> = T[] | { value?: T[]; Value?: T[] };
+type CollectionResponse<T> = T[] | { items?: T[]; value?: T[]; Value?: T[]; totalCount?: number; page?: number; pageSize?: number };
 
 const SUPPORTED_PRODUCT_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 function unwrapCollection<T>(response: CollectionResponse<T>) {
-    return Array.isArray(response) ? response : response.value ?? response.Value ?? [];
+    return Array.isArray(response) ? response : response.items ?? response.value ?? response.Value ?? [];
 }
 
 function normalizeProduct(product: ProductDto): ProductDto {
@@ -93,8 +93,15 @@ export function normalizeProductApiError(error: unknown) {
     return error.message || "Không thể lưu sản phẩm.";
 }
 
-export async function getProducts() {
-    const response = await apiClient.get<CollectionResponse<ProductDto>>("/api/v1/Products");
+export async function getProducts(): Promise<ProductDto[]>;
+export async function getProducts(params: PaginationParams): Promise<PaginatedResponse<ProductDto>>;
+export async function getProducts(params?: PaginationParams) {
+    const query = buildPaginationQuery(params);
+    const response = await apiClient.get<CollectionResponse<ProductDto>>(`/api/v1/Products${query}`);
+    if (params?.page && !Array.isArray(response)) {
+        const paginated = response as PaginatedResponse<ProductDto>;
+        return { ...paginated, items: (paginated.items ?? []).map(normalizeProduct) };
+    }
     return unwrapCollection(response).map(normalizeProduct);
 }
 
