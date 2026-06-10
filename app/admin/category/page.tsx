@@ -159,8 +159,23 @@ export default function AdminCategoryPage() {
     };
 
     useEffect(() => {
-        fetchTree();
+        void getCategoryTree()
+            .then(setTree)
+            .catch((err) =>
+                setLoadError(
+                    err instanceof Error
+                        ? err.message
+                        : "Không thể tải danh mục.",
+                ),
+            )
+            .finally(() => setLoading(false));
     }, []);
+
+    const startAddRoot = () => {
+        setEditing({ id: null, parentId: null, name: "", description: "" });
+        setMessage("");
+        setError("");
+    };
 
     const startAddChild = (parentId: number) => {
         setEditing({ id: null, parentId, name: "", description: "" });
@@ -218,7 +233,11 @@ export default function AdminCategoryPage() {
                 setMessage("Đã cập nhật danh mục.");
             } else {
                 await createCategory(payload);
-                setMessage("Đã tạo danh mục mới.");
+                setMessage(
+                    editing.parentId === null
+                        ? "Đã tạo danh mục gốc mới."
+                        : "Đã tạo danh mục con mới.",
+                );
             }
             setEditing(null);
             fetchTree();
@@ -234,6 +253,15 @@ export default function AdminCategoryPage() {
     return (
         <div className="space-y-3 text-[#101a36]">
             <AdminSectionHeader
+                action={
+                    <AdminPrimaryButton
+                        type="button"
+                        onClick={startAddRoot}
+                        disabled={isSubmitting}
+                    >
+                        + Danh mục gốc
+                    </AdminPrimaryButton>
+                }
                 title="Quản lý danh mục"
                 subtitle="Cây danh mục sản phẩm. Danh mục gốc không thể sửa hoặc xóa."
             />
@@ -279,9 +307,15 @@ export default function AdminCategoryPage() {
 
             {editing ? (
                 <AdminCard className="space-y-3 p-3.5">
-                    <h2 className="text-[15px] font-extrabold">
-                        {editing.id ? "Sửa danh mục" : "Thêm danh mục con"}
-                    </h2>
+                    {!editing.id && editing.parentId === null ? (
+                        <h2 className="text-[15px] font-extrabold">
+                            Thêm danh mục gốc
+                        </h2>
+                    ) : (
+                        <h2 className="text-[15px] font-extrabold">
+                            {editing.id ? "Sửa danh mục" : "Thêm danh mục con"}
+                        </h2>
+                    )}
                     <label className="block text-[12px] font-extrabold">
                         Tên danh mục <span className="text-rose-500">*</span>
                         <AdminField
