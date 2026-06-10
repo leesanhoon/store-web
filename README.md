@@ -1,6 +1,6 @@
-# In ly sờ to — Storefront in ly (store-web)
+# In ly DTP Quảng Ngãi — Storefront in ly (store-web)
 
-**In ly sờ to** is a mobile-first storefront for selling printed plastic/paper cups (ly nhựa PET, PP, ly giấy, nắp ly) and collecting print-on-logo quote requests. The whole experience is designed around a phone-frame shell with a Vietnamese-language UI. It ships with two areas in a single Next.js app: a **customer storefront** (catalog, product detail, cart → quote, order tracking, gallery) and a lightweight **admin area** for managing products, categories, orders and quotes. Catalog data is served by a .NET backend API (with a built-in demo fallback), while cart, wishlist, orders and the admin session live in the browser's `localStorage`.
+**In ly DTP Quảng Ngãi** is a mobile-first storefront for selling printed plastic/paper cups (ly nhựa PET, PP, ly giấy, nắp ly) and collecting print-on-logo quote requests. The whole experience is designed around a phone-frame shell with a Vietnamese-language UI. It ships with two areas in a single Next.js app: a **customer storefront** (catalog, product detail, cart → quote, order tracking, gallery) and a lightweight **admin area** for managing products, categories, orders and quotes. Catalog data is served by a .NET backend API (with a built-in demo fallback), while cart, wishlist, orders and the admin session live in the browser's `localStorage`.
 
 ---
 

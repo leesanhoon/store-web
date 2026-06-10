@@ -271,7 +271,7 @@ export default function CartPage() {
 
                 <section className="why-card">
                     <div>
-                        <h2>Vì sao chọn In ly sờ to?</h2>
+                        <h2>Vì sao chọn In ly DTP Quảng Ngãi?</h2>
                         <ul>
                             {reasons.map((reason) => (
                                 <li key={reason}>{reason}</li>

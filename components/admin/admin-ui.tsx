@@ -44,7 +44,7 @@ export function AdminChip({
         <button
             type="button"
             onClick={onClick}
-            className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition active:scale-[0.98] ${
+            className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition active:scale-[0.98] break-words ${
                 active
                     ? "bg-[#101a36] text-white shadow-[0_14px_30px_-20px_rgba(6,27,61,0.9)]"
                     : "border border-[#eadfce] bg-white text-[#1f2f46] shadow-sm"
@@ -129,7 +129,12 @@ type AdminSelectProps = {
 
 function ChevronDownIcon() {
     return (
-        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-4 w-4"
+            aria-hidden="true"
+        >
             <path
                 d="m6 9 6 6 6-6"
                 stroke="currentColor"
@@ -143,7 +148,12 @@ function ChevronDownIcon() {
 
 function CheckIcon() {
     return (
-        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-4 w-4"
+            aria-hidden="true"
+        >
             <path
                 d="m5 12 4 4 10-10"
                 stroke="currentColor"
@@ -216,7 +226,9 @@ export function AdminSelect({
                                 <Select.ItemIndicator className="absolute left-3 grid h-4 w-4 place-items-center text-emerald-600 data-[highlighted]:text-white">
                                     <CheckIcon />
                                 </Select.ItemIndicator>
-                                <Select.ItemText>{option.label}</Select.ItemText>
+                                <Select.ItemText>
+                                    {option.label}
+                                </Select.ItemText>
                             </Select.Item>
                         ))}
                     </Select.Viewport>
