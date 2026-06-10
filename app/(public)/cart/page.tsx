@@ -83,12 +83,15 @@ export default function CartPage() {
         setSubmitting(true);
         setError("");
 
+        const businessName = form.businessName.trim();
+        const note = form.note.trim();
         const payload: CreateOrderRequest = {
             customerName: form.fullName.trim(),
             customerPhone: form.phone.trim(),
+            customerEmail: null,
             note: [
-                form.businessName ? `Quán: ${form.businessName}` : "",
-                form.note,
+                businessName ? `Quán: ${businessName}` : "",
+                note,
             ]
                 .filter(Boolean)
                 .join(". ") || null,
@@ -96,6 +99,8 @@ export default function CartPage() {
                 productId: item.productId,
                 quantity: item.quantity,
                 unitPrice: getItemUnitPrice(item),
+                materialId: null,
+                printTypeId: null,
             })),
         };
 
