@@ -1718,7 +1718,7 @@ body {
   position: relative;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   border-top: 1px solid rgba(234, 223, 206, 0.78);
   background: rgba(255, 253, 248, 0.97);

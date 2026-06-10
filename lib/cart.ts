@@ -18,6 +18,10 @@ export type CartItem = {
   categoryName: string;
   configuration: CartConfiguration;
   imageSrc?: string | null;
+  variantId?: number;
+  capacityMl?: number;
+  diameterMm?: number;
+  priceTierMinQuantity?: number;
 };
 
 export type QuoteRequest = {
@@ -100,6 +104,9 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "conf
     config.printMethod,
     config.lidOption,
     config.note,
+    (item as CartItem).variantId ?? "",
+    (item as CartItem).capacityMl ?? "",
+    (item as CartItem).diameterMm ?? "",
   ].join("|");
 }
 

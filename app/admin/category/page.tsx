@@ -1,174 +1,221 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { CategoryDto, getCategories } from "@/lib/api/categories";
+import { useEffect, useState } from "react";
+import {
+  CategoryTreeNode,
+  getCategoryTree,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "@/lib/api/categories";
 import {
   AdminCard,
   AdminField,
   AdminPrimaryButton,
   AdminSectionHeader,
-  AdminSelect,
   AdminStatusBadge,
   AdminTextArea,
 } from "@/components/admin/admin-ui";
 
-type Banner = {
-  id: number;
-  title: string;
+type EditingCategory = {
+  id: number | null;
+  parentId: number | null;
+  name: string;
   description: string;
-  image: string;
-  visible: boolean;
 };
 
-const categoryImages = [
-  "/images/mockups/logo-cup-500-urban.png",
-  "/images/mockups/paper-360-linen.png",
-  "/images/ly/coc-nhua-dung-tau-hu-7.png",
-];
+function CategoryTreeItem({
+  node,
+  depth,
+  onEdit,
+  onDelete,
+  onAddChild,
+}: {
+  node: CategoryTreeNode;
+  depth: number;
+  onEdit: (node: CategoryTreeNode) => void;
+  onDelete: (node: CategoryTreeNode) => void;
+  onAddChild: (parentId: number) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
 
-function toBanner(category: CategoryDto, index: number): Banner {
-  return {
-    id: category.id,
-    title: category.name,
-    description: category.description || "Chua cap nhat mo ta danh muc.",
-    image: categoryImages[index % categoryImages.length],
-    visible: true,
-  };
+  return (
+    <div>
+      <div className="rounded-[18px] border border-[#eadfce] bg-white p-2.5 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.3)]" style={{ marginLeft: depth * 16 }}>
+        <div className="flex items-center gap-2">
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded text-slate-500"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className={`h-4 w-4 transition ${expanded ? "rotate-90" : ""}`} aria-hidden="true">
+                <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : (
+            <span className="w-6" />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-[14px] font-extrabold text-[#101a36]">{node.name}</h3>
+              {node.isRoot ? (
+                <AdminStatusBadge tone="info">Gốc</AdminStatusBadge>
+              ) : null}
+            </div>
+            {node.description ? (
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">{node.description}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 gap-1.5">
+            <button type="button" onClick={() => onAddChild(node.id)} className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-[#101a36]">
+              + Con
+            </button>
+            {!node.isRoot ? (
+              <>
+                <button type="button" onClick={() => onEdit(node)} className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-emerald-700">
+                  Sửa
+                </button>
+                <button type="button" onClick={() => onDelete(node)} className="rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-extrabold text-rose-600">
+                  Xóa
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      {expanded && hasChildren ? (
+        <div className="mt-1.5 space-y-1.5">
+          {node.children.map((child) => (
+            <CategoryTreeItem key={child.id} node={child} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function AdminCategoryPage() {
-  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [tree, setTree] = useState<CategoryTreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [cta, setCta] = useState("Xem san pham");
-  const [status, setStatus] = useState("Hien thi");
-  const [order, setOrder] = useState(1);
+  const [editing, setEditing] = useState<EditingCategory | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchTree = () => {
+    setLoading(true);
+    void getCategoryTree()
+      .then(setTree)
+      .catch((err) => setLoadError(err instanceof Error ? err.message : "Không thể tải danh mục."))
+      .finally(() => setLoading(false));
+  };
 
-    void getCategories()
-      .then((result) => {
-        if (!mounted) return;
-        setCategories(result);
-        if (result[0]) {
-          setTitle(result[0].name);
-          setDescription(result[0].description || "Chua cap nhat mo ta danh muc.");
-        }
-      })
-      .catch((error) => {
-        if (!mounted) return;
-        setLoadError(error instanceof Error ? error.message : "Khong the tai danh muc.");
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+  useEffect(() => { fetchTree(); }, []);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const startAddChild = (parentId: number) => {
+    setEditing({ id: null, parentId, name: "", description: "" });
+    setMessage("");
+    setError("");
+  };
 
-  const banners = useMemo(() => categories.map(toBanner), [categories]);
+  const startEdit = (node: CategoryTreeNode) => {
+    setEditing({ id: node.id, parentId: node.parentId, name: node.name, description: node.description });
+    setMessage("");
+    setError("");
+  };
 
-  const save = () => {
-    setMessage("Da luu thay doi banner.");
-    window.setTimeout(() => setMessage(""), 1800);
+  const handleDelete = async (node: CategoryTreeNode) => {
+    if (node.isRoot) return;
+    if (!window.confirm(`Xóa danh mục "${node.name}"?`)) return;
+    setIsSubmitting(true);
+    setMessage("");
+    setError("");
+    try {
+      await deleteCategory(node.id);
+      setMessage(`Đã xóa danh mục "${node.name}".`);
+      fetchTree();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể xóa danh mục.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!editing) return;
+    if (!editing.name.trim()) {
+      setError("Vui lòng nhập tên danh mục.");
+      return;
+    }
+    setIsSubmitting(true);
+    setMessage("");
+    setError("");
+    try {
+      const payload = {
+        name: editing.name.trim(),
+        description: editing.description.trim(),
+        parentId: editing.parentId,
+      };
+      if (editing.id) {
+        await updateCategory(editing.id, payload);
+        setMessage("Đã cập nhật danh mục.");
+      } else {
+        await createCategory(payload);
+        setMessage("Đã tạo danh mục mới.");
+      }
+      setEditing(null);
+      fetchTree();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể lưu danh mục.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-3 text-[#101a36]">
-      <AdminSectionHeader title="Cau hinh hien thi" subtitle="Lay danh muc tu backend de tao danh sach banner trang chu." />
+      <AdminSectionHeader title="Quản lý danh mục" subtitle="Cây danh mục sản phẩm. Danh mục gốc không thể sửa hoặc xóa." />
 
-      <div className="flex items-center justify-between">
-        <h2 className="text-[16px] font-extrabold">Banner trang chu</h2>
-        <AdminPrimaryButton type="button" className="h-9 min-h-9 rounded-[13px] px-3 text-[13px]">
-          + Lam moi
-        </AdminPrimaryButton>
-      </div>
-
-      {loading ? <AdminCard className="p-3 text-[12px] font-semibold text-slate-500">Dang tai danh muc tu API...</AdminCard> : null}
+      {loading ? <AdminCard className="p-3 text-[12px] font-semibold text-slate-500">Đang tải danh mục...</AdminCard> : null}
       {loadError ? <AdminCard className="p-3 text-[12px] font-semibold text-rose-700">{loadError}</AdminCard> : null}
+      {message ? <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">{message}</AdminCard> : null}
+      {error ? <AdminCard className="border-rose-200 bg-rose-50 p-3 text-[12px] font-bold text-rose-700">{error}</AdminCard> : null}
 
-      <section className="space-y-2.5">
-        {banners.map((banner) => (
-          <AdminCard key={banner.id} className="grid grid-cols-[18px_1fr_auto] items-center gap-2.5 p-2.5">
-            <span className="text-lg font-bold text-slate-400">=</span>
-            <div className="grid grid-cols-[64px_1fr] gap-2.5">
-              <Image src={banner.image} alt={banner.title} width={90} height={60} className="h-12 w-16 rounded-xl object-cover" />
-              <div className="min-w-0">
-                <h2 className="truncate text-[12px] font-extrabold">{banner.title}</h2>
-                <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">{banner.description}</p>
-              </div>
-            </div>
-            <AdminStatusBadge tone={banner.visible ? "success" : "neutral"}>{banner.visible ? "Hien thi" : "An"}</AdminStatusBadge>
-          </AdminCard>
+      <section className="space-y-1.5">
+        {tree.map((root) => (
+          <CategoryTreeItem key={root.id} node={root} depth={0} onEdit={startEdit} onDelete={(n) => void handleDelete(n)} onAddChild={startAddChild} />
         ))}
-        {!loading && !loadError && banners.length === 0 ? (
-          <AdminCard className="p-4 text-center text-[12px] font-bold text-slate-500">Chua co danh muc nao tu backend.</AdminCard>
+        {!loading && !loadError && tree.length === 0 ? (
+          <AdminCard className="p-4 text-center text-[12px] font-bold text-slate-500">Chưa có danh mục nào.</AdminCard>
         ) : null}
       </section>
 
-      {message ? <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">{message}</AdminCard> : null}
-
-      <AdminCard className="p-3.5">
-        <div className="space-y-3">
-          <label className="block text-[11px] font-extrabold">
-            Tieu de <span className="text-rose-500">*</span>
-            <AdminField value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1" />
+      {editing ? (
+        <AdminCard className="space-y-3 p-3.5">
+          <h2 className="text-[15px] font-extrabold">
+            {editing.id ? "Sửa danh mục" : "Thêm danh mục con"}
+          </h2>
+          <label className="block text-[12px] font-extrabold">
+            Tên danh mục <span className="text-rose-500">*</span>
+            <AdminField value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="mt-1" placeholder="Tên danh mục" />
           </label>
-          <label className="block text-[11px] font-extrabold">
-            Mo ta <span className="text-rose-500">*</span>
-            <AdminTextArea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1" />
+          <label className="block text-[12px] font-extrabold">
+            Mô tả
+            <AdminTextArea rows={2} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="mt-1" placeholder="Mô tả danh mục..." />
           </label>
-          <div className="grid grid-cols-2 gap-2.5">
-            <label className="block text-[11px] font-extrabold">
-              CTA
-              <AdminSelect value={cta} onChange={(event) => setCta(event.target.value)} className="mt-1">
-                <option>Xem san pham</option>
-                <option>Yeu cau bao gia</option>
-                <option>Lien he ngay</option>
-              </AdminSelect>
-            </label>
-            <label className="block text-[11px] font-extrabold">
-              Trang thai
-              <AdminSelect value={status} onChange={(event) => setStatus(event.target.value)} className="mt-1">
-                <option>Hien thi</option>
-                <option>An</option>
-              </AdminSelect>
-            </label>
+          <div className="flex gap-2">
+            <AdminPrimaryButton type="button" onClick={() => void handleSave()} disabled={isSubmitting} className="flex-1">
+              {isSubmitting ? "Đang lưu..." : "Lưu"}
+            </AdminPrimaryButton>
+            <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-2xl border border-[#eadfce] bg-white px-4 py-2.5 text-[14px] font-extrabold text-[#101a36]">
+              Hủy
+            </button>
           </div>
-          <div className="grid grid-cols-[1fr_110px] gap-2.5">
-            <div>
-              <p className="text-[11px] font-extrabold">Hinh anh</p>
-              <div className="mt-1 flex items-center gap-2 rounded-2xl border border-[#eadfce] bg-white p-2">
-                <Image
-                  src={banners[0]?.image ?? categoryImages[0]}
-                  alt="Banner preview"
-                  width={72}
-                  height={54}
-                  className="h-12 w-16 rounded-xl object-cover"
-                />
-                <span className="text-[10px] font-extrabold text-slate-600">Anh preview dang duoc map tam tu category.</span>
-              </div>
-            </div>
-            <div>
-              <p className="text-[11px] font-extrabold">Thu tu</p>
-              <div className="mt-1 grid grid-cols-3 overflow-hidden rounded-xl border border-[#eadfce] bg-white text-center">
-                <button type="button" onClick={() => setOrder((value) => Math.max(1, value - 1))} className="py-2 text-sm font-bold text-slate-500">-</button>
-                <span className="border-x border-[#eadfce] py-2 text-[12px] font-extrabold">{order}</span>
-                <button type="button" onClick={() => setOrder((value) => value + 1)} className="py-2 text-sm font-bold text-slate-500">+</button>
-              </div>
-            </div>
-          </div>
-          <AdminStatusBadge tone={status === "Hien thi" ? "success" : "neutral"}>{status}</AdminStatusBadge>
-          <AdminPrimaryButton type="button" onClick={save} className="w-full">Luu thay doi</AdminPrimaryButton>
-        </div>
-      </AdminCard>
+        </AdminCard>
+      ) : null}
     </div>
   );
 }

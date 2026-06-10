@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import type { ProductDto } from "@/lib/api/products";
+import { getMinPrice } from "@/lib/products/display";
 
 type Props = {
   products: ProductDto[];
@@ -19,7 +20,7 @@ export default function SaleProductsSection({ products }: Props) {
     );
   }
 
-  const saleProducts = [...products].sort((left, right) => left.price - right.price).slice(0, 6);
+  const saleProducts = [...products].sort((left, right) => (getMinPrice(left) ?? Infinity) - (getMinPrice(right) ?? Infinity)).slice(0, 6);
 
   return (
     <section className="mobile-section">

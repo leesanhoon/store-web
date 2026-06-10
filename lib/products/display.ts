@@ -1,4 +1,4 @@
-import { ProductDto } from "@/lib/api/products";
+import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 
 export type ProductDisplayInfo = {
   cupType: string;
@@ -31,7 +31,7 @@ export function formatCurrency(value: number) {
 export function normalizeText(value: string) {
   return value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
 }
 
@@ -64,11 +64,40 @@ export function formatCurrencyWithSymbol(value: number) {
   }).format(value);
 }
 
+export function getMinPrice(product: Pick<ProductDto, "variants">): number | null {
+  const prices = (product.variants ?? []).flatMap(v => v.priceTiers.map(t => t.unitPrice));
+  return prices.length > 0 ? Math.min(...prices) : null;
+}
+
+export function getMaxPrice(product: Pick<ProductDto, "variants">): number | null {
+  const prices = (product.variants ?? []).flatMap(v => v.priceTiers.map(t => t.unitPrice));
+  return prices.length > 0 ? Math.max(...prices) : null;
+}
+
+export function getMinMoq(product: Pick<ProductDto, "variants">): number | null {
+  const quantities = (product.variants ?? []).flatMap(v => v.priceTiers.map(t => t.minQuantity));
+  return quantities.length > 0 ? Math.min(...quantities) : null;
+}
+
+export function formatPriceRange(product: Pick<ProductDto, "variants">): string {
+  const min = getMinPrice(product);
+  if (min === null) return "Liên hệ";
+  return `Từ ${formatCurrency(min)}`;
+}
+
+export function getVariantLabel(variant: ProductVariantDto): string {
+  return `${variant.capacityMl}ml - ⌀${variant.diameterMm}mm`;
+}
+
 export function getProductDisplayInfo(
-  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">,
+  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl" | "variants">,
 ): ProductDisplayInfo {
   const text = getProductText(product);
-  const volume = text.match(VOLUME_PATTERN)?.[0].replace(/\s+/g, "") ?? "500ml";
+  const variants = product.variants ?? [];
+
+  const volumeFromVariant = variants[0]?.capacityMl ? `${variants[0].capacityMl}ml` : null;
+  const volume = volumeFromVariant ?? text.match(VOLUME_PATTERN)?.[0].replace(/\s+/g, "") ?? "500ml";
+
   const isPaper = text.includes("giay") || text.includes("paper");
   const isPet = text.includes("pet");
   const isPp = text.includes("pp");
@@ -76,11 +105,14 @@ export function getProductDisplayInfo(
   const isPrint = text.includes(" in ") || text.includes("logo");
   const material = isPaper ? "Giấy" : isPp ? "PP" : isPet ? "PET" : isLid ? "PET" : "PET/PP";
 
+  const minMoq = getMinMoq(product);
+  const minimumQuantity = minMoq ? `Từ ${new Intl.NumberFormat("vi-VN").format(minMoq)}` : isPrint ? "Từ 1.000 ly" : "Từ 1.000";
+
   return {
     cupType: isLid ? "Nắp ly" : isPaper ? "Ly giấy" : isPet ? "Ly nhựa PET" : isPp ? "Ly nhựa PP" : "Ly nhựa/giấy",
     volume,
     unit: text.includes("thung") ? "Thùng" : "Cây hoặc thùng",
-    minimumQuantity: isPrint ? "Từ 1.000 ly" : "Từ 1.000",
+    minimumQuantity,
     printOption: isPrint ? "Có in logo" : "Có/không in",
     material,
     icon: isLid ? "N" : isPaper ? "G" : isPrint ? "I" : "C",
@@ -93,7 +125,7 @@ export function getFeaturedProducts(products: ProductDto[], limit = 4) {
 }
 
 export function getProductVariantLabels(
-  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl">,
+  product: Pick<ProductDto, "name" | "description" | "categoryName" | "avatarImageUrl" | "variants">,
 ) {
   const info = getProductDisplayInfo(product);
 

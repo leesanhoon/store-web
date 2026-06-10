@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getOrders } from "@/lib/api/orders";
 import { getProducts } from "@/lib/api/products";
-import { AdminCard, AdminSectionHeader, AdminStatusBadge, adminFormatMoney } from "@/components/admin/admin-ui";
+import { getLids } from "@/lib/api/lids";
+import { getMinPrice } from "@/lib/products/display";
+import { AdminCard, AdminSectionHeader, adminFormatMoney } from "@/components/admin/admin-ui";
 
 function CalendarIcon() {
   return (
@@ -11,58 +12,31 @@ function CalendarIcon() {
   );
 }
 
-function Donut({ total }: { total: number }) {
-  return (
-    <div className="relative grid h-[116px] w-[116px] shrink-0 place-items-center rounded-full bg-[conic-gradient(#08964f_0_25%,#3b8eed_25%_60%,#f2b431_60%_78%,#f15b2f_78%_100%)]">
-      <div className="grid h-[70px] w-[70px] place-items-center rounded-full bg-white text-center shadow-[0_1px_0_rgba(0,0,0,0.04)]">
-        <div>
-          <p className="text-[13px] font-semibold leading-tight text-[#101a36]">Tong</p>
-          <p className="text-[13px] font-extrabold leading-tight text-[#101a36]">{total} don</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function statusCount(orders: Array<{ status: string }>, needle: string) {
-  return orders.filter((order) => order.status.toLowerCase().includes(needle)).length;
-}
-
 export default async function AdminPage() {
-  const [products, orders] = await Promise.all([
+  const [products, lids] = await Promise.all([
     getProducts().catch(() => []),
-    getOrders().catch(() => []),
+    getLids().catch(() => []),
   ]);
 
-  const productionOrders = statusCount(orders, "san xuat") || statusCount(orders, "production");
-  const deliveredOrders = statusCount(orders, "giao") || statusCount(orders, "delivered");
-  const canceledOrders = statusCount(orders, "huy") || statusCount(orders, "cancel");
-  const pendingOrders = Math.max(orders.length - productionOrders - deliveredOrders - canceledOrders, 0);
-  const estimatedRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const totalForChart = orders.length || deliveredOrders + productionOrders + pendingOrders + canceledOrders || 1;
+  const productsWithVariants = products.filter((p) => p.variants.length > 0);
+  const productsWithoutPrice = products.filter((p) => getMinPrice(p) === null);
+  const productsWithoutImage = products.filter((p) => !p.avatarImageUrl);
 
   const stats = [
-    { label: "Tong san pham", value: products.length.toString(), delta: products.length ? "Du lieu API" : "Chua co du lieu", suffix: "SP" },
-    { label: "Yeu cau moi", value: pendingOrders.toString(), delta: pendingOrders ? "Can xu ly" : "Khong co yeu cau", suffix: "yeu cau" },
-    { label: "Don dang san xuat", value: productionOrders.toString(), delta: productionOrders ? "Theo API don hang" : "Chua co don", suffix: "don hang" },
-    { label: "Doanh thu tam tinh", value: adminFormatMoney(estimatedRevenue), delta: estimatedRevenue ? "Tu don hang hien co" : "Chua phat sinh", suffix: "" },
-  ];
-
-  const orderStatus = [
-    { name: "Da giao hang", value: deliveredOrders, color: "bg-emerald-600" },
-    { name: "Dang san xuat", value: productionOrders, color: "bg-blue-500" },
-    { name: "Cho xac nhan", value: pendingOrders, color: "bg-amber-400" },
-    { name: "Da huy", value: canceledOrders, color: "bg-orange-500" },
+    { label: "Tổng sản phẩm", value: products.length.toString(), delta: products.length ? "Dữ liệu API" : "Chưa có dữ liệu", suffix: "SP" },
+    { label: "Có biến thể", value: productsWithVariants.length.toString(), delta: productsWithVariants.length ? "Đã cấu hình giá" : "Chưa có", suffix: "SP" },
+    { label: "Tổng nắp", value: lids.length.toString(), delta: lids.length ? "Dữ liệu API" : "Chưa có dữ liệu", suffix: "loại" },
+    { label: "Thiếu giá/ảnh", value: String(productsWithoutPrice.length + productsWithoutImage.length), delta: "Cần bổ sung", suffix: "SP" },
   ];
 
   return (
     <div className="space-y-3 text-[#101a36]">
       <AdminSectionHeader
-        title="Dashboard tong quan"
+        title="Dashboard tổng quan"
         action={
           <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[13px] border border-[#eadfce] bg-white px-3 text-[13px] font-bold text-[#1f2f46] shadow-sm">
             <CalendarIcon />
-            Hom nay
+            Hôm nay
             <span aria-hidden="true" className="text-xl leading-none">›</span>
           </button>
         }
@@ -85,69 +59,52 @@ export default async function AdminPage() {
 
       <section className="grid grid-cols-3 gap-2.5">
         <Link href="/admin/product?mode=create" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Them san pham
+          Thêm sản phẩm
         </Link>
-        <Link href="/admin/order?view=quotes" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Bao gia moi
+        <Link href="/admin/lid?mode=create" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
+          Thêm nắp
         </Link>
-        <Link href="/admin/order" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
-          Don can xu ly
+        <Link href="/admin/category" className="rounded-[16px] border border-[#eadfce] bg-white p-3 text-center text-[11px] font-extrabold text-[#101a36] shadow-sm">
+          Quản lý danh mục
         </Link>
       </section>
 
       <AdminCard className="p-3.5">
-        <h2 className="text-[17px] font-extrabold">Tinh trang don hang</h2>
-        <div className="mt-3 flex items-center gap-3.5">
-          <Donut total={orders.length} />
-          <div className="min-w-0 flex-1 space-y-2.5">
-            {orderStatus.map((item) => {
-              const percent = orders.length ? Math.round((item.value / totalForChart) * 100) : 0;
-              return (
-                <div key={item.name} className="grid grid-cols-[10px_1fr_auto] items-center gap-2 text-[12px]">
-                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                  <span className="truncate font-semibold text-[#3d4860]">{item.name}</span>
-                  <span className="font-bold text-[#101a36]">{item.value}{orders.length ? ` (${percent}%)` : ""}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </AdminCard>
-
-      <AdminCard className="p-3.5">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-[17px] font-extrabold">Yeu cau bao gia moi</h2>
-          <Link href="/admin/order?view=quotes" className="text-[12px] font-extrabold text-emerald-700">Xem tat ca</Link>
-        </div>
-        {orders.length === 0 ? (
+        <h2 className="text-[17px] font-extrabold">Sản phẩm gần đây</h2>
+        {products.length === 0 ? (
           <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white px-3 py-4 text-center text-[12px] font-semibold text-slate-500">
-            Chua co yeu cau bao gia nao.
+            Chưa có sản phẩm nào.
           </div>
         ) : (
           <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white">
-            {orders.slice(0, 3).map((order) => (
-              <article key={order.id} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0">
-                <p className="min-w-0 text-[13px] font-extrabold text-[#101a36]">{`RQ250520-${String(order.id).slice(-3).padStart(3, "0")}`}</p>
-                <p className="whitespace-nowrap text-right text-[12px] font-semibold text-[#1f2f46]">{adminFormatMoney(order.totalAmount)}</p>
-                <div className="min-w-0">
-                  <p className="truncate text-[12px] font-bold text-[#101a36]">{order.customerName || "Khach hang"}</p>
-                  <p className="mt-0.5 text-[12px] font-semibold text-[#3d4860]">{order.status}</p>
-                </div>
-                <div className="justify-self-end"><AdminStatusBadge tone="warning">Moi</AdminStatusBadge></div>
-              </article>
-            ))}
+            {products.slice(0, 5).map((product) => {
+              const minPrice = getMinPrice(product);
+              return (
+                <article key={product.id} className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0">
+                  <p className="min-w-0 truncate text-[13px] font-extrabold text-[#101a36]">{product.name}</p>
+                  <p className="whitespace-nowrap text-right text-[12px] font-semibold text-[#1f2f46]">
+                    {minPrice !== null ? adminFormatMoney(minPrice) : "Chưa có giá"}
+                  </p>
+                  <p className="text-[12px] font-semibold text-[#3d4860]">{product.categoryName}</p>
+                  <p className="text-right text-[11px] font-semibold text-slate-500">
+                    {product.variants.length} biến thể
+                  </p>
+                </article>
+              );
+            })}
           </div>
         )}
       </AdminCard>
 
-      <AdminCard className="border-amber-200 bg-amber-50 p-3.5">
-        <h2 className="text-[14px] font-extrabold text-[#101a36]">Canh bao van hanh</h2>
-        <ul className="mt-2 space-y-1.5 text-[12px] font-semibold text-[#3d4860]">
-          <li>{pendingOrders} bao gia can kiem tra trong hom nay.</li>
-          <li>{productionOrders} don dang trong quy trinh san xuat.</li>
-          <li>{products.filter((product) => !product.avatarImageUrl || product.price <= 0).length} san pham thieu anh hoac gia ban.</li>
-        </ul>
-      </AdminCard>
+      {(productsWithoutPrice.length > 0 || productsWithoutImage.length > 0) ? (
+        <AdminCard className="border-amber-200 bg-amber-50 p-3.5">
+          <h2 className="text-[14px] font-extrabold text-[#101a36]">Cảnh báo vận hành</h2>
+          <ul className="mt-2 space-y-1.5 text-[12px] font-semibold text-[#3d4860]">
+            {productsWithoutPrice.length > 0 ? <li>{productsWithoutPrice.length} sản phẩm chưa có bảng giá (biến thể).</li> : null}
+            {productsWithoutImage.length > 0 ? <li>{productsWithoutImage.length} sản phẩm thiếu ảnh đại diện.</li> : null}
+          </ul>
+        </AdminCard>
+      ) : null}
     </div>
   );
 }

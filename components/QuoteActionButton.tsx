@@ -3,13 +3,6 @@
 import { useTransition } from "react";
 import type { ReactNode } from "react";
 import { createQuoteRequest, CartItem } from "@/lib/cart";
-import { createOrder } from "@/lib/api/orders";
-
-function mapCartItems(items: CartItem[]) {
-  return items
-    .filter((item) => item.productId > 0)
-    .map((item) => ({ productId: item.productId, materialId: null, printTypeId: null, quantity: item.quantity, unitPrice: item.price }));
-}
 
 type Props = {
   fullName: string;
@@ -30,14 +23,6 @@ export default function QuoteActionButton({ fullName, phone, businessName, note,
       disabled={isPending}
       onClick={() => startTransition(async () => {
         createQuoteRequest({ fullName, phone, businessName, note, items });
-        const apiItems = mapCartItems(items);
-        if (apiItems.length > 0) {
-          try {
-            await createOrder({ customerName: fullName, customerPhone: phone, customerEmail: null, note: `${businessName ? `Doanh nghiệp: ${businessName}. ` : ""}${note}`.trim(), items: apiItems });
-          } catch {
-            // Gmail/local quote flow should still work when backend order creation is unavailable.
-          }
-        }
         const subject = encodeURIComponent("Yêu cầu báo giá ly in");
         const body = encodeURIComponent([`Họ tên: ${fullName}`, `SĐT: ${phone}`, `Doanh nghiệp: ${businessName}`, `Ghi chú: ${note}`, `---`, ...items.map((item) => `${item.name} x ${item.quantity}`)].join("\n"));
         window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`, "_blank", "noreferrer");

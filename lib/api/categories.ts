@@ -2,14 +2,20 @@ import { apiClient, buildPaginationQuery, type PaginatedResponse, type Paginatio
 
 export type CreateCategoryPayload = {
     name: string;
-    description: string;
+    description?: string;
+    parentId?: number | null;
 };
 
 export type CategoryDto = {
     id: number;
     name: string;
     description: string;
-    products: unknown[];
+    parentId: number | null;
+    isRoot: boolean;
+};
+
+export type CategoryTreeNode = CategoryDto & {
+    children: CategoryTreeNode[];
 };
 
 type CollectionResponse<T> = T[] | {
@@ -42,16 +48,20 @@ export async function getCategories(params?: PaginationParams) {
     return unwrapCollection(response);
 }
 
+export async function getCategoryTree(): Promise<CategoryTreeNode[]> {
+    return apiClient.get<CategoryTreeNode[]>("/api/v1/Categories/tree");
+}
+
 export async function getCategory(id: number) {
     return apiClient.get<CategoryDto>(`/api/v1/Categories/${id}`);
 }
 
 export async function createCategory(payload: CreateCategoryPayload) {
-    return apiClient.post<string, CreateCategoryPayload>("/api/v1/Categories", payload);
+    return apiClient.post<CategoryDto, CreateCategoryPayload>("/api/v1/Categories", payload);
 }
 
 export async function updateCategory(id: number, payload: CreateCategoryPayload) {
-    return apiClient.put<string, CreateCategoryPayload>(`/api/v1/Categories/${id}`, payload);
+    return apiClient.put<unknown, CreateCategoryPayload>(`/api/v1/Categories/${id}`, payload);
 }
 
 export async function deleteCategory(id: number) {

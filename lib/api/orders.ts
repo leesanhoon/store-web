@@ -1,4 +1,5 @@
-import { apiClient, buildPaginationQuery, type PaginatedResponse, type PaginationParams } from "@/lib/api/http";
+// Orders API has been removed in backend v1.0. This module is a stub.
+// Types are kept for backward compatibility during transition.
 
 export type OrderSummaryDto = {
     id: number;
@@ -55,35 +56,26 @@ export const ORDER_STATUS_TRANSITIONS: Record<string, OrderStatus[]> = {
     cancelled: [],
 };
 
-type CollectionResponse<T> = T[] | { items?: T[]; value?: T[]; Value?: T[]; totalCount?: number; page?: number; pageSize?: number };
-
-function unwrapCollection<T>(response: CollectionResponse<T>) {
-    return Array.isArray(response) ? response : response.items ?? response.value ?? response.Value ?? [];
+function removedError(): never {
+    throw new Error("Orders API removed in v1.0. This feature will be redesigned in a future version.");
 }
 
-export async function getOrders(): Promise<OrderSummaryDto[]>;
-export async function getOrders(params: PaginationParams): Promise<PaginatedResponse<OrderSummaryDto>>;
-export async function getOrders(params?: PaginationParams) {
-    const query = buildPaginationQuery(params);
-    const response = await apiClient.get<CollectionResponse<OrderSummaryDto>>(`/api/v1/Orders${query}`);
-    if (params?.page && !Array.isArray(response)) {
-        return response as PaginatedResponse<OrderSummaryDto>;
-    }
-    return unwrapCollection(response);
+export async function getOrders(): Promise<OrderSummaryDto[]> {
+    return removedError();
 }
 
-export async function getOrder(id: number) {
-    return apiClient.get<OrderDetailDto>(`/api/v1/Orders/${id}`);
+export async function getOrder(_id: number): Promise<OrderDetailDto> {
+    return removedError();
 }
 
-export async function createOrder(payload: CreateOrderRequest) {
-    return apiClient.post<unknown, CreateOrderRequest>("/api/v1/Orders", payload);
+export async function createOrder(_payload: CreateOrderRequest): Promise<unknown> {
+    return removedError();
 }
 
-export async function updateOrderStatus(id: number, status: OrderStatus) {
-    return apiClient.put<{ status: string }, { status: string }>(`/api/v1/Orders/${id}/status`, { status });
+export async function updateOrderStatus(_id: number, _status: OrderStatus): Promise<unknown> {
+    return removedError();
 }
 
-export async function deleteOrder(id: number) {
-    return apiClient.delete<unknown>(`/api/v1/Orders/${id}`, { headers: { accept: "*/*" } });
+export async function deleteOrder(_id: number): Promise<unknown> {
+    return removedError();
 }

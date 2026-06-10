@@ -1,4 +1,4 @@
-﻿import { apiClient, buildPaginationQuery, type PaginatedResponse, type PaginationParams } from "@/lib/api/http";
+import { apiClient, buildPaginationQuery, type PaginatedResponse, type PaginationParams } from "@/lib/api/http";
 
 export type ProductGalleryImageDto = {
     id: number;
@@ -8,29 +8,62 @@ export type ProductGalleryImageDto = {
     createdAtUtc: string;
 };
 
+export type PriceTierDto = {
+    id: number;
+    minQuantity: number;
+    unitPrice: number;
+};
+
+export type ProductVariantDto = {
+    id: number;
+    capacityMl: number;
+    diameterMm: number;
+    priceTiers: PriceTierDto[];
+};
+
+export type ProductLidLinkDto = {
+    id: number;
+    lidId: number;
+    lidName: string;
+};
+
 export type ProductDto = {
     id: number;
     name: string;
     description: string | null;
-    price: number;
-    stockQuantity: number;
     categoryId: number;
     categoryName: string;
     avatarImageUrl?: string | null;
     galleryImages?: ProductGalleryImageDto[];
+    variants: ProductVariantDto[];
+    lids: ProductLidLinkDto[];
+};
+
+export type CreateProductVariant = {
+    capacityMl: number;
+    diameterMm: number;
+    priceTiers: Array<{ minQuantity: number; unitPrice: number }>;
 };
 
 export type CreateProductPayload = {
     name: string;
     description?: string;
-    price: number;
-    stockQuantity: number;
     categoryId: number;
+    variants: CreateProductVariant[];
+    lidIds?: number[];
 };
 
 export type ProductUploadPayload = CreateProductPayload & {
     avatarImage?: File | null;
     galleryImages?: File[];
+};
+
+export type UpdateProductPayload = {
+    name: string;
+    description?: string;
+    categoryId: number;
+    variants: CreateProductVariant[];
+    lidIds?: number[];
 };
 
 type CollectionResponse<T> = T[] | { items?: T[]; value?: T[]; Value?: T[]; totalCount?: number; page?: number; pageSize?: number };
@@ -42,7 +75,13 @@ function unwrapCollection<T>(response: CollectionResponse<T>) {
 }
 
 function normalizeProduct(product: ProductDto): ProductDto {
-    return { ...product, description: product.description ?? "", categoryName: product.categoryName ?? "" };
+    return {
+        ...product,
+        description: product.description ?? "",
+        categoryName: product.categoryName ?? "",
+        variants: product.variants ?? [],
+        lids: product.lids ?? [],
+    };
 }
 
 function getFileExtension(fileName: string) {
@@ -67,9 +106,15 @@ function toFormData(payload: ProductUploadPayload) {
         formData.append("Description", payload.description.trim());
     }
 
-    formData.append("Price", String(payload.price));
-    formData.append("StockQuantity", String(payload.stockQuantity));
     formData.append("CategoryId", String(payload.categoryId));
+
+    formData.append("Variants", JSON.stringify(payload.variants));
+
+    if (payload.lidIds) {
+        for (const lidId of payload.lidIds) {
+            formData.append("LidIds", String(lidId));
+        }
+    }
 
     if (payload.avatarImage) {
         formData.append("AvatarImage", payload.avatarImage);
@@ -117,12 +162,28 @@ export async function createProduct(payload: ProductUploadPayload) {
     return normalizeProduct(product);
 }
 
-export type UpdateProductPayload = Required<CreateProductPayload>;
-
 export async function updateProduct(id: number, payload: UpdateProductPayload) {
     return apiClient.put<unknown, UpdateProductPayload>(`/api/v1/Products/${id}`, payload);
 }
 
 export async function deleteProduct(id: number) {
     return apiClient.delete<unknown>(`/api/v1/Products/${id}`, { headers: { accept: "*/*" } });
+}
+
+export type CompatibleLidDto = {
+    id: number;
+    name: string;
+    description: string | null;
+    categoryId: number;
+    categoryName: string;
+    prices: Array<{
+        id: number;
+        diameterMm: number;
+        sizeName: string;
+        unitPrice: number;
+    }>;
+};
+
+export async function getCompatibleLids(productId: number) {
+    return apiClient.get<CompatibleLidDto[]>(`/api/v1/Products/${productId}/compatible-lids`);
 }
