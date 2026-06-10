@@ -6,6 +6,11 @@ export type CartConfiguration = {
   material: string;
   printMethod: string;
   lidOption?: string;
+  lidId?: number;
+  lidName?: string;
+  lidPriceId?: number;
+  lidDiameterMm?: number;
+  lidUnitPrice?: number;
   note?: string;
 };
 
@@ -103,6 +108,8 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "conf
     config.material,
     config.printMethod,
     config.lidOption,
+    config.lidId ?? "",
+    config.lidPriceId ?? "",
     config.note,
     (item as CartItem).variantId ?? "",
     (item as CartItem).capacityMl ?? "",

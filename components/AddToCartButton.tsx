@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
+import type { CompatibleLidDto, ProductVariantDto } from "@/lib/api/products";
 import type { CartUnit } from "@/lib/cart";
 
 type Props = {
@@ -9,6 +10,8 @@ type Props = {
   name: string;
   price: number;
   categoryName: string;
+  variants?: ProductVariantDto[];
+  compatibleLids?: CompatibleLidDto[];
   unit?: CartUnit;
   quantity?: number;
   label?: string;
@@ -20,6 +23,8 @@ export default function AddToCartButton({
   name,
   price,
   categoryName,
+  variants,
+  compatibleLids,
   unit = "cay",
   quantity = 1000,
   label = "Thêm vào giỏ",
@@ -38,6 +43,8 @@ export default function AddToCartButton({
           name,
           price,
           categoryName,
+          variants,
+          compatibleLids,
           unit,
           imageSrc,
           defaultQuantity: quantity,

@@ -4,21 +4,29 @@ import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { MinusIcon, PlusIcon } from "@/components/mobile-store/icons";
-import { addToCart, CartConfiguration, CartUnit, defaultCartConfiguration } from "@/lib/cart";
-import { formatCurrency } from "@/lib/products/display";
+import type { CompatibleLidDto, PriceTierDto, ProductVariantDto } from "@/lib/api/products";
+import {
+  addToCart,
+  CartConfiguration,
+  CartUnit,
+  defaultCartConfiguration,
+} from "@/lib/cart";
+import { formatCurrency, getVariantLabel } from "@/lib/products/display";
 
 const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
-const lidOptions = ["Không nắp", "Nắp bằng", "Nắp cầu"];
 
 type CartProduct = {
   productId: number;
   name: string;
   price: number;
   categoryName: string;
+  variants?: ProductVariantDto[];
+  compatibleLids?: CompatibleLidDto[];
   unit?: CartUnit;
   defaultQuantity?: number;
   imageSrc?: string | null;
 };
+
 type OpenPayload = CartProduct & { anchorRect?: DOMRect | null };
 type FlyToken = { id: number; name: string; fromX: number; fromY: number; toX: number; toY: number };
 
@@ -34,17 +42,31 @@ export function useCartConfigurator() {
 type ConfigState = CartConfiguration & { quantity: number };
 const initialConfiguration: ConfigState = { ...defaultCartConfiguration, quantity: 1000 };
 
+function getFirstPriceTier(variant?: ProductVariantDto | null) {
+  return variant?.priceTiers?.[0] ?? null;
+}
+
+function getPriceTierForQuantity(variant: ProductVariantDto | null, quantity: number) {
+  if (!variant?.priceTiers?.length) return null;
+
+  return variant.priceTiers.reduce<PriceTierDto | null>((selected, tier) => {
+    if (quantity < tier.minQuantity) return selected;
+    if (!selected || tier.minQuantity > selected.minQuantity) return tier;
+    return selected;
+  }, null) ?? getFirstPriceTier(variant);
+}
+
 function inferCupModel(product?: OpenPayload | null) {
   const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
   if (text.includes("pp")) return "PP";
-  if (text.includes("giấy") || text.includes("giay")) return "Ly giấy";
+  if (text.includes("giay") || text.includes("giấy")) return "Ly giay";
   return "PET";
 }
 
 function inferMaterial(product?: OpenPayload | null) {
   const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
   if (text.includes("pp")) return "PP";
-  if (text.includes("giấy") || text.includes("giay")) return "Giấy";
+  if (text.includes("giay") || text.includes("giấy")) return "Giay";
   return "PET";
 }
 
@@ -57,19 +79,51 @@ export default function CartConfiguratorProvider({ children }: { children: React
   const [isOpen, setIsOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState<OpenPayload | null>(null);
   const [configuration, setConfiguration] = useState<ConfigState>(initialConfiguration);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [selectedTierMinQuantity, setSelectedTierMinQuantity] = useState<number | null>(null);
+  const [selectedLidId, setSelectedLidId] = useState<number | null>(null);
+  const [selectedLidPriceId, setSelectedLidPriceId] = useState<number | null>(null);
   const [flyToken, setFlyToken] = useState<FlyToken | null>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const flyTokenIdRef = useRef(0);
+
+  const selectedVariant =
+    activeProduct?.variants?.find((variant) => variant.id === selectedVariantId) ??
+    activeProduct?.variants?.[0] ??
+    null;
+  const selectedTier =
+    selectedVariant?.priceTiers.find((tier) => tier.minQuantity === selectedTierMinQuantity) ??
+    getPriceTierForQuantity(selectedVariant, configuration.quantity);
+  const activeUnitPrice = selectedTier?.unitPrice ?? activeProduct?.price ?? 0;
+
+  const selectedLid = activeProduct?.compatibleLids?.find((lid) => lid.id === selectedLidId) ?? null;
+  const selectedLidPrice = selectedLid?.prices.find((p) => p.id === selectedLidPriceId) ?? null;
+  const lidUnitPrice = selectedLidPrice?.unitPrice ?? 0;
+  const totalUnitPrice = activeUnitPrice + lidUnitPrice;
+
+  const getMatchingLidPrices = (lid: CompatibleLidDto) => {
+    if (!selectedVariant) return lid.prices;
+    return lid.prices.filter((p) => p.diameterMm === selectedVariant.diameterMm);
+  };
 
   const openConfigurator = (product: OpenPayload) => {
+    const firstVariant = product.variants?.[0] ?? null;
+    const firstTier = getFirstPriceTier(firstVariant);
+    const quantity = product.defaultQuantity ?? firstTier?.minQuantity ?? 1000;
+
     setActiveProduct(product);
+    setSelectedVariantId(firstVariant?.id ?? null);
+    setSelectedTierMinQuantity(firstTier?.minQuantity ?? null);
+    setSelectedLidId(null);
+    setSelectedLidPriceId(null);
     setConfiguration({
-      cupModel: inferCupModel(product),
-      size: inferSize(product),
+      cupModel: firstVariant ? `${firstVariant.capacityMl}ml - ${firstVariant.diameterMm}mm` : inferCupModel(product),
+      size: firstVariant ? `${firstVariant.capacityMl}ml` : inferSize(product),
       material: inferMaterial(product),
       printMethod: "Không in",
       lidOption: "Không nắp",
       note: "",
-      quantity: product.defaultQuantity ?? 1000,
+      quantity,
     });
     setIsOpen(true);
   };
@@ -82,24 +136,94 @@ export default function CartConfiguratorProvider({ children }: { children: React
   const setQuantity = (value: number) =>
     setConfiguration((current) => ({ ...current, quantity: Math.max(100, value) }));
 
+  const selectVariant = (variant: ProductVariantDto) => {
+    const firstTier = getFirstPriceTier(variant);
+
+    setSelectedVariantId(variant.id);
+    setSelectedTierMinQuantity(firstTier?.minQuantity ?? null);
+    setSelectedLidPriceId(null);
+    setConfiguration((current) => ({
+      ...current,
+      cupModel: `${variant.capacityMl}ml - ${variant.diameterMm}mm`,
+      size: `${variant.capacityMl}ml`,
+      quantity: Math.max(current.quantity, firstTier?.minQuantity ?? current.quantity),
+      lidPriceId: undefined,
+      lidDiameterMm: undefined,
+      lidUnitPrice: undefined,
+    }));
+  };
+
+  const selectPriceTier = (tier: PriceTierDto) => {
+    setSelectedTierMinQuantity(tier.minQuantity);
+    setConfiguration((current) => ({
+      ...current,
+      quantity: Math.max(current.quantity, tier.minQuantity),
+    }));
+  };
+
+  const selectLid = (lid: CompatibleLidDto | null) => {
+    if (!lid) {
+      setSelectedLidId(null);
+      setSelectedLidPriceId(null);
+      setConfiguration((current) => ({
+        ...current,
+        lidOption: "Không nắp",
+        lidId: undefined,
+        lidName: undefined,
+        lidPriceId: undefined,
+        lidDiameterMm: undefined,
+        lidUnitPrice: undefined,
+      }));
+      return;
+    }
+    setSelectedLidId(lid.id);
+    const matching = getMatchingLidPrices(lid);
+    const firstPrice = matching[0] ?? null;
+    setSelectedLidPriceId(firstPrice?.id ?? null);
+    setConfiguration((current) => ({
+      ...current,
+      lidOption: lid.name,
+      lidId: lid.id,
+      lidName: lid.name,
+      lidPriceId: firstPrice?.id,
+      lidDiameterMm: firstPrice?.diameterMm,
+      lidUnitPrice: firstPrice?.unitPrice,
+    }));
+  };
+
+  const selectLidPrice = (price: CompatibleLidDto["prices"][number]) => {
+    setSelectedLidPriceId(price.id);
+    setConfiguration((current) => ({
+      ...current,
+      lidPriceId: price.id,
+      lidDiameterMm: price.diameterMm,
+      lidUnitPrice: price.unitPrice,
+    }));
+  };
+
   const handleConfirm = () => {
     if (!activeProduct) return;
 
     addToCart({
       productId: activeProduct.productId,
       name: activeProduct.name,
-      price: activeProduct.price,
+      price: activeUnitPrice,
       categoryName: activeProduct.categoryName,
       unit: activeProduct.unit ?? "cay",
       quantity: configuration.quantity,
       imageSrc: activeProduct.imageSrc,
       configuration,
+      variantId: selectedVariant?.id,
+      capacityMl: selectedVariant?.capacityMl,
+      diameterMm: selectedVariant?.diameterMm,
+      priceTierMinQuantity: selectedTier?.minQuantity,
     });
 
     const rect = confirmRef.current?.getBoundingClientRect();
     if (activeProduct.anchorRect && rect) {
+      flyTokenIdRef.current += 1;
       setFlyToken({
-        id: Date.now(),
+        id: flyTokenIdRef.current,
         name: activeProduct.name,
         fromX: activeProduct.anchorRect.left + activeProduct.anchorRect.width / 2,
         fromY: activeProduct.anchorRect.top + activeProduct.anchorRect.height / 2,
@@ -138,10 +262,55 @@ export default function CartConfiguratorProvider({ children }: { children: React
               </div>
               <div>
                 <h2>{activeProduct.name}</h2>
-                <p className="sheet-price">Từ {formatCurrency(activeProduct.price)}</p>
-                <p className="sheet-moq">MOQ 1.000</p>
+                <p className="sheet-price">{formatCurrency(totalUnitPrice)} / ly</p>
+                <p className="sheet-moq">
+                  MOQ {new Intl.NumberFormat("vi-VN").format(selectedTier?.minQuantity ?? 1000)}
+                </p>
               </div>
             </div>
+
+            <div className="sheet-specs-row">
+              <span>{inferSize(activeProduct)}</span>
+              <span>{inferMaterial(activeProduct)}</span>
+            </div>
+
+            {activeProduct.variants?.length ? (
+              <div className="sheet-control-group">
+                <h3>Biến thể</h3>
+                <div className="sheet-variant-options">
+                  {activeProduct.variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => selectVariant(variant)}
+                      className={selectedVariant?.id === variant.id ? "active" : undefined}
+                    >
+                      <strong>{getVariantLabel(variant)}</strong>
+                      <span>Từ {formatCurrency(getFirstPriceTier(variant)?.unitPrice ?? activeProduct.price)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {selectedVariant?.priceTiers?.length ? (
+              <div className="sheet-control-group">
+                <h3>Bậc giá</h3>
+                <div className="sheet-tier-options">
+                  {selectedVariant.priceTiers.map((tier) => (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => selectPriceTier(tier)}
+                      className={selectedTier?.id === tier.id ? "active" : undefined}
+                    >
+                      <span>Từ {new Intl.NumberFormat("vi-VN").format(tier.minQuantity)} ly</span>
+                      <strong>{formatCurrency(tier.unitPrice)}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="sheet-control-group">
               <h3>Số lượng</h3>
@@ -162,12 +331,52 @@ export default function CartConfiguratorProvider({ children }: { children: React
               value={configuration.printMethod}
               onChange={(value) => updateConfiguration("printMethod", value)}
             />
-            <OptionGroup
-              label="Nắp đi kèm"
-              options={lidOptions}
-              value={configuration.lidOption ?? "Không nắp"}
-              onChange={(value) => updateConfiguration("lidOption", value)}
-            />
+
+            <div className="sheet-control-group">
+              <h3>Nắp đi kèm</h3>
+              <div className="sheet-segmented-options sheet-lid-options">
+                <button
+                  type="button"
+                  onClick={() => selectLid(null)}
+                  className={!selectedLidId ? "active" : undefined}
+                >
+                  Không nắp
+                </button>
+                {(activeProduct.compatibleLids ?? []).map((lid) => (
+                  <button
+                    key={lid.id}
+                    type="button"
+                    onClick={() => selectLid(lid)}
+                    className={selectedLidId === lid.id ? "active" : undefined}
+                  >
+                    {lid.name}
+                  </button>
+                ))}
+              </div>
+              {selectedLid && getMatchingLidPrices(selectedLid).length > 0 ? (
+                <div className="sheet-tier-options">
+                  {getMatchingLidPrices(selectedLid).map((price) => (
+                    <button
+                      key={price.id}
+                      type="button"
+                      onClick={() => selectLidPrice(price)}
+                      className={selectedLidPriceId === price.id ? "active" : undefined}
+                    >
+                      <span>{price.sizeName || `${price.diameterMm}mm`}</span>
+                      <strong>{formatCurrency(price.unitPrice)}</strong>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            {lidUnitPrice > 0 ? (
+              <div className="sheet-price-breakdown">
+                <div><span>Ly</span><span>{formatCurrency(activeUnitPrice)}</span></div>
+                <div><span>+ Nắp ({selectedLid?.name})</span><span>{formatCurrency(lidUnitPrice)}</span></div>
+                <div className="total"><span>Tổng/ly</span><strong>{formatCurrency(totalUnitPrice)}</strong></div>
+              </div>
+            ) : null}
 
             <label className="sheet-note">
               <span>Ghi chú</span>
@@ -180,7 +389,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
             </label>
 
             <button ref={confirmRef} type="button" onClick={handleConfirm} className="sheet-submit">
-              Thêm vào yêu cầu
+              Thêm vào yêu cầu - {formatCurrency(totalUnitPrice * configuration.quantity)}
             </button>
           </section>
         </div>
