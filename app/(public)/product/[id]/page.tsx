@@ -175,7 +175,7 @@ export default async function ProductDetailPage({
                         variants={product.variants}
                         compatibleLids={compatibleLids}
                         imageSrc={imageSrc}
-                        label="Yêu cầu báo giá"
+                        label="Thêm vào giỏ hàng"
                     />
                 </div>
             </div>

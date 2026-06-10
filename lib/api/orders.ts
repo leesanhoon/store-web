@@ -56,26 +56,8 @@ export const ORDER_STATUS_TRANSITIONS: Record<string, OrderStatus[]> = {
     cancelled: [],
 };
 
-function removedError(): never {
-    throw new Error("Orders API removed in v1.0. This feature will be redesigned in a future version.");
-}
+import { apiClient } from "@/lib/api/http";
 
-export async function getOrders(): Promise<OrderSummaryDto[]> {
-    return removedError();
-}
-
-export async function getOrder(_id: number): Promise<OrderDetailDto> {
-    return removedError();
-}
-
-export async function createOrder(_payload: CreateOrderRequest): Promise<unknown> {
-    return removedError();
-}
-
-export async function updateOrderStatus(_id: number, _status: OrderStatus): Promise<unknown> {
-    return removedError();
-}
-
-export async function deleteOrder(_id: number): Promise<unknown> {
-    return removedError();
+export async function createOrder(payload: CreateOrderRequest): Promise<OrderDetailDto> {
+    return apiClient.post<OrderDetailDto, CreateOrderRequest>("/api/orders", payload);
 }

@@ -389,7 +389,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
             </label>
 
             <button ref={confirmRef} type="button" onClick={handleConfirm} className="sheet-submit">
-              Thêm vào yêu cầu - {formatCurrency(totalUnitPrice * configuration.quantity)}
+              Thêm vào giỏ hàng - {formatCurrency(totalUnitPrice * configuration.quantity)}
             </button>
           </section>
         </div>
