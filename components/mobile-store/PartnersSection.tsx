@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronRightIcon } from "@/components/mobile-store/icons";
 import type { PartnerDto } from "@/lib/api/partners";
 
 type Props = {
@@ -9,39 +10,39 @@ type Props = {
 type DisplayPartner = {
     id: number | string;
     name: string;
-    subtitle: string;
-    avatarUrl: string | null;
+    imageUrl: string | null;
     href: string;
+    imageCount: number;
 };
 
 const DEMO_PARTNERS: DisplayPartner[] = [
     {
         id: "phuc-long",
         name: "Phúc Long",
-        subtitle: "Chuỗi cafe & trà",
-        avatarUrl: null,
+        imageUrl: null,
         href: "/products",
+        imageCount: 0,
     },
     {
         id: "daily-bean",
         name: "Daily Bean",
-        subtitle: "Coffee kiosk",
-        avatarUrl: null,
+        imageUrl: null,
         href: "/products",
+        imageCount: 0,
     },
     {
         id: "milk-lab",
         name: "Milk Lab",
-        subtitle: "Trà sữa & dessert",
-        avatarUrl: null,
+        imageUrl: null,
         href: "/products",
+        imageCount: 0,
     },
     {
         id: "brew-corner",
         name: "Brew Corner",
-        subtitle: "Specialty coffee",
-        avatarUrl: null,
+        imageUrl: null,
         href: "/products",
+        imageCount: 0,
     },
 ];
 
@@ -55,13 +56,21 @@ function getInitials(name: string) {
 }
 
 function toDisplayPartners(partners: PartnerDto[]): DisplayPartner[] {
-    return partners.map((p) => ({
-        id: p.id,
-        name: p.name,
-        subtitle: p.description ?? p.address,
-        avatarUrl: p.avatarImageUrl,
-        href: `/partner/${p.id}`,
-    }));
+    return partners.map((p) => {
+        const firstGallery =
+            p.galleryImages.length > 0
+                ? [...p.galleryImages].sort(
+                      (a, b) => a.displayOrder - b.displayOrder,
+                  )[0].imageUrl
+                : null;
+        return {
+            id: p.id,
+            name: p.name,
+            imageUrl: firstGallery ?? p.avatarImageUrl,
+            href: `/partner/${p.id}`,
+            imageCount: p.galleryImages.length,
+        };
+    });
 }
 
 export default function PartnersSection({ partners }: Props) {
@@ -75,32 +84,43 @@ export default function PartnersSection({ partners }: Props) {
                 <Link href="/products">Xem sản phẩm</Link>
             </div>
 
-            <div className="partners-scroll" aria-label="Đối tác nổi bật">
+            <div className="partners-grid" aria-label="Đối tác nổi bật">
                 {items.map((item) => (
                     <Link
                         key={item.id}
                         href={item.href}
-                        className="partner-card"
+                        className="partner-tile"
                     >
-                        <div className="partner-avatar-shell">
-                            <div className="partner-avatar-core">
-                                {item.avatarUrl ? (
+                        <div className="partner-tile-shell">
+                            <div className="partner-tile-image">
+                                {item.imageUrl ? (
                                     <Image
-                                        src={item.avatarUrl}
-                                        alt={item.name}
-                                        width={96}
-                                        height={96}
-                                        className="partner-avatar-img"
+                                        src={item.imageUrl}
+                                        alt={`Sản phẩm ${item.name}`}
+                                        width={400}
+                                        height={300}
+                                        className="partner-tile-img"
                                     />
                                 ) : (
-                                    <span className="partner-avatar-initials">
-                                        {getInitials(item.name)}
-                                    </span>
+                                    <div className="partner-tile-placeholder">
+                                        <span>{getInitials(item.name)}</span>
+                                    </div>
                                 )}
+                                {item.imageCount > 0 ? (
+                                    <span className="partner-tile-badge">
+                                        {item.imageCount} ảnh
+                                    </span>
+                                ) : null}
+                            </div>
+                            <div className="partner-tile-footer">
+                                <span className="partner-tile-name">
+                                    {item.name}
+                                </span>
+                                <span className="partner-tile-arrow">
+                                    <ChevronRightIcon className="h-3.5 w-3.5" />
+                                </span>
                             </div>
                         </div>
-                        <span className="partner-name">{item.name}</span>
-                        <span className="partner-subtitle">{item.subtitle}</span>
                     </Link>
                 ))}
             </div>
@@ -114,7 +134,10 @@ export default function PartnersSection({ partners }: Props) {
                     </p>
                 </div>
                 <Link href="/products" className="partners-cta-btn">
-                    Yêu cầu báo giá
+                    <span>Yêu cầu báo giá</span>
+                    <span className="partners-cta-icon">
+                        <ChevronRightIcon className="h-4 w-4" />
+                    </span>
                 </Link>
             </div>
         </section>

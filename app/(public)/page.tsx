@@ -24,7 +24,7 @@ async function loadProducts() {
       error:
         error instanceof Error
           ? error.message
-          : "Khong the tai du lieu trang chu.",
+          : "Không thể tải dữ liệu trang chủ.",
     };
   }
 }
@@ -40,9 +40,9 @@ async function loadPartners() {
 const categories = [
   { label: "Ly PET", icon: CupIcon, filter: "PET" },
   { label: "Ly PP", icon: CupIcon, filter: "PP" },
-  { label: "Ly giay", icon: CupIcon, filter: "Ly giay" },
-  { label: "Nap ly", icon: LidIcon, filter: "Nap ly" },
-  { label: "In logo", icon: BadgeLogoIcon, filter: "Tat ca" },
+  { label: "Ly giấy", icon: CupIcon, filter: "Ly giấy" },
+  { label: "Nắp ly", icon: LidIcon, filter: "Nắp ly" },
+  { label: "In logo", icon: BadgeLogoIcon, filter: "Tất cả" },
 ];
 
 export default async function Home() {
@@ -55,15 +55,15 @@ export default async function Home() {
     <MobileAppShell>
       <div className="home-screen">
         <header className="mobile-home-header">
-          <Link href="/" className="brand-lockup" aria-label="In ly so to">
+          <Link href="/" className="brand-lockup" aria-label="In ly DTP Quảng Ngãi">
             <Image
               src="/images/logo.png"
-              alt="In ly so to logo"
+              alt="In ly DTP Quảng Ngãi"
               width={44}
               height={44}
               priority
             />
-            <span>In ly so to</span>
+            <span>In ly DTP Quảng Ngãi</span>
           </Link>
           <MobileCartButton />
         </header>
@@ -71,7 +71,7 @@ export default async function Home() {
         <HeroSlider />
 
         <Reveal>
-          <section className="category-rail" aria-label="Danh muc nhanh">
+          <section className="category-rail" aria-label="Danh mục nhanh">
             {categories.map((category) => {
               const Icon = category.icon;
               return (

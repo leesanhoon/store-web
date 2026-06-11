@@ -41,6 +41,7 @@ export default function ProductCard({ product, compact = false }: Props) {
           name={product.name}
           price={minPrice}
           categoryName={product.categoryName || info.cupType}
+          variants={product.variants}
           imageSrc={imageSrc}
           label="+ Thêm"
         />

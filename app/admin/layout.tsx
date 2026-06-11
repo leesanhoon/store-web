@@ -11,6 +11,7 @@ const adminNav = [
     { href: "/admin", label: "Tổng quan", icon: "home" },
     { href: "/admin/product", label: "Sản phẩm", icon: "box" },
     { href: "/admin/lid", label: "Nắp", icon: "lid" },
+    { href: "/admin/partner", label: "Đối tác", icon: "partner" },
     { href: "/admin/category", label: "Danh mục", icon: "settings" },
 ];
 
@@ -62,6 +63,30 @@ function NavIcon({ name }: { name: string }) {
                         d="M5 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"
                         stroke="currentColor"
                         strokeWidth="1.8"
+                        strokeLinejoin="round"
+                    />
+                </>
+            ) : name === "partner" ? (
+                <>
+                    <path
+                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    <circle
+                        cx="9"
+                        cy="7"
+                        r="4"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                    />
+                    <path
+                        d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                     />
                 </>

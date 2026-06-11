@@ -10,7 +10,7 @@ async function loadProducts() {
   } catch (error) {
     return {
       products: [],
-      error: error instanceof Error ? error.message : "Khong the tai danh sach san pham.",
+      error: error instanceof Error ? error.message : "Không thể tải danh sách sản phẩm.",
     };
   }
 }
@@ -21,9 +21,9 @@ export default async function ProductsPage() {
   return (
     <MobileAppShell>
       <div className="catalog-screen">
-        <MobileTopBar title="Danh muc san pham" backHref="/" backLabel="Quay lai trang chu" />
+        <MobileTopBar title="Danh mục sản phẩm" backHref="/" backLabel="Quay lại trang chủ" />
         {error ? <p className="mobile-alert">{error}</p> : null}
-        {!error && products.length === 0 ? <p className="mobile-alert">Chua co san pham nao.</p> : null}
+        {!error && products.length === 0 ? <p className="mobile-alert">Chưa có sản phẩm nào.</p> : null}
         {products.length > 0 ? (
           <Suspense fallback={<section className="catalog-grid" aria-hidden="true" />}>
             <ProductCatalog products={products} />

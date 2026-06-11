@@ -1,17 +1,16 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
-import ProductImageGallery from "@/components/mobile-store/ProductImageGallery";
-import ProductCard from "@/components/mobile-store/ProductCard";
 import {
+    ChevronRightIcon,
     BoxIcon,
     DropletIcon,
     LayersIcon,
 } from "@/components/mobile-store/icons";
 import type { PartnerDto } from "@/lib/api/partners";
 import { getCatalogPartner } from "@/lib/data/partners";
-import { getCatalogProducts } from "@/lib/data/catalog";
 
 async function loadPartner(id: string) {
     const partnerId = Number(id);
@@ -19,28 +18,13 @@ async function loadPartner(id: string) {
     return getCatalogPartner(partnerId);
 }
 
-async function loadSuggestedProducts() {
-    try {
-        const products = await getCatalogProducts();
-        return products.slice(0, 3);
-    } catch {
-        return [];
-    }
-}
-
-function getPartnerGallerySources(partner: PartnerDto) {
-    const sources: string[] = [];
-
-    if (partner.avatarImageUrl) {
-        sources.push(partner.avatarImageUrl);
-    }
-
-    const gallerySources = [...partner.galleryImages]
-        .sort((left, right) => left.displayOrder - right.displayOrder)
-        .map((image) => image.imageUrl);
-
-    sources.push(...gallerySources);
-
+function getGalleryImages(partner: PartnerDto) {
+    const sorted = [...partner.galleryImages]
+        .sort((a, b) => a.displayOrder - b.displayOrder)
+        .map((img) => img.imageUrl);
+    const sources = partner.avatarImageUrl
+        ? [partner.avatarImageUrl, ...sorted]
+        : sorted;
     return [...new Set(sources)];
 }
 
@@ -55,6 +39,15 @@ function formatDate(isoDate: string) {
     }
 }
 
+function getInitials(name: string) {
+    return name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase();
+}
+
 export default async function PartnerDetailPage({
     params,
 }: {
@@ -64,8 +57,10 @@ export default async function PartnerDetailPage({
     const partner = await loadPartner(id);
     if (!partner) notFound();
 
-    const gallerySources = getPartnerGallerySources(partner);
-    const suggestedProducts = await loadSuggestedProducts();
+    const galleryImages = getGalleryImages(partner);
+    const phoneHref = partner.phoneNumber
+        ? `tel:${partner.phoneNumber.replace(/[^\d+]/g, "")}`
+        : null;
 
     const infoItems = [
         { label: "Địa chỉ", value: partner.address, icon: LayersIcon },
@@ -90,26 +85,58 @@ export default async function PartnerDetailPage({
                     backLabel="Quay lại trang chủ"
                 />
 
-                {gallerySources.length > 0 && (
-                    <section className="detail-hero-image">
-                        <ProductImageGallery
-                            images={gallerySources}
-                            productName={partner.name}
-                            priorityImage
-                        />
-                    </section>
-                )}
+                {/* Profile Card */}
+                <section className="partner-profile-card">
+                    <div className="partner-profile-core">
+                        <div className="partner-profile-avatar">
+                            {partner.avatarImageUrl ? (
+                                <Image
+                                    src={partner.avatarImageUrl}
+                                    alt={partner.name}
+                                    width={128}
+                                    height={128}
+                                    className="partner-profile-avatar-img"
+                                />
+                            ) : (
+                                <span>{getInitials(partner.name)}</span>
+                            )}
+                        </div>
 
-                <section className="partner-info">
-                    <span className="detail-eyebrow">Đối tác</span>
-                    <h2>{partner.name}</h2>
-                    {partner.description && (
-                        <p className="partner-description">
-                            {partner.description}
-                        </p>
-                    )}
+                        <div className="partner-info">
+                            <span className="detail-eyebrow">
+                                Đối tác F&B
+                            </span>
+                            <h2>{partner.name}</h2>
+                            {partner.description && (
+                                <p className="partner-description">
+                                    {partner.description}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="partner-profile-actions">
+                            {phoneHref ? (
+                                <Link
+                                    href={phoneHref}
+                                    className="partner-contact-btn"
+                                >
+                                    <span>Gọi đối tác</span>
+                                </Link>
+                            ) : null}
+                            <Link
+                                href="/products"
+                                className="partner-products-btn"
+                            >
+                                <span>Xem sản phẩm</span>
+                                <span className="partner-products-icon">
+                                    <ChevronRightIcon className="h-4 w-4" />
+                                </span>
+                            </Link>
+                        </div>
+                    </div>
                 </section>
 
+                {/* Info Grid */}
                 <section
                     className="partner-info-grid"
                     aria-label="Thông tin đối tác"
@@ -126,25 +153,33 @@ export default async function PartnerDetailPage({
                     })}
                 </section>
 
-                <section className="detail-section">
-                    <div className="mobile-section-heading">
-                        <h3>Sản phẩm gợi ý</h3>
-                        <Link href="/products">Xem tất cả</Link>
-                    </div>
-                    {suggestedProducts.length === 0 ? (
-                        <p className="mobile-alert">Chưa có sản phẩm nào.</p>
-                    ) : (
-                        <div className="related-products">
-                            {suggestedProducts.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    compact
-                                />
+                {/* Product Gallery */}
+                {galleryImages.length > 0 ? (
+                    <section className="partner-gallery-section">
+                        <div className="partner-gallery-header">
+                            <h3>Sản phẩm đang sử dụng</h3>
+                            <span className="partner-gallery-count">
+                                {galleryImages.length} ảnh
+                            </span>
+                        </div>
+                        <div className="partner-gallery-grid">
+                            {galleryImages.map((src, index) => (
+                                <div
+                                    key={src}
+                                    className={`partner-gallery-item ${index === 0 ? "partner-gallery-item-featured" : ""}`}
+                                >
+                                    <Image
+                                        src={src}
+                                        alt={`${partner.name} — sản phẩm ${index + 1}`}
+                                        width={600}
+                                        height={400}
+                                        className="partner-gallery-img"
+                                    />
+                                </div>
                             ))}
                         </div>
-                    )}
-                </section>
+                    </section>
+                ) : null}
             </div>
         </MobileAppShell>
     );

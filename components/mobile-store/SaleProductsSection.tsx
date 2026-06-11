@@ -12,10 +12,10 @@ export default function SaleProductsSection({ products }: Props) {
     return (
       <section className="mobile-section">
         <div className="mobile-section-heading">
-          <h2>San pham dang giam gia</h2>
-          <Link href="/products">Xem tat ca</Link>
+          <h2>Sản phẩm đang giảm giá</h2>
+          <Link href="/products">Xem tất cả</Link>
         </div>
-        <p className="mobile-alert">Chua co san pham nao.</p>
+        <p className="mobile-alert">Chưa có sản phẩm nào.</p>
       </section>
     );
   }
@@ -25,13 +25,13 @@ export default function SaleProductsSection({ products }: Props) {
   return (
     <section className="mobile-section">
       <div className="mobile-section-heading">
-        <h2>San pham dang giam gia</h2>
-        <Link href="/products">Xem tat ca</Link>
+        <h2>Sản phẩm đang giảm giá</h2>
+        <Link href="/products">Xem tất cả</Link>
       </div>
-      <div className="mobile-product-rail" aria-label="San pham gia tot">
+      <div className="mobile-product-rail" aria-label="Sản phẩm giá tốt">
         {saleProducts.map((product) => (
           <div key={product.id} className="mobile-product-rail-item">
-            <span className="mobile-product-badge">Gia tot</span>
+            <span className="mobile-product-badge">Giá tốt</span>
             <ProductCard product={product} compact />
           </div>
         ))}

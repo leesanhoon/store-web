@@ -50,3 +50,54 @@ export async function getPartners(
 export async function getPartner(id: number): Promise<PartnerDto> {
     return apiClient.get<PartnerDto>(`/api/v1/partners/${id}`);
 }
+
+export type CreatePartnerPayload = {
+    name: string;
+    address: string;
+    phoneNumber?: string;
+    description?: string;
+    avatarImage?: File;
+    galleryImages?: File[];
+};
+
+function toPartnerFormData(payload: CreatePartnerPayload) {
+    const formData = new FormData();
+    formData.append("Name", payload.name);
+    formData.append("Address", payload.address);
+    if (payload.phoneNumber?.trim()) {
+        formData.append("PhoneNumber", payload.phoneNumber.trim());
+    }
+    if (payload.description?.trim()) {
+        formData.append("Description", payload.description.trim());
+    }
+    if (payload.avatarImage) {
+        formData.append("AvatarImage", payload.avatarImage);
+    }
+    if (payload.galleryImages) {
+        for (const file of payload.galleryImages) {
+            formData.append("GalleryImages", file);
+        }
+    }
+    return formData;
+}
+
+export async function createPartner(payload: CreatePartnerPayload) {
+    return apiClient.post<PartnerDto, FormData>(
+        "/api/v1/partners",
+        toPartnerFormData(payload),
+    );
+}
+
+export async function updatePartner(
+    id: number,
+    payload: CreatePartnerPayload,
+) {
+    return apiClient.put<PartnerDto, FormData>(
+        `/api/v1/partners/${id}`,
+        toPartnerFormData(payload),
+    );
+}
+
+export async function deletePartner(id: number) {
+    return apiClient.delete<void>(`/api/v1/partners/${id}`);
+}

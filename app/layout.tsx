@@ -19,7 +19,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-    title: { default: "In ly store", template: "%s | In ly store" },
+    title: { default: "In ly DTP Quảng Ngãi", template: "%s | In ly DTP Quảng Ngãi" },
     description:
         "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
 };

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/api/products";
 import { getLids } from "@/lib/api/lids";
+import { getPartners } from "@/lib/api/partners";
 import { getMinPrice } from "@/lib/products/display";
 import {
     AdminCard,
@@ -27,10 +28,12 @@ function CalendarIcon() {
 }
 
 export default async function AdminPage() {
-    const [products, lids] = await Promise.all([
+    const [products, lids, partnersResponse] = await Promise.all([
         getProducts().catch(() => []),
         getLids().catch(() => []),
+        getPartners({ pageSize: 100 }).catch(() => ({ items: [] })),
     ]);
+    const partnerCount = partnersResponse.items.length;
 
     const productsWithVariants = products.filter((p) => p.variants.length > 0);
     const productsWithoutPrice = products.filter(
@@ -58,12 +61,10 @@ export default async function AdminPage() {
             suffix: "loại",
         },
         {
-            label: "Thiếu giá/ảnh",
-            value: String(
-                productsWithoutPrice.length + productsWithoutImage.length,
-            ),
-            delta: "Cần bổ sung",
-            suffix: "SP",
+            label: "Đối tác",
+            value: String(partnerCount),
+            delta: partnerCount > 0 ? "Đang hoạt động" : "Chưa có",
+            suffix: "đối tác",
         },
     ];
 
@@ -112,6 +113,10 @@ export default async function AdminPage() {
                         label: "Thêm sản phẩm",
                     },
                     { href: "/admin/lid?mode=create", label: "Thêm nắp" },
+                    {
+                        href: "/admin/partner?mode=create",
+                        label: "Thêm đối tác",
+                    },
                     { href: "/admin/category", label: "Quản lý danh mục" },
                 ].map((item) => (
                     <Link

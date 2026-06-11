@@ -23,20 +23,65 @@ export function useRevealOnScroll<T extends HTMLElement = HTMLElement>() {
       return;
     }
 
-    const observer = new IntersectionObserver(
+    node.classList.add("reveal-pending");
+
+    const scrollRoot = node.closest<HTMLElement>(".mobile-screen");
+    let animationFrame = 0;
+    let observer: IntersectionObserver | null = null;
+
+    const reveal = () => {
+      node.classList.remove("reveal-pending");
+      node.classList.add("reveal-in");
+      observer?.disconnect();
+      scrollRoot?.removeEventListener("scroll", queueVisibilityCheck);
+      window.removeEventListener("resize", queueVisibilityCheck);
+    };
+
+    const isVisibleInRoot = () => {
+      const rootRect = scrollRoot?.getBoundingClientRect() ?? {
+        top: 0,
+        bottom: window.innerHeight,
+      };
+      const nodeRect = node.getBoundingClientRect();
+      const visibleHeight =
+        Math.min(nodeRect.bottom, rootRect.bottom) -
+        Math.max(nodeRect.top, rootRect.top);
+
+      return visibleHeight >= nodeRect.height * 0.12;
+    };
+
+    function queueVisibilityCheck() {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        if (isVisibleInRoot()) reveal();
+      });
+    }
+
+    observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            entry.target.classList.add("reveal-in");
-            observer.unobserve(entry.target);
+            reveal();
           }
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+      { root: scrollRoot, rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
+    queueVisibilityCheck();
+    scrollRoot?.addEventListener("scroll", queueVisibilityCheck, {
+      passive: true,
+    });
+    window.addEventListener("resize", queueVisibilityCheck);
+
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      observer?.disconnect();
+      scrollRoot?.removeEventListener("scroll", queueVisibilityCheck);
+      window.removeEventListener("resize", queueVisibilityCheck);
+    };
   }, []);
 
   return ref;

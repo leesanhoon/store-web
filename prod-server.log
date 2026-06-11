@@ -1,0 +1,58 @@
+
+> store-web@0.1.0 start
+> next start --port 3001
+
+▲ Next.js 16.2.6
+- Local:         http://localhost:3001
+- Network:       http://10.236.61.143:3001
+✓ Ready in 133ms
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/partners/6' \
+  -H 'accept: application/json, text/plain, */*'
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/partners/6' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6 -> 200 OK
+{"id":6,"name":"The Alley","address":"39 Ngo Duc Ke, Ben Nghe, Quan 1, TP. Ho Chi Minh","phoneNumber":"028 3827 9279","description":"The Alley la thuong hieu tra sua cao cap den tu Dai Loan, noi tieng voi Deerioca (tran chau huou cao co). Chuoi cua hang da lua chon ly nhua dac biet cua chung toi de giu nguyen huong vi va chat luong do uong.","avatarImageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168636/products/avatar-thealley-avatar-20260611090356246_qw3eot.jpg","galleryImages":[{"id":15,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168637/products/gallery-thealley-g1-20260611090357536_ka0vad.jpg","displayOrder":1},{"id":16,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168638/products/gallery-thealley-g2-20260611090358615_cnlcqy....
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/Products
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/Products' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6 -> 200 OK
+{"id":6,"name":"The Alley","address":"39 Ngo Duc Ke, Ben Nghe, Quan 1, TP. Ho Chi Minh","phoneNumber":"028 3827 9279","description":"The Alley la thuong hieu tra sua cao cap den tu Dai Loan, noi tieng voi Deerioca (tran chau huou cao co). Chuoi cua hang da lua chon ly nhua dac biet cua chung toi de giu nguyen huong vi va chat luong do uong.","avatarImageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168636/products/avatar-thealley-avatar-20260611090356246_qw3eot.jpg","galleryImages":[{"id":15,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168637/products/gallery-thealley-g1-20260611090357536_ka0vad.jpg","displayOrder":1},{"id":16,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168638/products/gallery-thealley-g2-20260611090358615_cnlcqy....
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/Products
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/Products' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/Products -> 200 OK
+{"items":[{"id":4,"name":"Ly giấy trắng 1 lớp","description":"Ly giấy trắng tiêu chuẩn cho cà phê mang đi","categoryId":3,"categoryName":"Ly giấy 1 lớp","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":9,"capacityMl":240,"diameterMm":80,"priceTiers":[{"id":25,"minQuantity":1000,"unitPrice":750},{"id":26,"minQuantity":5000,"unitPrice":680},{"id":27,"minQuantity":10000,"unitPrice":620}]},{"id":10,"capacityMl":360,"diameterMm":90,"priceTiers":[{"id":28,"minQuantity":1000,"unitPrice":900},{"id":29,"minQuantity":5000,"unitPrice":830},{"id":30,"minQuantity":10000,"unitPrice":760}]}],"lids":[]},{"id":3,"name":"Ly PET trong suốt","description":"Ly nhựa PET trong suốt cho đồ uống lạnh","categoryId":5,"categoryName":"Ly PET","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":6,"cap...
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/Products -> 200 OK
+{"items":[{"id":4,"name":"Ly giấy trắng 1 lớp","description":"Ly giấy trắng tiêu chuẩn cho cà phê mang đi","categoryId":3,"categoryName":"Ly giấy 1 lớp","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":9,"capacityMl":240,"diameterMm":80,"priceTiers":[{"id":25,"minQuantity":1000,"unitPrice":750},{"id":26,"minQuantity":5000,"unitPrice":680},{"id":27,"minQuantity":10000,"unitPrice":620}]},{"id":10,"capacityMl":360,"diameterMm":90,"priceTiers":[{"id":28,"minQuantity":1000,"unitPrice":900},{"id":29,"minQuantity":5000,"unitPrice":830},{"id":30,"minQuantity":10000,"unitPrice":760}]}],"lids":[]},{"id":3,"name":"Ly PET trong suốt","description":"Ly nhựa PET trong suốt cho đồ uống lạnh","categoryId":5,"categoryName":"Ly PET","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":6,"cap...
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/partners/6' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6 -> 200 OK
+{"id":6,"name":"The Alley","address":"39 Ngo Duc Ke, Ben Nghe, Quan 1, TP. Ho Chi Minh","phoneNumber":"028 3827 9279","description":"The Alley la thuong hieu tra sua cao cap den tu Dai Loan, noi tieng voi Deerioca (tran chau huou cao co). Chuoi cua hang da lua chon ly nhua dac biet cua chung toi de giu nguyen huong vi va chat luong do uong.","avatarImageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168636/products/avatar-thealley-avatar-20260611090356246_qw3eot.jpg","galleryImages":[{"id":15,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168637/products/gallery-thealley-g1-20260611090357536_ka0vad.jpg","displayOrder":1},{"id":16,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168638/products/gallery-thealley-g2-20260611090358615_cnlcqy....
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/Products
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/Products' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/Products -> 200 OK
+{"items":[{"id":4,"name":"Ly giấy trắng 1 lớp","description":"Ly giấy trắng tiêu chuẩn cho cà phê mang đi","categoryId":3,"categoryName":"Ly giấy 1 lớp","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":9,"capacityMl":240,"diameterMm":80,"priceTiers":[{"id":25,"minQuantity":1000,"unitPrice":750},{"id":26,"minQuantity":5000,"unitPrice":680},{"id":27,"minQuantity":10000,"unitPrice":620}]},{"id":10,"capacityMl":360,"diameterMm":90,"priceTiers":[{"id":28,"minQuantity":1000,"unitPrice":900},{"id":29,"minQuantity":5000,"unitPrice":830},{"id":30,"minQuantity":10000,"unitPrice":760}]}],"lids":[]},{"id":3,"name":"Ly PET trong suốt","description":"Ly nhựa PET trong suốt cho đồ uống lạnh","categoryId":5,"categoryName":"Ly PET","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":6,"cap...
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/partners/6' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6 -> 200 OK
+{"id":6,"name":"The Alley","address":"39 Ngo Duc Ke, Ben Nghe, Quan 1, TP. Ho Chi Minh","phoneNumber":"028 3827 9279","description":"The Alley la thuong hieu tra sua cao cap den tu Dai Loan, noi tieng voi Deerioca (tran chau huou cao co). Chuoi cua hang da lua chon ly nhua dac biet cua chung toi de giu nguyen huong vi va chat luong do uong.","avatarImageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168636/products/avatar-thealley-avatar-20260611090356246_qw3eot.jpg","galleryImages":[{"id":15,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168637/products/gallery-thealley-g1-20260611090357536_ka0vad.jpg","displayOrder":1},{"id":16,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168638/products/gallery-thealley-g2-20260611090358615_cnlcqy....
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/Products
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/Products' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/Products -> 200 OK
+{"items":[{"id":4,"name":"Ly giấy trắng 1 lớp","description":"Ly giấy trắng tiêu chuẩn cho cà phê mang đi","categoryId":3,"categoryName":"Ly giấy 1 lớp","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":9,"capacityMl":240,"diameterMm":80,"priceTiers":[{"id":25,"minQuantity":1000,"unitPrice":750},{"id":26,"minQuantity":5000,"unitPrice":680},{"id":27,"minQuantity":10000,"unitPrice":620}]},{"id":10,"capacityMl":360,"diameterMm":90,"priceTiers":[{"id":28,"minQuantity":1000,"unitPrice":900},{"id":29,"minQuantity":5000,"unitPrice":830},{"id":30,"minQuantity":10000,"unitPrice":760}]}],"lids":[]},{"id":3,"name":"Ly PET trong suốt","description":"Ly nhựa PET trong suốt cho đồ uống lạnh","categoryId":5,"categoryName":"Ly PET","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":6,"cap...
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/partners/6' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/partners/6 -> 200 OK
+{"id":6,"name":"The Alley","address":"39 Ngo Duc Ke, Ben Nghe, Quan 1, TP. Ho Chi Minh","phoneNumber":"028 3827 9279","description":"The Alley la thuong hieu tra sua cao cap den tu Dai Loan, noi tieng voi Deerioca (tran chau huou cao co). Chuoi cua hang da lua chon ly nhua dac biet cua chung toi de giu nguyen huong vi va chat luong do uong.","avatarImageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168636/products/avatar-thealley-avatar-20260611090356246_qw3eot.jpg","galleryImages":[{"id":15,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168637/products/gallery-thealley-g1-20260611090357536_ka0vad.jpg","displayOrder":1},{"id":16,"imageUrl":"https://res.cloudinary.com/dmwfdkml6/image/upload/v1781168638/products/gallery-thealley-g2-20260611090358615_cnlcqy....
+[API REQUEST] GET https://backend-api-dotnet9.onrender.com/api/v1/Products
+curl -X GET 'https://backend-api-dotnet9.onrender.com/api/v1/Products' \
+  -H 'accept: application/json, text/plain, */*'
+[API RESPONSE] GET https://backend-api-dotnet9.onrender.com/api/v1/Products -> 200 OK
+{"items":[{"id":4,"name":"Ly giấy trắng 1 lớp","description":"Ly giấy trắng tiêu chuẩn cho cà phê mang đi","categoryId":3,"categoryName":"Ly giấy 1 lớp","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":9,"capacityMl":240,"diameterMm":80,"priceTiers":[{"id":25,"minQuantity":1000,"unitPrice":750},{"id":26,"minQuantity":5000,"unitPrice":680},{"id":27,"minQuantity":10000,"unitPrice":620}]},{"id":10,"capacityMl":360,"diameterMm":90,"priceTiers":[{"id":28,"minQuantity":1000,"unitPrice":900},{"id":29,"minQuantity":5000,"unitPrice":830},{"id":30,"minQuantity":10000,"unitPrice":760}]}],"lids":[]},{"id":3,"name":"Ly PET trong suốt","description":"Ly nhựa PET trong suốt cho đồ uống lạnh","categoryId":5,"categoryName":"Ly PET","avatarImageUrl":null,"galleryImages":[],"variants":[{"id":6,"cap...

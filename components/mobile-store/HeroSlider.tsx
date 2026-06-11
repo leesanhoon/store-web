@@ -17,30 +17,30 @@ type Slide = {
 const slides: Slide[] = [
   {
     id: "pet-branding",
-    eyebrow: "Gia cong nhanh",
-    title: "Ly PET in logo cho quan cafe va tra sua",
-    description: "Tu van mau ly, len layout va bao gia nhanh de shop chot mua trong ngay.",
+    eyebrow: "Gia công nhanh",
+    title: "Ly PET in logo cho quán café và trà sữa",
+    description: "Tư vấn mẫu ly, lên layout và báo giá nhanh để shop chốt mua trong ngày.",
     image: "/images/mockups/logo-cup-500-urban.png",
     href: "/products?category=PET",
     cta: "Xem ly PET",
   },
   {
     id: "paper-takeaway",
-    eyebrow: "Mang di chuyen nghiep",
-    title: "Ly giay cho menu takeaway va su kien",
-    description: "Phu hop quan ca phe, bakery va chuoi giao hang can nhan dien dong bo.",
+    eyebrow: "Mang đi chuyên nghiệp",
+    title: "Ly giấy cho menu takeaway và sự kiện",
+    description: "Phù hợp quán cà phê, bakery và chuỗi giao hàng cần nhận diện đồng bộ.",
     image: "/images/mockups/paper-360-linen.png",
     href: "/products?category=Ly%20gi%E1%BA%A5y",
-    cta: "Xem ly giay",
+    cta: "Xem ly giấy",
   },
   {
     id: "cup-lid-set",
-    eyebrow: "Dong bo vat tu",
-    title: "Set ly, nap va phu kien theo tung size",
-    description: "Chon dung combo de gian hang van hanh on dinh, giam loi khi dong goi.",
+    eyebrow: "Đồng bộ vật tư",
+    title: "Set ly, nắp và phụ kiện theo từng size",
+    description: "Chọn đúng combo để gian hàng vận hành ổn định, giảm lỗi khi đóng gói.",
     image: "/images/ly/coc-nhua-dung-tau-hu-7.png",
     href: "/products?category=N%E1%BA%AFp%20ly",
-    cta: "Xem phu kien",
+    cta: "Xem phụ kiện",
   },
 ];
 
@@ -81,7 +81,7 @@ export default function HeroSlider() {
   }, []);
 
   return (
-    <section className="hero-slider" aria-label="Banner noi bat">
+    <section className="hero-slider" aria-label="Banner nổi bật">
       <div ref={trackRef} className="hero-slider-track">
         {slides.map((slide) => (
           <article key={slide.id} className="hero-slide">
@@ -95,7 +95,7 @@ export default function HeroSlider() {
                   <span className="cta-arrow" aria-hidden>↗</span>
                 </Link>
                 <Link href="/cart" className="mobile-cta secondary">
-                  Yeu cau bao gia
+                  Yêu cầu báo giá
                 </Link>
               </div>
             </div>
@@ -113,13 +113,13 @@ export default function HeroSlider() {
         ))}
       </div>
 
-      <div className="hero-slider-dots" aria-label="Chuyen slide">
+      <div className="hero-slider-dots" aria-label="Chuyển slide">
         {slides.map((slide, index) => (
           <button
             key={slide.id}
             type="button"
             className={index === activeIndex ? "active" : undefined}
-            aria-label={`Mo slide ${index + 1}`}
+            aria-label={`Mở slide ${index + 1}`}
             aria-pressed={index === activeIndex}
             onClick={() => {
               const track = trackRef.current;

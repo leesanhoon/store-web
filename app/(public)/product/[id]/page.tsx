@@ -117,8 +117,8 @@ export default async function ProductDetailPage({
     ]);
 
     const specs = [
-        { label: "Dung tich", value: info.volume, icon: DropletIcon },
-        { label: "Chat lieu", value: info.material, icon: LayersIcon },
+        { label: "Dung tích", value: info.volume, icon: DropletIcon },
+        { label: "Chất liệu", value: info.material, icon: LayersIcon },
         {
             label: "MOQ",
             value: minMoq
@@ -126,16 +126,16 @@ export default async function ProductDetailPage({
                 : "1.000",
             icon: BoxIcon,
         },
-        { label: "In logo", value: "theo yeu cau", icon: PencilIcon },
+        { label: "In logo", value: "theo yêu cầu", icon: PencilIcon },
     ];
 
     return (
         <MobileAppShell>
             <div className="product-detail-screen">
                 <MobileTopBar
-                    title="Chi tiet san pham"
+                    title="Chi tiết sản phẩm"
                     backHref="/products"
-                    backLabel="Quay lai danh muc"
+                    backLabel="Quay lại danh mục"
                     rightSlot={
                         <ProductActions
                             productId={product.id}
@@ -163,7 +163,7 @@ export default async function ProductDetailPage({
 
                 <section
                     className="detail-spec-grid"
-                    aria-label="Thong so san pham"
+                    aria-label="Thông số sản phẩm"
                 >
                     {specs.map((spec) => {
                         const Icon = spec.icon;
