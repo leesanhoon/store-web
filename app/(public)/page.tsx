@@ -5,6 +5,7 @@ import MobileCartButton from "@/components/mobile-store/MobileCartButton";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import PartnersSection from "@/components/mobile-store/PartnersSection";
 import PopularProductsSection from "@/components/mobile-store/PopularProductsSection";
+import Reveal from "@/components/mobile-store/Reveal";
 import SaleProductsSection from "@/components/mobile-store/SaleProductsSection";
 import {
   BadgeLogoIcon,
@@ -57,27 +58,35 @@ export default async function Home() {
 
         <HeroSlider />
 
-        <section className="category-rail" aria-label="Danh muc nhanh">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Link
-                key={category.label}
-                href={`/products?category=${encodeURIComponent(category.filter)}`}
-                className="category-tile"
-              >
-                <Icon className="h-7 w-7" />
-                <span>{category.label}</span>
-              </Link>
-            );
-          })}
-        </section>
+        <Reveal>
+          <section className="category-rail" aria-label="Danh muc nhanh">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <Link
+                  key={category.label}
+                  href={`/products?category=${encodeURIComponent(category.filter)}`}
+                  className="category-tile"
+                >
+                  <Icon className="h-7 w-7" />
+                  <span>{category.label}</span>
+                </Link>
+              );
+            })}
+          </section>
+        </Reveal>
 
         {error ? <p className="mobile-alert">{error}</p> : null}
 
-        <SaleProductsSection products={products} />
-        <PopularProductsSection products={products} />
-        <PartnersSection products={products} />
+        <Reveal delay={60}>
+          <SaleProductsSection products={products} />
+        </Reveal>
+        <Reveal delay={120}>
+          <PopularProductsSection products={products} />
+        </Reveal>
+        <Reveal delay={180}>
+          <PartnersSection products={products} />
+        </Reveal>
       </div>
     </MobileAppShell>
   );

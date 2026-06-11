@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import ProductCard from "@/components/mobile-store/ProductCard";
+import { useRevealOnScroll } from "@/components/mobile-store/useRevealOnScroll";
 import { SearchIcon } from "@/components/mobile-store/icons";
 import type { ProductDto } from "@/lib/api/products";
 import { getProductDisplayInfo, normalizeText } from "@/lib/products/display";
@@ -29,6 +30,7 @@ export default function ProductCatalog({ products }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const gridRef = useRevealOnScroll<HTMLElement>();
   const activeFilter = resolveInitialFilter(searchParams.get("category"));
 
   const updateFilter = (nextFilter: string) => {
@@ -84,7 +86,7 @@ export default function ProductCatalog({ products }: Props) {
       {filteredProducts.length === 0 ? (
         <p className="mobile-alert">Không có sản phẩm phù hợp với bộ lọc này.</p>
       ) : (
-        <section className="catalog-grid" aria-label="Danh sách sản phẩm">
+        <section ref={gridRef} className="catalog-grid reveal" aria-label="Danh sách sản phẩm">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

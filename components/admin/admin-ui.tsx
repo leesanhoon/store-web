@@ -44,10 +44,10 @@ export function AdminChip({
         <button
             type="button"
             onClick={onClick}
-            className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition active:scale-[0.98] break-words ${
+            className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition-[transform,background-color,border-color,color] duration-300 ease-[var(--ease-spring)] active:scale-[0.94] break-words ${
                 active
                     ? "bg-[#101a36] text-white shadow-[0_14px_30px_-20px_rgba(6,27,61,0.9)]"
-                    : "border border-[#eadfce] bg-white text-[#1f2f46] shadow-sm"
+                    : "border border-[rgba(16,26,54,0.08)] bg-white text-[#1f2f46] shadow-sm"
             }`}
         >
             {children}
@@ -63,7 +63,7 @@ export function AdminPrimaryButton({
     return (
         <button
             {...props}
-            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#101a36] px-4 py-2.5 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(6,27,61,0.9)] transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#101a36] px-4 py-2.5 text-[15px] font-extrabold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.16),0_18px_30px_-22px_rgba(6,27,61,0.9)] transition-[transform,background-color,box-shadow] duration-300 ease-[var(--ease-spring)] hover:bg-[#1c2a4d] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
         >
             {children}
         </button>
@@ -79,7 +79,7 @@ export function AdminCard({
 }) {
     return (
         <article
-            className={`rounded-[18px] border border-[#eadfce] bg-white shadow-[0_18px_30px_-28px_rgba(15,23,42,0.3)] ${className}`}
+            className={`rounded-[20px] border border-[rgba(16,26,54,0.06)] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_18px_32px_-28px_rgba(16,26,54,0.34)] ${className}`}
         >
             {children}
         </article>
@@ -87,7 +87,7 @@ export function AdminCard({
 }
 
 const fieldClass =
-    "w-full rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-[14px] font-semibold text-[#101a36] outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10";
+    "w-full rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-[14px] font-semibold text-[#101a36] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/15";
 
 export function AdminField({
     className = "",
@@ -201,7 +201,7 @@ export function AdminSelect({
             name={name}
         >
             <Select.Trigger
-                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-left text-[14px] font-semibold text-[#101a36] outline-none transition data-[placeholder]:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-left text-[14px] font-semibold text-[#101a36] outline-none transition data-[placeholder]:text-slate-400 focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/15 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
             >
                 <Select.Value placeholder={placeholder} />
                 <Select.Icon className="grid h-5 w-5 shrink-0 place-items-center text-[#4c596c]">

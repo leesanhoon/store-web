@@ -1,13 +1,21 @@
 ﻿import type { Metadata } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Be_Vietnam_Pro, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider";
 import "./globals.css";
 
-const notoSans = Noto_Sans({
+const beVietnamPro = Be_Vietnam_Pro({
     subsets: ["latin", "vietnamese"],
     weight: ["400", "500", "600", "700", "800"],
     display: "swap",
+    variable: "--font-be-vietnam",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+    subsets: ["latin", "vietnamese"],
+    weight: ["500", "600", "700", "800"],
+    display: "swap",
+    variable: "--font-jakarta",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +30,7 @@ export default function RootLayout({
     return (
         <html lang="vi" suppressHydrationWarning>
             <body
-                className={`${notoSans.className} min-h-[100dvh] bg-background text-foreground antialiased`}
+                className={`${beVietnamPro.variable} ${plusJakarta.variable} ${beVietnamPro.className} min-h-[100dvh] bg-background text-foreground antialiased`}
                 suppressHydrationWarning
             >
                 <Script id="strip-extension-hydration-attrs" strategy="beforeInteractive">

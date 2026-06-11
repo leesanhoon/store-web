@@ -92,6 +92,7 @@ export default function HeroSlider() {
               <div className="hero-slide-actions">
                 <Link href={slide.href} className="mobile-cta primary">
                   {slide.cta}
+                  <span className="cta-arrow" aria-hidden>↗</span>
                 </Link>
                 <Link href="/cart" className="mobile-cta secondary">
                   Yeu cau bao gia

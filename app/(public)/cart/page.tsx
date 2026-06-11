@@ -132,7 +132,7 @@ export default function CartPage() {
                     />
                     <section className="cart-success">
                         <div className="cart-success-icon">✓</div>
-                        <h2>Đặt hàng thành công!</h2>
+                        <h2>Đặt hàng thành công</h2>
                         <p>
                             Mã đơn hàng của bạn:{" "}
                             <strong>#{successOrderId}</strong>
