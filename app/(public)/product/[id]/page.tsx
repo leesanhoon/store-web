@@ -49,6 +49,31 @@ async function loadCompatibleLids(productId: number) {
     }
 }
 
+const MOCKUP_GALLERY: Record<string, string[]> = {
+    pet: [
+        "/images/mockups/pet-500-amber.png",
+        "/images/mockups/pet-700-velvet.png",
+        "/images/mockups/logo-cup-500-urban.png",
+    ],
+    paper: [
+        "/images/mockups/paper-360-linen.png",
+        "/images/mockups/logo-cup-500-urban.png",
+        "/images/mockups/hero-cups.png",
+    ],
+    default: [
+        "/images/mockups/hero-cups.png",
+        "/images/mockups/paper-360-linen.png",
+        "/images/mockups/pet-500-amber.png",
+    ],
+};
+
+function getMockupGallery(product: ProductDto) {
+    const text = `${product.name} ${product.categoryName ?? ""}`.toLowerCase();
+    if (text.includes("pet")) return MOCKUP_GALLERY.pet;
+    if (text.includes("giấy") || text.includes("paper")) return MOCKUP_GALLERY.paper;
+    return MOCKUP_GALLERY.default;
+}
+
 function getProductGallerySources(product: ProductDto, fallbackImageSrc: string) {
     const sources: string[] = [];
 
@@ -62,8 +87,11 @@ function getProductGallerySources(product: ProductDto, fallbackImageSrc: string)
 
     sources.push(...gallerySources);
 
-    if (sources.length === 0) {
-        sources.push(fallbackImageSrc);
+    if (sources.length <= 1) {
+        const primary = sources[0] ?? fallbackImageSrc;
+        const mockups = getMockupGallery(product).filter((src) => src !== primary);
+        sources.length = 0;
+        sources.push(primary, ...mockups);
     }
 
     return [...new Set(sources)];
@@ -125,9 +153,12 @@ export default async function ProductDetailPage({
                 </section>
 
                 <section className="detail-product-copy">
+                    <span className="detail-eyebrow">{product.categoryName}</span>
                     <h2>{product.name}</h2>
                     <p className="detail-price">{formatPriceRange(product)}</p>
-                    <p className="detail-description">{product.description}</p>
+                    {product.description ? (
+                        <p className="detail-description">{product.description}</p>
+                    ) : null}
                 </section>
 
                 <section

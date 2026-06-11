@@ -13,6 +13,7 @@ import {
   LidIcon,
 } from "@/components/mobile-store/icons";
 import { getCatalogProducts } from "@/lib/data/catalog";
+import { getCatalogPartners } from "@/lib/data/partners";
 
 async function loadProducts() {
   try {
@@ -28,6 +29,14 @@ async function loadProducts() {
   }
 }
 
+async function loadPartners() {
+  try {
+    return await getCatalogPartners();
+  } catch {
+    return [];
+  }
+}
+
 const categories = [
   { label: "Ly PET", icon: CupIcon, filter: "PET" },
   { label: "Ly PP", icon: CupIcon, filter: "PP" },
@@ -37,7 +46,10 @@ const categories = [
 ];
 
 export default async function Home() {
-  const { products, error } = await loadProducts();
+  const [{ products, error }, partners] = await Promise.all([
+    loadProducts(),
+    loadPartners(),
+  ]);
 
   return (
     <MobileAppShell>
@@ -85,7 +97,7 @@ export default async function Home() {
           <PopularProductsSection products={products} />
         </Reveal>
         <Reveal delay={180}>
-          <PartnersSection products={products} />
+          <PartnersSection partners={partners} />
         </Reveal>
       </div>
     </MobileAppShell>
