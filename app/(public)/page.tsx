@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroSlider from "@/components/mobile-store/HeroSlider";
-import MobileCartButton from "@/components/mobile-store/MobileCartButton";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import PartnersSection from "@/components/mobile-store/PartnersSection";
 import PopularProductsSection from "@/components/mobile-store/PopularProductsSection";
@@ -65,7 +64,6 @@ export default async function Home() {
             />
             <span>In ly DTP Quảng Ngãi</span>
           </Link>
-          <MobileCartButton />
         </header>
 
         <HeroSlider />

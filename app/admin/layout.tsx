@@ -10,6 +10,7 @@ import { clearAdminAuthenticated } from "@/lib/admin-auth";
 const adminNav = [
     { href: "/admin", label: "Tổng quan", icon: "home" },
     { href: "/admin/product", label: "Sản phẩm", icon: "box" },
+    { href: "/admin/order", label: "Đơn hàng", icon: "order" },
     { href: "/admin/lid", label: "Nắp", icon: "lid" },
     { href: "/admin/partner", label: "Đối tác", icon: "partner" },
     { href: "/admin/category", label: "Danh mục", icon: "settings" },
@@ -40,6 +41,27 @@ function NavIcon({ name }: { name: string }) {
                     />
                     <path
                         d="M8 8.5V7a4 4 0 0 1 8 0v1.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                    />
+                </>
+            ) : name === "order" ? (
+                <>
+                    <path
+                        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                    />
+                    <path
+                        d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1H9V5Z"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                    />
+                    <path
+                        d="M9 12h6M9 16h4"
                         stroke="currentColor"
                         strokeWidth="1.8"
                         strokeLinecap="round"
@@ -202,34 +224,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                             </span>
                         </Link>
 
-                        <button
-                            type="button"
-                            className="admin-icon-button relative"
-                            aria-label="Thông báo"
-                        >
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                className="h-6 w-6"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    d="M15 17a3 3 0 0 1-6 0"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                />
-                                <path
-                                    d="M18 16H6c1-1.5 1.5-2.2 1.5-5a4.5 4.5 0 1 1 9 0c0 2.8.5 3.5 1.5 5Z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                            <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#101a36] px-1 text-[10px] font-extrabold text-white">
-                                3
-                            </span>
-                        </button>
+                        <span className="admin-icon-button" aria-hidden="true" />
                     </header>
 
                     <main id="admin-main-content" className="admin-content">

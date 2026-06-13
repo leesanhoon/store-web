@@ -421,6 +421,24 @@ h1, h2, h3,
   stroke-width: 2.2;
 }
 
+.nav-cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-price);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(11, 122, 82, 0.4);
+}
+
 .home-screen,
 .catalog-screen,
 .quote-screen,
@@ -2987,11 +3005,11 @@ h1, h2, h3,
   position: relative;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1px;
   border-top: 1px solid rgba(234, 223, 206, 0.78);
   background: rgba(255, 253, 248, 0.97);
-  padding: 7px 4px 10px;
+  padding: 7px 2px 10px;
   backdrop-filter: blur(18px);
 }
 
@@ -3003,7 +3021,7 @@ h1, h2, h3,
   border-radius: 12px;
   padding: 6px 1px;
   color: #667085;
-  font-size: 9.2px;
+  font-size: 8.5px;
   font-weight: 800;
   line-height: 1;
   overflow: hidden;
@@ -3024,8 +3042,8 @@ h1, h2, h3,
 }
 
 .admin-bottom-nav a svg {
-  height: 20px;
-  width: 20px;
+  height: 18px;
+  width: 18px;
 }
 
 .admin-with-fixed-cta {
@@ -3051,6 +3069,21 @@ h1, h2, h3,
   border-radius: 16px;
   font-size: 15px;
   pointer-events: auto;
+}
+
+@keyframes admin-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-card-enter {
+  animation: admin-card-in 0.5s var(--ease-spring) both;
 }
 
 .admin-product-form {
@@ -3100,7 +3133,7 @@ h1, h2, h3,
   }
 
   .admin-bottom-nav a {
-    font-size: 9px;
+    font-size: 8.2px;
   }
 
   .admin-with-fixed-cta {

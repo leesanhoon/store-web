@@ -258,8 +258,15 @@ export function AdminStatusBadge({
 
     return (
         <span
-            className={`inline-flex rounded-lg border px-2.5 py-1 text-[11px] font-extrabold ${classes}`}
+            className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-extrabold ${classes}`}
         >
+            {(tone === "warning" || tone === "info") && (
+                <span
+                    className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${
+                        tone === "warning" ? "bg-orange-500 animate-pulse" : "bg-blue-500 animate-pulse"
+                    }`}
+                />
+            )}
             {children}
         </span>
     );

@@ -3,7 +3,7 @@ import { apiClient, type PaginatedResponse } from "@/lib/api/http";
 export type OrderStatus = "draft" | "confirmed" | "shipping" | "completed" | "cancelled";
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-    draft: "Nháp",
+    draft: "Chờ xác nhận",
     confirmed: "Đã xác nhận",
     shipping: "Đang giao",
     completed: "Hoàn tất",

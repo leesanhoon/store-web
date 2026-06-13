@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
-  DocumentIcon,
+  CartIcon,
   GridIcon,
   HomeIcon,
   SearchIcon,
 } from "@/components/mobile-store/icons";
+import { CART_CHANGED_EVENT, getCartItems } from "@/lib/cart";
 
 type Props = {
   children: React.ReactNode;
@@ -16,7 +18,7 @@ type Props = {
 const navItems = [
   { href: "/", label: "Trang chủ", icon: HomeIcon },
   { href: "/products", label: "Danh mục", icon: GridIcon },
-  { href: "/cart", label: "Yêu cầu", icon: DocumentIcon },
+  { href: "/cart", label: "Giỏ hàng", icon: CartIcon, showBadge: true },
   { href: "/track-order", label: "Tra cứu đơn", icon: SearchIcon },
 ];
 
@@ -30,6 +32,18 @@ function isActive(pathname: string, href: string) {
 
 export default function MobileAppShell({ children }: Props) {
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const sync = () => setCartCount(getCartItems().length);
+    sync();
+    window.addEventListener(CART_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(CART_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   return (
     <div className="mobile-stage">
@@ -46,7 +60,12 @@ export default function MobileAppShell({ children }: Props) {
                 aria-current={active ? "page" : undefined}
                 className={active ? "active" : undefined}
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" />
+                  {item.showBadge && cartCount > 0 && (
+                    <span className="nav-cart-badge">{cartCount}</span>
+                  )}
+                </span>
                 <span>{item.label}</span>
               </Link>
             );
