@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     CategoryTreeNode,
     getCategoryTree,
@@ -8,6 +8,8 @@ import {
     updateCategory,
     deleteCategory,
 } from "@/lib/api/categories";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
     AdminCard,
     AdminField,
@@ -194,15 +196,16 @@ export default function AdminCategoryPage() {
         setError("");
     };
 
-    const handleDelete = async (node: CategoryTreeNode) => {
-        if (node.isRoot) return;
-        if (!window.confirm(`Xóa danh mục "${node.name}"?`)) return;
+    const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(null);
+
+    const confirmDelete = useCallback(async () => {
+        if (!deleteTarget) return;
         setIsSubmitting(true);
         setMessage("");
         setError("");
         try {
-            await deleteCategory(node.id);
-            setMessage(`Đã xóa danh mục "${node.name}".`);
+            await deleteCategory(deleteTarget.id);
+            setMessage(`Đã xóa danh mục "${deleteTarget.name}".`);
             fetchTree();
         } catch (err) {
             setError(
@@ -210,8 +213,9 @@ export default function AdminCategoryPage() {
             );
         } finally {
             setIsSubmitting(false);
+            setDeleteTarget(null);
         }
-    };
+    }, [deleteTarget, fetchTree]);
 
     const handleSave = async () => {
         if (!editing) return;
@@ -294,7 +298,7 @@ export default function AdminCategoryPage() {
                         node={root}
                         depth={0}
                         onEdit={startEdit}
-                        onDelete={(n) => void handleDelete(n)}
+                        onDelete={(n) => { if (!n.isRoot) setDeleteTarget(n); }}
                         onAddChild={startAddChild}
                     />
                 ))}
@@ -361,6 +365,19 @@ export default function AdminCategoryPage() {
                     </div>
                 </AdminCard>
             ) : null}
+
+            <ConfirmModal
+                open={deleteTarget !== null}
+                title={`Xóa danh mục "${deleteTarget?.name ?? ""}"?`}
+                description="Thao tác này không thể hoàn tác."
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa"
+                loading={isSubmitting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
+            <LoadingOverlay open={isSubmitting} message="Đang xử lý..." />
         </div>
     );
 }

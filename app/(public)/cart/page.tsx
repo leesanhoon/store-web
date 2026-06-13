@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingOverlay, { InlineSpinner } from "@/components/ui/LoadingOverlay";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import { MinusIcon, PlusIcon, TrashIcon } from "@/components/mobile-store/icons";
@@ -46,6 +48,8 @@ export default function CartPage() {
     const [submitting, setSubmitting] = useState(false);
     const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
     const [error, setError] = useState("");
+    const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
 
     const totalAmount = useMemo(
         () => items.reduce((sum, item) => sum + getItemSubtotal(item), 0),
@@ -63,14 +67,25 @@ export default function CartPage() {
     };
 
     const handleRemoveItem = (item: CartItem) => {
-        removeCartItem(getCartItemKey(item));
-        reloadCart();
+        setRemoveTarget(item);
     };
 
+    const confirmRemove = useCallback(() => {
+        if (!removeTarget) return;
+        removeCartItem(getCartItemKey(removeTarget));
+        reloadCart();
+        setRemoveTarget(null);
+    }, [removeTarget]);
+
     const handleClear = () => {
+        setShowClearConfirm(true);
+    };
+
+    const confirmClear = useCallback(() => {
         clearCart();
         setItems([]);
-    };
+        setShowClearConfirm(false);
+    }, []);
 
     const canSubmit =
         items.length > 0 &&
@@ -341,7 +356,7 @@ export default function CartPage() {
                                 className="button-primary w-full"
                             >
                                 {submitting
-                                    ? "Đang gửi..."
+                                    ? <span className="inline-flex items-center gap-2"><InlineSpinner className="h-4 w-4" /> Đang gửi...</span>
                                     : `Gửi đặt hàng · ${formatCurrency(totalAmount)}`}
                             </button>
                             {error ? (
@@ -351,6 +366,28 @@ export default function CartPage() {
                     </>
                 )}
             </div>
+
+            <ConfirmModal
+                open={removeTarget !== null}
+                title="Xóa sản phẩm?"
+                description={`Bạn muốn xóa "${removeTarget?.name ?? ""}" khỏi giỏ hàng?`}
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa"
+                onConfirm={confirmRemove}
+                onCancel={() => setRemoveTarget(null)}
+            />
+            <ConfirmModal
+                open={showClearConfirm}
+                title="Xóa toàn bộ giỏ hàng?"
+                description="Tất cả sản phẩm trong giỏ hàng sẽ bị xóa."
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa tất cả"
+                onConfirm={confirmClear}
+                onCancel={() => setShowClearConfirm(false)}
+            />
+            <LoadingOverlay open={submitting} message="Đang gửi đơn hàng..." />
         </MobileAppShell>
     );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
     createLid,
     deleteLid,
@@ -211,22 +213,25 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
         }
     };
 
-    const handleDelete = async (lidId: number) => {
-        if (!window.confirm("Xóa nắp này?")) return;
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+    const confirmDelete = useCallback(async () => {
+        if (deleteTarget === null) return;
         setIsSubmitting(true);
         setMessage("");
         setError("");
         try {
-            await deleteLid(lidId);
+            await deleteLid(deleteTarget);
             await mutate();
-            if (selectedId === lidId) closeForm();
+            if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa nắp.");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể xóa nắp.");
         } finally {
             setIsSubmitting(false);
+            setDeleteTarget(null);
         }
-    };
+    }, [deleteTarget, selectedId, closeForm, mutate]);
 
     if (isFormMode) {
         return (
@@ -335,7 +340,7 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
                                 <IconButton label="Sửa nắp" onClick={() => editLid(lid)}>
                                     <EditIcon />
                                 </IconButton>
-                                <IconButton label="Xóa nắp" onClick={() => void handleDelete(lid.id)}>
+                                <IconButton label="Xóa nắp" onClick={() => setDeleteTarget(lid.id)}>
                                     <DeleteIcon />
                                 </IconButton>
                             </div>
@@ -348,6 +353,19 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
                     </AdminCard>
                 ) : null}
             </section>
+
+            <ConfirmModal
+                open={deleteTarget !== null}
+                title="Xóa nắp?"
+                description="Thao tác này không thể hoàn tác."
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa"
+                loading={isSubmitting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
+            <LoadingOverlay open={isSubmitting} message="Đang xử lý..." />
         </div>
     );
 }

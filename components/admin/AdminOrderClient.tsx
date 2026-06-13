@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import { InlineSpinner } from "@/components/ui/LoadingOverlay";
 import useSWR from "swr";
 import {
     AdminCard,
@@ -94,13 +96,28 @@ function OrderRow({
 }) {
     const transitions = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
     const [updating, setUpdating] = useState(false);
+    const [cancelConfirm, setCancelConfirm] = useState(false);
 
     const handleTransition = async (newStatus: OrderStatus) => {
+        if (newStatus === "cancelled") {
+            setCancelConfirm(true);
+            return;
+        }
         setUpdating(true);
         try {
             await onStatusChange(order.id, newStatus);
         } finally {
             setUpdating(false);
+        }
+    };
+
+    const confirmCancel = async () => {
+        setUpdating(true);
+        try {
+            await onStatusChange(order.id, "cancelled");
+        } finally {
+            setUpdating(false);
+            setCancelConfirm(false);
         }
     };
 
@@ -149,7 +166,10 @@ function OrderRow({
                                         : "border border-[#eadfce] bg-white text-[#101a36] shadow-sm hover:shadow-md"
                                 }`}
                             >
-                                <span>{updating ? "..." : ORDER_STATUS_LABELS[next]}</span>
+                                <span className="inline-flex items-center gap-1.5">
+                                    {updating && <InlineSpinner className="h-3.5 w-3.5" />}
+                                    {ORDER_STATUS_LABELS[next]}
+                                </span>
                                 <span
                                     className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition-transform duration-300 ease-[var(--ease-spring)] group-hover:translate-x-0.5 ${
                                         next === "cancelled"
@@ -164,6 +184,19 @@ function OrderRow({
                     </div>
                 )}
             </AdminCard>
+
+            <ConfirmModal
+                open={cancelConfirm}
+                title={`Hủy đơn hàng #${order.id}?`}
+                description="Đơn hàng sẽ chuyển sang trạng thái đã hủy và không thể hoàn tác."
+                icon="⚠️"
+                danger
+                confirmLabel="Hủy đơn"
+                cancelLabel="Quay lại"
+                loading={updating}
+                onConfirm={confirmCancel}
+                onCancel={() => setCancelConfirm(false)}
+            />
         </div>
     );
 }

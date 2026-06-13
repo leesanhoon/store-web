@@ -5,6 +5,7 @@ import {
     FormEvent,
     ReactNode,
     RefObject,
+    useCallback,
     useEffect,
     useMemo,
     useRef,
@@ -13,6 +14,8 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { getLids, LidDto } from "@/lib/api/lids";
 import {
     createProduct,
@@ -799,15 +802,17 @@ export default function AdminProductClient({
         }
     };
 
-    const handleDelete = async (productId: number) => {
-        if (!window.confirm("Xóa sản phẩm này?")) return;
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+    const confirmDelete = useCallback(async () => {
+        if (deleteTarget === null) return;
         setIsSubmitting(true);
         setMessage("");
         setError("");
         try {
-            await deleteProduct(productId);
+            await deleteProduct(deleteTarget);
             await mutate();
-            if (selectedId === productId) closeForm();
+            if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa sản phẩm.");
         } catch (err) {
             setError(
@@ -815,8 +820,9 @@ export default function AdminProductClient({
             );
         } finally {
             setIsSubmitting(false);
+            setDeleteTarget(null);
         }
-    };
+    }, [deleteTarget, selectedId, closeForm, mutate]);
 
     if (isFormMode) {
         return (
@@ -1096,7 +1102,7 @@ export default function AdminProductClient({
                                     <IconButton
                                         label="Xóa sản phẩm"
                                         onClick={() =>
-                                            void handleDelete(product.id)
+                                            setDeleteTarget(product.id)
                                         }
                                     >
                                         <DeleteIcon />
@@ -1112,6 +1118,19 @@ export default function AdminProductClient({
                     </AdminCard>
                 ) : null}
             </section>
+
+            <ConfirmModal
+                open={deleteTarget !== null}
+                title="Xóa sản phẩm?"
+                description="Thao tác này không thể hoàn tác."
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa"
+                loading={isSubmitting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
+            <LoadingOverlay open={isSubmitting} message="Đang xử lý..." />
         </div>
     );
 }

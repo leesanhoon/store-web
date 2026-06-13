@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
     createPartner,
     deletePartner,
@@ -319,15 +321,17 @@ export default function AdminPartnerClient({
         }
     };
 
-    const handleDelete = async (partnerId: number) => {
-        if (!window.confirm("Xóa đối tác này?")) return;
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+    const confirmDelete = useCallback(async () => {
+        if (deleteTarget === null) return;
         setIsSubmitting(true);
         setMessage("");
         setError("");
         try {
-            await deletePartner(partnerId);
+            await deletePartner(deleteTarget);
             await mutate();
-            if (selectedId === partnerId) closeForm();
+            if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa đối tác.");
         } catch (err) {
             setError(
@@ -337,8 +341,9 @@ export default function AdminPartnerClient({
             );
         } finally {
             setIsSubmitting(false);
+            setDeleteTarget(null);
         }
-    };
+    }, [deleteTarget, selectedId, closeForm, mutate]);
 
     if (isFormMode) {
         const editingPartner = selectedId
@@ -642,7 +647,7 @@ export default function AdminPartnerClient({
                                 <IconButton
                                     label="Xóa đối tác"
                                     onClick={() =>
-                                        void handleDelete(partner.id)
+                                        setDeleteTarget(partner.id)
                                     }
                                 >
                                     <DeleteIcon />
@@ -658,6 +663,19 @@ export default function AdminPartnerClient({
                     </AdminEmptyState>
                 ) : null}
             </section>
+
+            <ConfirmModal
+                open={deleteTarget !== null}
+                title="Xóa đối tác?"
+                description="Thao tác này không thể hoàn tác."
+                icon="🗑️"
+                danger
+                confirmLabel="Xóa"
+                loading={isSubmitting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
+            <LoadingOverlay open={isSubmitting} message="Đang xử lý..." />
         </div>
     );
 }
