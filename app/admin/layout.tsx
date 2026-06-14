@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ReactNode, Suspense, useState, useCallback, useEffect, useRef } from "react";
+import { ReactNode, Suspense } from "react";
 import AdminAuthGate from "@/components/admin/AdminAuthGate";
 import { clearAdminAuthenticated } from "@/lib/admin-auth";
 
@@ -14,11 +14,6 @@ const adminNav = [
     { href: "/admin/manage", label: "Quản lý", icon: "grid" },
 ];
 
-const fabActions = [
-    { href: "/admin/product?mode=create", label: "Sản phẩm", icon: "box" },
-    { href: "/admin/lid?mode=create", label: "Nắp", icon: "lid" },
-    { href: "/admin/partner?mode=create", label: "Đối tác", icon: "partner" },
-];
 
 function NavIcon({ name }: { name: string }) {
     return (
@@ -175,75 +170,6 @@ function LogoutIcon() {
     );
 }
 
-function AdminFAB() {
-    const [open, setOpen] = useState(false);
-    const fabRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
-
-    const toggle = useCallback(() => setOpen((v) => !v), []);
-
-    useEffect(() => {
-        if (!open) return;
-        const handler = (e: MouseEvent) => {
-            if (fabRef.current && !fabRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handler);
-        return () => document.removeEventListener("mousedown", handler);
-    }, [open]);
-
-    const handleAction = (href: string) => {
-        setOpen(false);
-        router.push(href);
-    };
-
-    return (
-        <div ref={fabRef} className="admin-fab-container">
-            {/* Backdrop */}
-            <div
-                className={`admin-fab-backdrop ${open ? "open" : ""}`}
-                onClick={() => setOpen(false)}
-            />
-
-            {/* Action items */}
-            <div className={`admin-fab-menu ${open ? "open" : ""}`}>
-                {fabActions.map((action, i) => (
-                    <button
-                        key={action.href}
-                        type="button"
-                        className="admin-fab-action"
-                        style={{ transitionDelay: open ? `${i * 50}ms` : "0ms" }}
-                        onClick={() => handleAction(action.href)}
-                    >
-                        <span className="admin-fab-action-icon">
-                            <NavIcon name={action.icon} />
-                        </span>
-                        <span className="admin-fab-action-label">{action.label}</span>
-                    </button>
-                ))}
-            </div>
-
-            {/* FAB button */}
-            <button
-                type="button"
-                className={`admin-fab-btn ${open ? "open" : ""}`}
-                onClick={toggle}
-                aria-label={open ? "Đóng" : "Tạo mới"}
-            >
-                <svg viewBox="0 0 24 24" fill="none" className="admin-fab-icon">
-                    <path
-                        d="M12 5v14M5 12h14"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                    />
-                </svg>
-            </button>
-        </div>
-    );
-}
-
 function AdminChrome() {
     return (
         <div className="admin-chrome">
@@ -310,8 +236,6 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                     <main id="admin-main-content" className="admin-content">
                         {children}
                     </main>
-
-                    <AdminFAB />
 
                     <nav
                         className="admin-bottom-nav"

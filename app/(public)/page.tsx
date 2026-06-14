@@ -6,6 +6,7 @@ import PartnersSection from "@/components/mobile-store/PartnersSection";
 import PopularProductsSection from "@/components/mobile-store/PopularProductsSection";
 import Reveal from "@/components/mobile-store/Reveal";
 import SaleProductsSection from "@/components/mobile-store/SaleProductsSection";
+import TrustStrip from "@/components/mobile-store/TrustStrip";
 import {
   BadgeLogoIcon,
   CupIcon,
@@ -66,6 +67,11 @@ export default async function Home() {
           </Link>
         </header>
 
+        <div className="promo-strip" aria-label="Khuyến mãi">
+          <span className="promo-strip-dot" aria-hidden="true" />
+          <p>Miễn phí thiết kế logo &bull; Giao hàng toàn quốc</p>
+        </div>
+
         <HeroSlider />
 
         <Reveal>
@@ -94,7 +100,10 @@ export default async function Home() {
         <Reveal delay={120}>
           <PopularProductsSection products={products} />
         </Reveal>
-        <Reveal delay={180}>
+        <Reveal delay={160}>
+          <TrustStrip />
+        </Reveal>
+        <Reveal delay={200}>
           <PartnersSection partners={partners} />
         </Reveal>
       </div>

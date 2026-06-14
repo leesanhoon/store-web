@@ -1,16 +1,20 @@
 "use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import Image from "next/image";
+import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
+    addLidImages,
     createLid,
     deleteLid,
+    deleteLidImage,
     getLids,
     updateLid,
+    validateLidImages,
     LidDto,
 } from "@/lib/api/lids";
 import {
@@ -73,6 +77,15 @@ function DeleteIcon() {
     );
 }
 
+function UploadIcon() {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" className="h-9 w-9" aria-hidden="true">
+            <path d="M12 16V7m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 18a4 4 0 1 1 .9-7.9A5 5 0 0 1 17.7 11 3.5 3.5 0 1 1 18 18H7Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
 function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
     return (
         <button type="button" onClick={onClick} className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#eadfce] bg-white text-[#4c596c] shadow-sm transition active:scale-[0.96]" aria-label={label}>
@@ -89,13 +102,28 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
     );
 }
 
+function preserveAdminScroll() {
+    const scroller = document.getElementById("admin-main-content");
+    const scrollTop = scroller?.scrollTop ?? 0;
+    const restore = () => {
+        if (scroller) scroller.scrollTop = scrollTop;
+    };
+    window.requestAnimationFrame(restore);
+    window.setTimeout(restore, 120);
+    window.setTimeout(restore, 320);
+}
+
 export default function AdminLidClient({ initialLids, initialCategories }: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const mode = searchParams.get("mode");
+    const avatarInputRef = useRef<HTMLInputElement | null>(null);
+    const galleryInputRef = useRef<HTMLInputElement | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [form, setForm] = useState<LidForm>(initialForm);
     const [searchTerm, setSearchTerm] = useState("");
+    const [avatarImage, setAvatarImage] = useState<File | null>(null);
+    const [galleryImages, setGalleryImages] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
@@ -105,8 +133,20 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
 
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa nắp" : "Thêm nắp mới";
+    const editingLid = selectedId ? lids.find((l) => l.id === selectedId) : null;
+    const existingAvatar = editingLid?.avatarImageUrl ?? null;
+    const existingGallery = editingLid?.galleryImages ?? [];
 
     const categorySelectOptions = categories.map((c) => ({ value: String(c.id), label: c.name }));
+
+    const avatarPreviewUrl = useMemo(
+        () => (avatarImage ? URL.createObjectURL(avatarImage) : ""),
+        [avatarImage],
+    );
+    const galleryPreviews = useMemo(
+        () => galleryImages.map((file) => ({ file, url: URL.createObjectURL(file) })),
+        [galleryImages],
+    );
 
     const normalizeSearch = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -116,9 +156,30 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
         return text.includes(normalizeSearch(searchTerm.trim()));
     });
 
+    const openAvatarPicker = () => {
+        preserveAdminScroll();
+        avatarInputRef.current?.click();
+    };
+    const openGalleryPicker = () => {
+        preserveAdminScroll();
+        galleryInputRef.current?.click();
+    };
+    const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAvatarImage(event.currentTarget.files?.[0] ?? null);
+        event.currentTarget.value = "";
+        preserveAdminScroll();
+    };
+    const handleGalleryFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setGalleryImages(Array.from(event.currentTarget.files ?? []));
+        event.currentTarget.value = "";
+        preserveAdminScroll();
+    };
+
     const startCreate = () => {
         setSelectedId(null);
         setForm(initialForm);
+        setAvatarImage(null);
+        setGalleryImages([]);
         setMessage("");
         setError("");
         router.push("/admin/lid?mode=create");
@@ -127,6 +188,8 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
     const closeForm = () => {
         setSelectedId(null);
         setForm(initialForm);
+        setAvatarImage(null);
+        setGalleryImages([]);
         setError("");
         router.push("/admin/lid");
     };
@@ -141,6 +204,8 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
                 ? lid.prices.map((p) => ({ diameterMm: String(p.diameterMm), sizeName: p.sizeName ?? "", unitPrice: String(p.unitPrice) }))
                 : [{ ...emptyPriceRow }],
         });
+        setAvatarImage(null);
+        setGalleryImages([]);
         setMessage("");
         setError("");
         router.push("/admin/lid?mode=edit");
@@ -164,6 +229,16 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
         }));
     };
 
+    const handleDeleteExistingImage = async (imageId: number) => {
+        if (!selectedId) return;
+        try {
+            await deleteLidImage(selectedId, imageId);
+            await mutate();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
+        }
+    };
+
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const categoryId = Number(form.categoryId);
@@ -185,23 +260,38 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
             return;
         }
 
+        const hasNewImages = avatarImage || galleryImages.length > 0;
+        const imageError = hasNewImages ? validateLidImages(avatarImage, galleryImages) : "";
+        if (imageError) {
+            setError(imageError);
+            return;
+        }
+
         setIsSubmitting(true);
         setMessage("");
         setError("");
 
         try {
-            const payload = {
-                name: form.name.trim(),
-                description: form.description.trim() || undefined,
-                categoryId,
-                prices,
-            };
-
             if (selectedId) {
-                await updateLid(selectedId, payload);
+                await updateLid(selectedId, {
+                    name: form.name.trim(),
+                    description: form.description.trim() || undefined,
+                    categoryId,
+                    prices,
+                });
+                if (hasNewImages) {
+                    await addLidImages(selectedId, avatarImage, galleryImages.length > 0 ? galleryImages : undefined);
+                }
                 setMessage("Đã cập nhật nắp.");
             } else {
-                await createLid(payload);
+                await createLid({
+                    name: form.name.trim(),
+                    description: form.description.trim() || undefined,
+                    categoryId,
+                    prices,
+                    avatarImage,
+                    galleryImages,
+                });
                 setMessage("Đã tạo nắp mới.");
             }
             await mutate();
@@ -234,6 +324,7 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
     }, [deleteTarget, selectedId, closeForm, mutate]);
 
     if (isFormMode) {
+        const displayAvatarUrl = avatarPreviewUrl || existingAvatar || "";
         return (
             <div className="text-[#101a36]">
                 <div className="flex items-center gap-3">
@@ -290,6 +381,67 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
                         ))}
                     </AdminCard>
 
+                    {/* Image upload section */}
+                    <div className="grid gap-4 min-[431px]:grid-cols-[0.95fr_1.05fr]">
+                        <div>
+                            <FieldLabel>Ảnh đại diện</FieldLabel>
+                            <input ref={avatarInputRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" onChange={handleAvatarFileChange} className="hidden" />
+                            <button
+                                type="button"
+                                onClick={openAvatarPicker}
+                                className="grid min-h-[136px] w-full place-items-center rounded-[14px] border border-dashed border-[#8a99ad] bg-white/60 p-3 text-center text-[#3d4860] transition active:scale-[0.99] min-[431px]:min-h-[154px]"
+                            >
+                                {displayAvatarUrl ? (
+                                    <Image
+                                        src={displayAvatarUrl}
+                                        alt="Ảnh đại diện xem trước"
+                                        width={220}
+                                        height={180}
+                                        unoptimized={displayAvatarUrl.startsWith("blob:")}
+                                        className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
+                                    />
+                                ) : (
+                                    <span className="grid place-items-center text-[14px] font-extrabold">
+                                        <UploadIcon />
+                                        Tải ảnh lên
+                                        <small className="mt-1 text-[11px] font-semibold text-slate-500">JPG, PNG tối đa 2MB</small>
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                        <div>
+                            <FieldLabel>Thư viện ảnh</FieldLabel>
+                            <div className="grid grid-cols-3 gap-2 rounded-[14px] border border-[#eadfce] bg-white p-2">
+                                <input ref={galleryInputRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" multiple onChange={handleGalleryFileChange} className="hidden" />
+                                {existingGallery.map((img) => (
+                                    <div key={img.id} className="relative">
+                                        <Image src={img.imageUrl} alt="Ảnh nắp" width={96} height={86} className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteExistingImage(img.id)}
+                                            className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm transition active:scale-90"
+                                            aria-label="Xóa ảnh"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                                {galleryPreviews.slice(0, 5).map(({ url }, index) => (
+                                    <Image key={`new-${index}`} src={url} alt="Ảnh nắp" width={96} height={86} unoptimized className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover" />
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={openGalleryPicker}
+                                    className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white text-center text-[12px] font-extrabold text-[#101a36] transition active:scale-[0.98]"
+                                >
+                                    <span>
+                                        <span className="block text-2xl leading-none">+</span>Ảnh khác
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <AdminPrimaryButton type="submit" disabled={isSubmitting} className="w-full rounded-full py-3 text-[16px]">
                         {isSubmitting ? "Đang lưu..." : "Lưu nắp"}
                     </AdminPrimaryButton>
@@ -323,7 +475,24 @@ export default function AdminLidClient({ initialLids, initialCategories }: Props
             <section className="space-y-2.5">
                 {visibleLids.map((lid) => (
                     <AdminCard key={lid.id} className="p-3">
-                        <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+                        <div className="grid grid-cols-[auto_1fr_auto] items-start gap-3">
+                            {lid.avatarImageUrl ? (
+                                <Image
+                                    src={lid.avatarImageUrl}
+                                    alt={lid.name}
+                                    width={72}
+                                    height={72}
+                                    className="h-[64px] w-[64px] rounded-[12px] object-cover"
+                                />
+                            ) : (
+                                <div className="grid h-[64px] w-[64px] place-items-center rounded-[12px] bg-[#f5efe5] text-[#8b95a8]">
+                                    <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
+                                        <path d="M6 14h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                        <path d="M7 14c0-4 2.2-7 5-7s5 3 5 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                        <path d="M5 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                            )}
                             <div className="min-w-0">
                                 <h2 className="truncate text-[16px] font-extrabold leading-tight text-[#101a36]">{lid.name}</h2>
                                 <p className="mt-1 text-[12px] font-semibold text-[#3d4860]">{lid.categoryName || "Danh mục"}</p>

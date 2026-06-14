@@ -177,6 +177,32 @@ export async function deleteProduct(id: number) {
     return apiClient.delete<unknown>(`/api/v1/Products/${id}`, { headers: { accept: "*/*" } });
 }
 
+export async function addProductImages(
+    id: number,
+    avatarImage?: File | null,
+    galleryImages?: File[],
+) {
+    const imageError = validateProductImages(avatarImage, galleryImages);
+    if (imageError) throw new Error(imageError);
+
+    const formData = new FormData();
+    if (avatarImage) formData.append("AvatarImage", avatarImage);
+    if (galleryImages) {
+        for (const file of galleryImages) formData.append("GalleryImages", file);
+    }
+    const product = await apiClient.post<ProductDto, FormData>(
+        `/api/v1/Products/${id}/images`,
+        formData,
+    );
+    return normalizeProduct(product);
+}
+
+export async function deleteProductImage(productId: number, imageId: number) {
+    return apiClient.delete<unknown>(
+        `/api/v1/Products/${productId}/images/${imageId}`,
+    );
+}
+
 export type CompatibleLidDto = {
     id: number;
     name: string;

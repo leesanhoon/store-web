@@ -18,8 +18,10 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { getLids, LidDto } from "@/lib/api/lids";
 import {
+    addProductImages,
     createProduct,
     deleteProduct,
+    deleteProductImage,
     getProducts,
     normalizeProductApiError,
     ProductDto,
@@ -220,14 +222,17 @@ function FieldLabel({
 function AdminImageUploadBox({
     inputRef,
     previewUrl,
+    existingImageUrl,
     onFileChange,
     onOpenPicker,
 }: {
     inputRef: RefObject<HTMLInputElement | null>;
     previewUrl: string;
+    existingImageUrl?: string | null;
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onOpenPicker: () => void;
 }) {
+    const displayUrl = previewUrl || existingImageUrl || "";
     return (
         <div>
             <input
@@ -242,13 +247,13 @@ function AdminImageUploadBox({
                 onClick={onOpenPicker}
                 className="grid min-h-[136px] w-full place-items-center rounded-[14px] border border-dashed border-[#8a99ad] bg-white/60 p-3 text-center text-[#3d4860] transition active:scale-[0.99] min-[431px]:min-h-[154px]"
             >
-                {previewUrl ? (
+                {displayUrl ? (
                     <Image
-                        src={previewUrl}
+                        src={displayUrl}
                         alt="Ảnh đại diện xem trước"
                         width={220}
                         height={180}
-                        unoptimized
+                        unoptimized={displayUrl.startsWith("blob:")}
                         className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
                     />
                 ) : (
@@ -268,13 +273,17 @@ function AdminImageUploadBox({
 function AdminGalleryPicker({
     inputRef,
     imageSources,
+    existingImages,
     onFileChange,
     onOpenPicker,
+    onDeleteExisting,
 }: {
     inputRef: RefObject<HTMLInputElement | null>;
     imageSources: string[];
+    existingImages?: { id: number; imageUrl: string }[];
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onOpenPicker: () => void;
+    onDeleteExisting?: (imageId: number) => void;
 }) {
     return (
         <div className="grid grid-cols-3 gap-2 rounded-[14px] border border-[#eadfce] bg-white p-2">
@@ -286,6 +295,27 @@ function AdminGalleryPicker({
                 onChange={onFileChange}
                 className="hidden"
             />
+            {existingImages?.map((img) => (
+                <div key={img.id} className="relative">
+                    <Image
+                        src={img.imageUrl}
+                        alt="Ảnh sản phẩm"
+                        width={96}
+                        height={86}
+                        className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover"
+                    />
+                    {onDeleteExisting ? (
+                        <button
+                            type="button"
+                            onClick={() => onDeleteExisting(img.id)}
+                            className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm transition active:scale-90"
+                            aria-label="Xóa ảnh"
+                        >
+                            ×
+                        </button>
+                    ) : null}
+                </div>
+            ))}
             {imageSources.slice(0, 5).map((src, index) => (
                 <Image
                     key={`${src}-${index}`}
@@ -630,6 +660,19 @@ export default function AdminProductClient({
     }));
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa sản phẩm" : "Thêm sản phẩm";
+    const editingProduct = selectedId ? products.find((p) => p.id === selectedId) : null;
+    const existingAvatar = editingProduct?.avatarImageUrl ?? null;
+    const existingGallery = editingProduct?.galleryImages ?? [];
+
+    const handleDeleteExistingImage = async (imageId: number) => {
+        if (!selectedId) return;
+        try {
+            await deleteProductImage(selectedId, imageId);
+            await mutate();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
+        }
+    };
 
     const visibleProducts = products.filter((product) => {
         const text = normalizeSearch(
@@ -759,9 +802,10 @@ export default function AdminProductClient({
             return;
         }
 
-        const imageError = selectedId
-            ? ""
-            : validateProductImages(avatarImage, galleryImages);
+        const hasNewImages = avatarImage || galleryImages.length > 0;
+        const imageError = hasNewImages
+            ? validateProductImages(avatarImage, galleryImages)
+            : "";
         if (imageError) {
             setError(imageError);
             return;
@@ -780,6 +824,9 @@ export default function AdminProductClient({
                     variants,
                     lidIds: form.lidIds.length > 0 ? form.lidIds : undefined,
                 });
+                if (hasNewImages) {
+                    await addProductImages(selectedId, avatarImage, galleryImages.length > 0 ? galleryImages : undefined);
+                }
                 setMessage("Đã cập nhật sản phẩm.");
             } else {
                 await createProduct({
@@ -930,28 +977,29 @@ export default function AdminProductClient({
                         />
                     </AdminCard>
 
-                    {!selectedId ? (
-                        <div className="grid gap-4 min-[431px]:grid-cols-[0.95fr_1.05fr]">
-                            <div>
-                                <FieldLabel>Ảnh đại diện</FieldLabel>
-                                <AdminImageUploadBox
-                                    inputRef={avatarInputRef}
-                                    previewUrl={avatarPreviewUrl}
-                                    onFileChange={handleAvatarFileChange}
-                                    onOpenPicker={openAvatarPicker}
-                                />
-                            </div>
-                            <div>
-                                <FieldLabel>Thư viện ảnh</FieldLabel>
-                                <AdminGalleryPicker
-                                    inputRef={galleryInputRef}
-                                    imageSources={galleryImageSources}
-                                    onFileChange={handleGalleryFileChange}
-                                    onOpenPicker={openGalleryPicker}
-                                />
-                            </div>
+                    <div className="grid gap-4 min-[431px]:grid-cols-[0.95fr_1.05fr]">
+                        <div>
+                            <FieldLabel>Ảnh đại diện</FieldLabel>
+                            <AdminImageUploadBox
+                                inputRef={avatarInputRef}
+                                previewUrl={avatarPreviewUrl}
+                                existingImageUrl={existingAvatar}
+                                onFileChange={handleAvatarFileChange}
+                                onOpenPicker={openAvatarPicker}
+                            />
                         </div>
-                    ) : null}
+                        <div>
+                            <FieldLabel>Thư viện ảnh</FieldLabel>
+                            <AdminGalleryPicker
+                                inputRef={galleryInputRef}
+                                imageSources={galleryImageSources}
+                                existingImages={existingGallery}
+                                onFileChange={handleGalleryFileChange}
+                                onOpenPicker={openGalleryPicker}
+                                onDeleteExisting={selectedId ? handleDeleteExistingImage : undefined}
+                            />
+                        </div>
+                    </div>
 
                     <AdminPrimaryButton
                         type="submit"
