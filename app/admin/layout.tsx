@@ -14,7 +14,6 @@ const adminNav = [
     { href: "/admin/manage", label: "Quản lý", icon: "grid" },
 ];
 
-
 function NavIcon({ name }: { name: string }) {
     return (
         <svg
@@ -113,10 +112,42 @@ function NavIcon({ name }: { name: string }) {
                 </>
             ) : name === "grid" ? (
                 <>
-                    <rect x="3" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.8" />
-                    <rect x="14" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.8" />
-                    <rect x="3" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.8" />
-                    <rect x="14" y="14" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                    <rect
+                        x="3"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                    />
+                    <rect
+                        x="14"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                    />
+                    <rect
+                        x="3"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                    />
+                    <rect
+                        x="14"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                    />
                 </>
             ) : (
                 <>
@@ -230,7 +261,10 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                             </span>
                         </Link>
 
-                        <span className="admin-icon-button" aria-hidden="true" />
+                        <span
+                            className="admin-icon-button"
+                            aria-hidden="true"
+                        />
                     </header>
 
                     <main id="admin-main-content" className="admin-content">
@@ -242,12 +276,18 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                         aria-label="Admin navigation"
                     >
                         {adminNav.map((item) => {
-                            const manageRoutes = ["/admin/lid", "/admin/partner", "/admin/category"];
+                            const manageRoutes = [
+                                "/admin/lid",
+                                "/admin/partner",
+                                "/admin/category",
+                            ];
                             const active =
                                 item.href === "/admin"
                                     ? pathname === item.href
                                     : item.href === "/admin/manage"
-                                      ? manageRoutes.some((r) => pathname.startsWith(r)) || pathname === "/admin/manage"
+                                      ? manageRoutes.some((r) =>
+                                            pathname.startsWith(r),
+                                        ) || pathname === "/admin/manage"
                                       : pathname.startsWith(item.href) && !mode;
 
                             return (

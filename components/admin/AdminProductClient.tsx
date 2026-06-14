@@ -22,6 +22,7 @@ import {
     createProduct,
     deleteProduct,
     deleteProductImage,
+    getProduct,
     getProducts,
     normalizeProductApiError,
     ProductDto,
@@ -233,8 +234,9 @@ function AdminImageUploadBox({
     onOpenPicker: () => void;
 }) {
     const displayUrl = previewUrl || existingImageUrl || "";
+    const isExisting = !previewUrl && !!existingImageUrl;
     return (
-        <div>
+        <div className="rounded-[18px] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.06]">
             <input
                 ref={inputRef}
                 type="file"
@@ -245,17 +247,22 @@ function AdminImageUploadBox({
             <button
                 type="button"
                 onClick={onOpenPicker}
-                className="grid min-h-[136px] w-full place-items-center rounded-[14px] border border-dashed border-[#8a99ad] bg-white/60 p-3 text-center text-[#3d4860] transition active:scale-[0.99] min-[431px]:min-h-[154px]"
+                className="relative grid min-h-[136px] w-full place-items-center rounded-[calc(18px-6px)] bg-white p-3 text-center text-[#3d4860] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] min-[431px]:min-h-[154px]"
             >
                 {displayUrl ? (
-                    <Image
-                        src={displayUrl}
-                        alt="Ảnh đại diện xem trước"
-                        width={220}
-                        height={180}
-                        unoptimized={displayUrl.startsWith("blob:")}
-                        className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
-                    />
+                    <>
+                        <Image
+                            src={displayUrl}
+                            alt="Ảnh đại diện xem trước"
+                            width={220}
+                            height={180}
+                            unoptimized={displayUrl.startsWith("blob:")}
+                            className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
+                        />
+                        {isExisting ? (
+                            <span className="absolute bottom-2 left-2 rounded-full bg-[#101a36]/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white/90 uppercase">Ảnh hiện tại</span>
+                        ) : null}
+                    </>
                 ) : (
                     <span className="grid place-items-center text-[14px] font-extrabold">
                         <UploadIcon />
@@ -286,7 +293,8 @@ function AdminGalleryPicker({
     onDeleteExisting?: (imageId: number) => void;
 }) {
     return (
-        <div className="grid grid-cols-3 gap-2 rounded-[14px] border border-[#eadfce] bg-white p-2">
+        <div className="rounded-[18px] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.06]">
+        <div className="grid grid-cols-3 gap-2 rounded-[calc(18px-6px)] bg-white p-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
             <input
                 ref={inputRef}
                 type="file"
@@ -296,19 +304,19 @@ function AdminGalleryPicker({
                 className="hidden"
             />
             {existingImages?.map((img) => (
-                <div key={img.id} className="relative">
+                <div key={img.id} className="group relative">
                     <Image
                         src={img.imageUrl}
                         alt="Ảnh sản phẩm"
                         width={96}
                         height={86}
-                        className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover"
+                        className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
                     />
                     {onDeleteExisting ? (
                         <button
                             type="button"
                             onClick={() => onDeleteExisting(img.id)}
-                            className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm transition active:scale-90"
+                            className="absolute -right-1.5 -top-1.5 grid h-[22px] w-[22px] place-items-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[11px] font-bold text-white shadow-md ring-2 ring-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-90"
                             aria-label="Xóa ảnh"
                         >
                             ×
@@ -317,26 +325,29 @@ function AdminGalleryPicker({
                 </div>
             ))}
             {imageSources.slice(0, 5).map((src, index) => (
-                <Image
-                    key={`${src}-${index}`}
-                    src={src}
-                    alt="Ảnh sản phẩm"
-                    width={96}
-                    height={86}
-                    unoptimized={src.startsWith("blob:")}
-                    className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover"
-                />
+                <div key={`${src}-${index}`} className="relative">
+                    <Image
+                        src={src}
+                        alt="Ảnh sản phẩm"
+                        width={96}
+                        height={86}
+                        unoptimized={src.startsWith("blob:")}
+                        className="h-[68px] w-full rounded-[10px] border border-emerald-200 object-cover"
+                    />
+                    <span className="absolute bottom-0.5 left-0.5 rounded-full bg-emerald-600/80 px-1.5 py-px text-[8px] font-bold text-white uppercase">Mới</span>
+                </div>
             ))}
             <button
                 type="button"
                 onClick={onOpenPicker}
-                className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white text-center text-[12px] font-extrabold text-[#101a36] transition active:scale-[0.98]"
+                className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white/80 text-center text-[12px] font-extrabold text-[#101a36] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
             >
                 <span>
                     <span className="block text-2xl leading-none">+</span>Ảnh
                     khác
                 </span>
             </button>
+        </div>
         </div>
     );
 }
@@ -590,18 +601,30 @@ function LidSelector({
                         key={lid.id}
                         type="button"
                         onClick={() => toggle(lid.id)}
-                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition ${checked ? "bg-emerald-50 ring-1 ring-emerald-300" : "bg-[#fffaf2]"}`}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${checked ? "bg-emerald-50 ring-1 ring-emerald-300" : "bg-[#fffaf2]"}`}
                     >
                         <span
                             className={`grid h-5 w-5 shrink-0 place-items-center rounded-md text-[11px] ${checked ? "bg-emerald-600 text-white" : "bg-white ring-1 ring-slate-300"}`}
                         >
                             {checked ? "✓" : ""}
                         </span>
+                        {lid.avatarImageUrl ? (
+                            <Image
+                                src={lid.avatarImageUrl}
+                                alt={lid.name}
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                            />
+                        ) : (
+                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#101a36]/5 text-[16px]">🫙</span>
+                        )}
                         <span className="min-w-0">
                             <span className="block truncate text-[13px] font-bold text-[#101a36]">
                                 {lid.name}
                             </span>
                             <span className="block text-[10px] font-semibold text-slate-500">
+                                {lid.categoryName ? `${lid.categoryName} · ` : ""}
                                 {lid.prices
                                     .map((p) => `⌀${p.diameterMm}mm`)
                                     .join(", ")}
@@ -647,6 +670,10 @@ export default function AdminProductClient({
     const { data: allLids = [] } = useSWR<LidDto[]>("/api/v1/Lids", getLids, {
         fallbackData: [],
     });
+    const { data: productDetail } = useSWR<ProductDto>(
+        selectedId ? `/api/v1/Products/${selectedId}` : null,
+        () => getProduct(selectedId!),
+    );
 
     const avatarPreviewUrl = useMemo(
         () => (avatarImage ? URL.createObjectURL(avatarImage) : ""),
@@ -660,7 +687,7 @@ export default function AdminProductClient({
     }));
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa sản phẩm" : "Thêm sản phẩm";
-    const editingProduct = selectedId ? products.find((p) => p.id === selectedId) : null;
+    const editingProduct = productDetail ?? (selectedId ? products.find((p) => p.id === selectedId) : null);
     const existingAvatar = editingProduct?.avatarImageUrl ?? null;
     const existingGallery = editingProduct?.galleryImages ?? [];
 

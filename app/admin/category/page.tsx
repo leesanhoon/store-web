@@ -78,7 +78,7 @@ function CategoryTreeItem({
                             <h3 className="truncate text-[14px] font-extrabold text-[#101a36]">
                                 {node.name}
                             </h3>
-                            {node.isRoot ? (
+                            {node.parentId == null ? (
                                 <AdminStatusBadge tone="info">
                                     Gốc
                                 </AdminStatusBadge>
@@ -196,7 +196,9 @@ export default function AdminCategoryPage() {
         setError("");
     };
 
-    const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(
+        null,
+    );
 
     const confirmDelete = useCallback(async () => {
         if (!deleteTarget) return;
@@ -298,7 +300,9 @@ export default function AdminCategoryPage() {
                         node={root}
                         depth={0}
                         onEdit={startEdit}
-                        onDelete={(n) => { if (!n.isRoot) setDeleteTarget(n); }}
+                        onDelete={(n) => {
+                            if (!n.isRoot) setDeleteTarget(n);
+                        }}
                         onAddChild={startAddChild}
                     />
                 ))}
