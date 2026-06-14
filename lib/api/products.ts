@@ -108,7 +108,14 @@ function toFormData(payload: ProductUploadPayload) {
 
     formData.append("CategoryId", String(payload.categoryId));
 
-    formData.append("Variants", JSON.stringify(payload.variants));
+    payload.variants.forEach((v, i) => {
+        formData.append(`Variants[${i}].CapacityMl`, String(v.capacityMl));
+        formData.append(`Variants[${i}].DiameterMm`, String(v.diameterMm));
+        v.priceTiers.forEach((t, j) => {
+            formData.append(`Variants[${i}].PriceTiers[${j}].MinQuantity`, String(t.minQuantity));
+            formData.append(`Variants[${i}].PriceTiers[${j}].UnitPrice`, String(t.unitPrice));
+        });
+    });
 
     if (payload.lidIds) {
         for (const lidId of payload.lidIds) {
