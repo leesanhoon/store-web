@@ -4,11 +4,11 @@ import AdminProductClient from "@/components/admin/AdminProductClient";
 
 export default async function AdminProductPage() {
     const [productResult, categoryResult] = await Promise.allSettled([
-        getProducts(),
+        getProducts({ page: 1, pageSize: 10 }),
         getCategories(),
     ]);
     const products =
-        productResult.status === "fulfilled" ? productResult.value : [];
+        productResult.status === "fulfilled" ? productResult.value.items : [];
     const categories =
         categoryResult.status === "fulfilled" ? categoryResult.value : [];
 

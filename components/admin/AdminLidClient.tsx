@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
+import { PaginatedResponse } from "@/lib/api/http";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
@@ -203,11 +204,57 @@ export default function AdminLidClient({
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    const { data: lids = initialLids, mutate } = useSWR<LidDto[]>(
-        "/api/v1/Lids",
-        getLids,
-        { fallbackData: initialLids },
+    const PAGE_SIZE = 10;
+    const [page, setPage] = useState(1);
+    const [allLids, setAllLids] = useState<LidDto[]>(initialLids);
+    const [hasMore, setHasMore] = useState(initialLids.length >= PAGE_SIZE);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
+
+    const {
+        data: lidsPage,
+        mutate,
+    } = useSWR<PaginatedResponse<LidDto>>(
+        [`/api/v1/Lids`, page],
+        () => getLids({ page, pageSize: PAGE_SIZE }),
+        { revalidateOnFocus: false },
     );
+
+    useEffect(() => {
+        if (!lidsPage) return;
+        setAllLids((prev) => {
+            if (page === 1) return lidsPage.items;
+            const existingIds = new Set(prev.map((l) => l.id));
+            const newItems = lidsPage.items.filter((l) => !existingIds.has(l.id));
+            return [...prev, ...newItems];
+        });
+        setHasMore(page * PAGE_SIZE < lidsPage.totalCount);
+        setIsLoadingMore(false);
+    }, [lidsPage, page]);
+
+    useEffect(() => {
+        const sentinel = scrollSentinelRef.current;
+        if (!sentinel || !hasMore) return;
+        const scroller = document.getElementById("admin-main-content") ?? undefined;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    setIsLoadingMore(true);
+                    setPage((p) => p + 1);
+                }
+            },
+            { root: scroller, rootMargin: "200px" },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, isLoadingMore]);
+
+    const refreshLids = useCallback(async () => {
+        setPage(1);
+        setAllLids([]);
+        await mutate();
+    }, [mutate]);
+
     const { data: categories = initialCategories } = useSWR<CategoryDto[]>(
         "/api/v1/Categories",
         getCategories,
@@ -222,7 +269,7 @@ export default function AdminLidClient({
     const formTitle = selectedId ? "Sửa nắp" : "Thêm nắp mới";
     const editingLid =
         lidDetail ??
-        (selectedId ? lids.find((l) => l.id === selectedId) : null);
+        (selectedId ? allLids.find((l) => l.id === selectedId) : null);
     const existingAvatar = editingLid?.avatarImageUrl ?? null;
     const existingGallery = editingLid?.galleryImages ?? [];
 
@@ -247,7 +294,7 @@ export default function AdminLidClient({
     const normalizeSearch = (value: string) =>
         value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-    const visibleLids = lids.filter((lid) => {
+    const visibleLids = allLids.filter((lid) => {
         if (!searchTerm.trim()) return true;
         const text = normalizeSearch(
             `${lid.name} ${lid.description ?? ""} ${lid.categoryName ?? ""}`,
@@ -353,7 +400,7 @@ export default function AdminLidClient({
         if (!selectedId) return;
         try {
             await deleteLidImage(selectedId, imageId);
-            await mutate();
+            await refreshLids();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
         }
@@ -420,7 +467,7 @@ export default function AdminLidClient({
                 });
                 setMessage("Đã tạo nắp mới.");
             }
-            await mutate();
+            await refreshLids();
             closeForm();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể lưu nắp.");
@@ -438,7 +485,7 @@ export default function AdminLidClient({
         setError("");
         try {
             await deleteLid(deleteTarget);
-            await mutate();
+            await refreshLids();
             if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa nắp.");
         } catch (err) {
@@ -447,7 +494,7 @@ export default function AdminLidClient({
             setIsSubmitting(false);
             setDeleteTarget(null);
         }
-    }, [deleteTarget, selectedId, closeForm, mutate]);
+    }, [deleteTarget, selectedId, closeForm, refreshLids]);
 
     if (isFormMode) {
         const displayAvatarUrl = avatarPreviewUrl || existingAvatar || "";
@@ -885,11 +932,17 @@ export default function AdminLidClient({
                         </div>
                     </AdminCard>
                 ))}
-                {visibleLids.length === 0 ? (
+                {visibleLids.length === 0 && !isLoadingMore ? (
                     <AdminCard className="p-4 text-center text-[13px] font-bold text-slate-500">
                         Chưa có nắp nào.
                     </AdminCard>
                 ) : null}
+                {isLoadingMore ? (
+                    <div className="flex justify-center py-4">
+                        <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#101a36] border-t-transparent" />
+                    </div>
+                ) : null}
+                {hasMore ? <div ref={scrollSentinelRef} className="h-1" /> : null}
             </section>
 
             <ConfirmModal

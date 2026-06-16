@@ -11,6 +11,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { PaginatedResponse } from "@/lib/api/http";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
@@ -570,10 +571,12 @@ function VariantEditor({
 function LidSelector({
     selectedIds,
     allLids,
+    productDiameters,
     onChange,
 }: {
     selectedIds: number[];
     allLids: LidDto[];
+    productDiameters: number[];
     onChange: (ids: number[]) => void;
 }) {
     const toggle = (id: number) => {
@@ -584,6 +587,12 @@ function LidSelector({
         );
     };
 
+    const compatibleLids = productDiameters.length > 0
+        ? allLids.filter((lid) =>
+              lid.prices.some((p) => productDiameters.includes(p.diameterMm)),
+          )
+        : allLids;
+
     if (allLids.length === 0) {
         return (
             <p className="text-[12px] font-semibold text-slate-500">
@@ -592,10 +601,21 @@ function LidSelector({
         );
     }
 
+    if (compatibleLids.length === 0) {
+        return (
+            <p className="text-[12px] font-semibold text-slate-500">
+                Không có nắp nào phù hợp với ⌀ miệng ({productDiameters.map((d) => `${d}mm`).join(", ")}).
+            </p>
+        );
+    }
+
     return (
         <div className="space-y-1.5">
-            {allLids.map((lid) => {
+            {compatibleLids.map((lid) => {
                 const checked = selectedIds.includes(lid.id);
+                const matchingDiameters = productDiameters.length > 0
+                    ? lid.prices.filter((p) => productDiameters.includes(p.diameterMm))
+                    : lid.prices;
                 return (
                     <button
                         key={lid.id}
@@ -625,7 +645,7 @@ function LidSelector({
                             </span>
                             <span className="block text-[10px] font-semibold text-slate-500">
                                 {lid.categoryName ? `${lid.categoryName} · ` : ""}
-                                {lid.prices
+                                {matchingDiameters
                                     .map((p) => `⌀${p.diameterMm}mm`)
                                     .join(", ")}
                             </span>
@@ -656,13 +676,58 @@ export default function AdminProductClient({
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
+    const PAGE_SIZE = 10;
+    const [page, setPage] = useState(1);
+    const [allProducts, setAllProducts] = useState<ProductDto[]>(initialProducts);
+    const [hasMore, setHasMore] = useState(initialProducts.length >= PAGE_SIZE);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
+
     const {
-        data: products = initialProducts,
+        data: productsPage,
         error: productsError,
         mutate,
-    } = useSWR<ProductDto[]>("/api/v1/Products", getProducts, {
-        fallbackData: initialProducts,
-    });
+    } = useSWR<PaginatedResponse<ProductDto>>(
+        [`/api/v1/Products`, page],
+        () => getProducts({ page, pageSize: PAGE_SIZE }),
+        { revalidateOnFocus: false },
+    );
+
+    useEffect(() => {
+        if (!productsPage) return;
+        setAllProducts((prev) => {
+            if (page === 1) return productsPage.items;
+            const existingIds = new Set(prev.map((p) => p.id));
+            const newItems = productsPage.items.filter((p) => !existingIds.has(p.id));
+            return [...prev, ...newItems];
+        });
+        setHasMore(page * PAGE_SIZE < productsPage.totalCount);
+        setIsLoadingMore(false);
+    }, [productsPage, page]);
+
+    useEffect(() => {
+        const sentinel = scrollSentinelRef.current;
+        if (!sentinel || !hasMore) return;
+        const scroller = document.getElementById("admin-main-content") ?? undefined;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    setIsLoadingMore(true);
+                    setPage((p) => p + 1);
+                }
+            },
+            { root: scroller, rootMargin: "200px" },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, isLoadingMore]);
+
+    const refreshProducts = useCallback(async () => {
+        setPage(1);
+        setAllProducts([]);
+        await mutate();
+    }, [mutate]);
+
     const { data: categories = initialCategories, error: categoriesError } =
         useSWR<CategoryDto[]>("/api/v1/Categories", getCategories, {
             fallbackData: initialCategories,
@@ -687,7 +752,7 @@ export default function AdminProductClient({
     }));
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa sản phẩm" : "Thêm sản phẩm";
-    const editingProduct = productDetail ?? (selectedId ? products.find((p) => p.id === selectedId) : null);
+    const editingProduct = productDetail ?? (selectedId ? allProducts.find((p) => p.id === selectedId) : null);
     const existingAvatar = editingProduct?.avatarImageUrl ?? null;
     const existingGallery = editingProduct?.galleryImages ?? [];
 
@@ -695,13 +760,13 @@ export default function AdminProductClient({
         if (!selectedId) return;
         try {
             await deleteProductImage(selectedId, imageId);
-            await mutate();
+            await refreshProducts();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
         }
     };
 
-    const visibleProducts = products.filter((product) => {
+    const visibleProducts = allProducts.filter((product) => {
         const text = normalizeSearch(
             `${product.name} ${product.description ?? ""} ${product.categoryName}`,
         );
@@ -867,7 +932,7 @@ export default function AdminProductClient({
                 });
                 setMessage("Đã tạo sản phẩm mới.");
             }
-            await mutate();
+            await refreshProducts();
             closeForm();
         } catch (err) {
             setError(normalizeProductApiError(err));
@@ -885,7 +950,7 @@ export default function AdminProductClient({
         setError("");
         try {
             await deleteProduct(deleteTarget);
-            await mutate();
+            await refreshProducts();
             if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa sản phẩm.");
         } catch (err) {
@@ -896,7 +961,7 @@ export default function AdminProductClient({
             setIsSubmitting(false);
             setDeleteTarget(null);
         }
-    }, [deleteTarget, selectedId, closeForm, mutate]);
+    }, [deleteTarget, selectedId, closeForm, refreshProducts]);
 
     if (isFormMode) {
         return (
@@ -998,6 +1063,9 @@ export default function AdminProductClient({
                         <LidSelector
                             selectedIds={form.lidIds}
                             allLids={allLids}
+                            productDiameters={form.variants
+                                .map((v) => Number(v.diameterMm))
+                                .filter((d) => d > 0)}
                             onChange={(lidIds) =>
                                 setForm((prev) => ({ ...prev, lidIds }))
                             }
@@ -1187,11 +1255,17 @@ export default function AdminProductClient({
                         </AdminCard>
                     );
                 })}
-                {visibleProducts.length === 0 ? (
+                {visibleProducts.length === 0 && !isLoadingMore ? (
                     <AdminCard className="p-4 text-center text-[13px] font-bold text-slate-500">
                         Chưa có sản phẩm phù hợp.
                     </AdminCard>
                 ) : null}
+                {isLoadingMore ? (
+                    <div className="flex justify-center py-4">
+                        <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#101a36] border-t-transparent" />
+                    </div>
+                ) : null}
+                {hasMore ? <div ref={scrollSentinelRef} className="h-1" /> : null}
             </section>
 
             <ConfirmModal

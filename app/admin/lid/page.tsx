@@ -3,8 +3,11 @@ import { getCategories } from "@/lib/api/categories";
 import AdminLidClient from "@/components/admin/AdminLidClient";
 
 export default async function AdminLidPage() {
-    const [lidResult, categoryResult] = await Promise.allSettled([getLids(), getCategories()]);
-    const lids = lidResult.status === "fulfilled" ? lidResult.value : [];
+    const [lidResult, categoryResult] = await Promise.allSettled([
+        getLids({ page: 1, pageSize: 10 }),
+        getCategories(),
+    ]);
+    const lids = lidResult.status === "fulfilled" ? lidResult.value.items : [];
     const categories = categoryResult.status === "fulfilled" ? categoryResult.value : [];
 
     return <AdminLidClient initialLids={lids} initialCategories={categories} />;
