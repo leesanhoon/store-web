@@ -105,8 +105,8 @@ export default function CartPage() {
 
         const businessName = form.businessName.trim();
         const note = form.note.trim();
-        const productItems = items;
-        // const lidItems = items.filter((item) => item.isLidOnly);
+        const productItems = items.filter((item) => !item.isLidOnly);
+        const lidItems = items.filter((item) => item.isLidOnly);
 
         if (productItems.length === 0) {
             setError(
@@ -116,15 +116,15 @@ export default function CartPage() {
             return;
         }
 
-        // const lidNotes = lidItems.map(
-        //     (item) =>
-        //         `Nắp: ${item.name} ⌀${item.configuration.lidDiameterMm ?? ""}mm x${item.quantity.toLocaleString("vi-VN")} (${formatCurrency(item.price)}/cái)`,
-        // );
+        const lidNotes = lidItems.map(
+            (item) =>
+                `Nắp: ${item.name} ⌀${item.configuration.lidDiameterMm ?? ""}mm x${item.quantity.toLocaleString("vi-VN")} (${formatCurrency(item.price)}/cái)`,
+        );
 
         const allNotes = [
             businessName ? `Quán: ${businessName}` : "",
             note,
-            // ...lidNotes,
+            ...lidNotes,
         ]
             .filter(Boolean)
             .join(". ");
