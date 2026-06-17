@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import Link from "next/link";
 import { getProducts } from "@/lib/api/products";
 import { getLids } from "@/lib/api/lids";
@@ -95,6 +96,7 @@ function PendingOrdersSection({
 }
 
 export default async function AdminPage() {
+    await connection();
     const [products, lids, partnersResponse, allOrdersResponse] = await Promise.all([
         getProducts().catch(() => []),
         getLids().catch(() => []),

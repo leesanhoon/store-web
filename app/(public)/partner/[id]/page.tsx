@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -53,6 +54,7 @@ export default async function PartnerDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
+    await connection();
     const { id } = await params;
     const partner = await loadPartner(id);
     if (!partner) notFound();

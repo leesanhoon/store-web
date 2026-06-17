@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import GalleryImageCard from "@/components/GalleryImageCard";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
@@ -18,6 +19,7 @@ async function loadGalleryItems() {
 }
 
 export default async function GalleryPage() {
+    await connection();
     const { galleryItems, error } = await loadGalleryItems();
 
     return (

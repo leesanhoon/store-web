@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
@@ -31,6 +32,7 @@ export default async function LidDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
+    await connection();
     const { id } = await params;
     const lid = await loadLid(id);
     if (!lid) notFound();

@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import HeroSlider from "@/components/mobile-store/HeroSlider";
@@ -46,6 +47,7 @@ const categories = [
 ];
 
 export default async function Home() {
+  await connection();
   const [{ products, error }, partners] = await Promise.all([
     loadProducts(),
     loadPartners(),

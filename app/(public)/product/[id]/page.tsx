@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/AddToCartButton";
@@ -108,6 +109,7 @@ export default async function ProductDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
+    await connection();
     const { id } = await params;
     const product = await loadProduct(id);
     if (!product) notFound();
