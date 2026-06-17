@@ -918,6 +918,11 @@ export default function AdminProductClient({
             return;
         }
 
+        if (!selectedId && !avatarImage) {
+            setError("Vui lòng chọn ảnh đại diện cho sản phẩm.");
+            return;
+        }
+
         const hasNewImages = avatarImage || galleryImages.length > 0;
         const imageError = hasNewImages
             ? validateProductImages(avatarImage, galleryImages)

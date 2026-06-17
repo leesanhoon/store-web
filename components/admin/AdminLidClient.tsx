@@ -430,6 +430,11 @@ export default function AdminLidClient({
             return;
         }
 
+        if (!selectedId && !avatarImage) {
+            setError("Vui lòng chọn ảnh đại diện cho nắp ly.");
+            return;
+        }
+
         const hasNewImages = avatarImage || galleryImages.length > 0;
         const imageError = hasNewImages
             ? validateLidImages(avatarImage, galleryImages)

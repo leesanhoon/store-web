@@ -70,11 +70,15 @@ const MOCKUP_GALLERY: Record<string, string[]> = {
 function getMockupGallery(product: ProductDto) {
     const text = `${product.name} ${product.categoryName ?? ""}`.toLowerCase();
     if (text.includes("pet")) return MOCKUP_GALLERY.pet;
-    if (text.includes("giấy") || text.includes("paper")) return MOCKUP_GALLERY.paper;
+    if (text.includes("giấy") || text.includes("paper"))
+        return MOCKUP_GALLERY.paper;
     return MOCKUP_GALLERY.default;
 }
 
-function getProductGallerySources(product: ProductDto, fallbackImageSrc: string) {
+function getProductGallerySources(
+    product: ProductDto,
+    fallbackImageSrc: string,
+) {
     const sources: string[] = [];
 
     if (product.avatarImageUrl) {
@@ -87,12 +91,14 @@ function getProductGallerySources(product: ProductDto, fallbackImageSrc: string)
 
     sources.push(...gallerySources);
 
-    if (sources.length <= 1) {
-        const primary = sources[0] ?? fallbackImageSrc;
-        const mockups = getMockupGallery(product).filter((src) => src !== primary);
-        sources.length = 0;
-        sources.push(primary, ...mockups);
-    }
+    // if (sources.length <= 1) {
+    //     const primary = sources[0] ?? fallbackImageSrc;
+    //     const mockups = getMockupGallery(product).filter(
+    //         (src) => src !== primary,
+    //     );
+    //     sources.length = 0;
+    //     sources.push(primary, ...mockups);
+    // }
 
     return [...new Set(sources)];
 }
@@ -153,11 +159,15 @@ export default async function ProductDetailPage({
                 </section>
 
                 <section className="detail-product-copy">
-                    <span className="detail-eyebrow">{product.categoryName}</span>
+                    <span className="detail-eyebrow">
+                        {product.categoryName}
+                    </span>
                     <h2>{product.name}</h2>
                     <p className="detail-price">{formatPriceRange(product)}</p>
                     {product.description ? (
-                        <p className="detail-description">{product.description}</p>
+                        <p className="detail-description">
+                            {product.description}
+                        </p>
                     ) : null}
                 </section>
 

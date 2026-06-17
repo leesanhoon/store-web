@@ -42,22 +42,19 @@ export default function ProductImageGallery({
         return () => track.removeEventListener("scroll", handleScroll);
     }, [images.length]);
 
-    const goToSlide = useCallback(
-        (index: number) => {
-            const track = trackRef.current;
-            const nextSlide = track?.children.item(index) as HTMLElement | null;
+    const goToSlide = useCallback((index: number) => {
+        const track = trackRef.current;
+        const nextSlide = track?.children.item(index) as HTMLElement | null;
 
-            setActiveIndex(index);
+        setActiveIndex(index);
 
-            if (track && nextSlide) {
-                track.scrollTo({
-                    left: nextSlide.offsetLeft,
-                    behavior: "smooth",
-                });
-            }
-        },
-        [],
-    );
+        if (track && nextSlide) {
+            track.scrollTo({
+                left: nextSlide.offsetLeft,
+                behavior: "smooth",
+            });
+        }
+    }, []);
 
     const hasMultiple = images.length > 1;
 
@@ -99,7 +96,11 @@ export default function ProductImageGallery({
 
             {/* Dot indicators */}
             {hasMultiple && (
-                <div className="gallery-dots" role="tablist" aria-label="Chọn ảnh">
+                <div
+                    className="gallery-dots"
+                    role="tablist"
+                    aria-label="Chọn ảnh"
+                >
                     {images.map((_, index) => (
                         <button
                             key={index}
