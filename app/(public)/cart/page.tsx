@@ -105,15 +105,38 @@ export default function CartPage() {
 
         const businessName = form.businessName.trim();
         const note = form.note.trim();
+        const productItems = items;
+        // const lidItems = items.filter((item) => item.isLidOnly);
+
+        if (productItems.length === 0) {
+            setError(
+                "Giỏ hàng cần có ít nhất một sản phẩm ly. Nắp chỉ có thể đặt kèm theo ly.",
+            );
+            setSubmitting(false);
+            return;
+        }
+
+        // const lidNotes = lidItems.map(
+        //     (item) =>
+        //         `Nắp: ${item.name} ⌀${item.configuration.lidDiameterMm ?? ""}mm x${item.quantity.toLocaleString("vi-VN")} (${formatCurrency(item.price)}/cái)`,
+        // );
+
+        const allNotes = [
+            businessName ? `Quán: ${businessName}` : "",
+            note,
+            // ...lidNotes,
+        ]
+            .filter(Boolean)
+            .join(". ");
+
+        console.log("Product items:", productItems);
+
         const payload: CreateOrderRequest = {
             customerName: form.fullName.trim(),
             customerPhone: form.phone.trim(),
             customerEmail: null,
-            note:
-                [businessName ? `Quán: ${businessName}` : "", note]
-                    .filter(Boolean)
-                    .join(". ") || null,
-            items: items.map((item) => ({
+            note: allNotes || null,
+            items: productItems.map((item) => ({
                 productId: item.productId,
                 quantity: item.quantity,
                 unitPrice: getItemUnitPrice(item),
