@@ -33,7 +33,7 @@ export default function ProductCard({ product, compact = false }: Props) {
       <div className="mobile-product-body">
         <h3>{product.name}</h3>
         <p className="mobile-product-price">{formatPriceRange(product)}</p>
-        {!compact ? <p className="mobile-product-moq">MOQ {info.minimumQuantity.replace("Từ ", "")}</p> : null}
+        {!compact ? <p className="mobile-product-moq">Đặt tối thiểu {info.minimumQuantity.replace("Từ ", "")} ly</p> : null}
       </div>
       {!compact ? (
         <AddToCartButton

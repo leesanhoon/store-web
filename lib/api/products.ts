@@ -209,6 +209,7 @@ export type CompatibleLidDto = {
     description: string | null;
     categoryId: number;
     categoryName: string;
+    avatarImageUrl: string | null;
     prices: Array<{
         id: number;
         diameterMm: number;

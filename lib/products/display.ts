@@ -133,7 +133,7 @@ export function getProductVariantLabels(
     { label: "Loại ly", value: info.cupType },
     { label: "Dung tích", value: info.volume },
     { label: "Đơn vị bán", value: info.unit },
-    { label: "Tối thiểu", value: info.minimumQuantity },
+    { label: "Đặt tối thiểu", value: info.minimumQuantity },
     { label: "In ấn", value: info.printOption },
   ];
 }

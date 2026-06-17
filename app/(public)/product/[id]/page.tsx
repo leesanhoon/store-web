@@ -128,10 +128,10 @@ export default async function ProductDetailPage({
         { label: "Dung tích", value: info.volume, icon: DropletIcon },
         { label: "Chất liệu", value: info.material, icon: LayersIcon },
         {
-            label: "MOQ",
+            label: "Đặt tối thiểu",
             value: minMoq
-                ? new Intl.NumberFormat("vi-VN").format(minMoq)
-                : "1.000",
+                ? `${new Intl.NumberFormat("vi-VN").format(minMoq)} ly`
+                : "1.000 ly",
             icon: BoxIcon,
         },
         { label: "In logo", value: "theo yêu cầu", icon: PencilIcon },

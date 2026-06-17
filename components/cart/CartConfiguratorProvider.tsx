@@ -12,9 +12,6 @@ import {
 } from "@/lib/cart";
 import { formatCurrency, getVariantLabel } from "@/lib/products/display";
 
-const QUANTITY_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000] as const;
-const CONTACT_VALUE = "contact";
-
 const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
 
 type CartProduct = {
@@ -136,9 +133,6 @@ export default function CartConfiguratorProvider({ children }: { children: React
     value: CartConfiguration[Key],
   ) => setConfiguration((current) => ({ ...current, [key]: value }));
 
-  const setQuantity = (value: number) =>
-    setConfiguration((current) => ({ ...current, quantity: Math.max(1000, value) }));
-
   const selectVariant = (variant: ProductVariantDto) => {
     const firstTier = getFirstPriceTier(variant);
 
@@ -160,7 +154,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
     setSelectedTierMinQuantity(tier.minQuantity);
     setConfiguration((current) => ({
       ...current,
-      quantity: Math.min(10000, Math.max(current.quantity, Math.ceil(tier.minQuantity / 1000) * 1000)),
+      quantity: Math.min(10000, Math.ceil(tier.minQuantity / 1000) * 1000),
     }));
   };
 
@@ -207,6 +201,11 @@ export default function CartConfiguratorProvider({ children }: { children: React
   const handleConfirm = () => {
     if (!activeProduct) return;
 
+    const cupConfiguration: CartConfiguration = {
+      ...configuration,
+      lidUnitPrice: undefined,
+    };
+
     addToCart({
       productId: activeProduct.productId,
       name: activeProduct.name,
@@ -215,12 +214,41 @@ export default function CartConfiguratorProvider({ children }: { children: React
       unit: activeProduct.unit ?? "cay",
       quantity: configuration.quantity,
       imageSrc: activeProduct.imageSrc,
-      configuration,
+      configuration: cupConfiguration,
       variantId: selectedVariant?.id,
       capacityMl: selectedVariant?.capacityMl,
       diameterMm: selectedVariant?.diameterMm,
       priceTierMinQuantity: selectedTier?.minQuantity,
     });
+
+    if (selectedLid && selectedLidPrice) {
+      addToCart({
+        productId: 0,
+        name: selectedLid.name,
+        price: selectedLidPrice.unitPrice,
+        categoryName: activeProduct.categoryName,
+        unit: "thung",
+        quantity: configuration.quantity,
+        imageSrc: selectedLid.avatarImageUrl,
+        isLidOnly: true,
+        lidOnlyId: selectedLid.id,
+        lidOnlyPriceId: selectedLidPrice.id,
+        lidOnlyDiameterMm: selectedLidPrice.diameterMm,
+        configuration: {
+          ...defaultCartConfiguration,
+          cupModel: `Nắp ⌀${selectedLidPrice.diameterMm}mm`,
+          size: `⌀${selectedLidPrice.diameterMm}mm`,
+          material: "Nắp ly",
+          printMethod: "Không in",
+          lidOption: selectedLid.name,
+          lidId: selectedLid.id,
+          lidName: selectedLid.name,
+          lidPriceId: selectedLidPrice.id,
+          lidDiameterMm: selectedLidPrice.diameterMm,
+          lidUnitPrice: 0,
+        },
+      });
+    }
 
     const rect = confirmRef.current?.getBoundingClientRect();
     if (activeProduct.anchorRect && rect) {
@@ -267,7 +295,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
                 <h2>{activeProduct.name}</h2>
                 <p className="sheet-price">{formatCurrency(totalUnitPrice)} / ly</p>
                 <p className="sheet-moq">
-                  MOQ {new Intl.NumberFormat("vi-VN").format(selectedTier?.minQuantity ?? 1000)}
+                  Đặt tối thiểu {new Intl.NumberFormat("vi-VN").format(selectedTier?.minQuantity ?? 1000)} ly
                 </p>
               </div>
             </div>
@@ -314,29 +342,6 @@ export default function CartConfiguratorProvider({ children }: { children: React
                 </div>
               </div>
             ) : null}
-
-            <div className="sheet-control-group">
-              <h3>Số lượng</h3>
-              <div className="quantity-dropdown">
-                <select
-                  value={configuration.quantity <= 10000 ? configuration.quantity : CONTACT_VALUE}
-                  onChange={(e) => {
-                    if (e.target.value === CONTACT_VALUE) {
-                      window.open("https://zalo.me/0905123456", "_blank");
-                      return;
-                    }
-                    setQuantity(Number(e.target.value));
-                  }}
-                >
-                  {QUANTITY_OPTIONS.map((qty) => (
-                    <option key={qty} value={qty}>
-                      {qty.toLocaleString("vi-VN")} ly
-                    </option>
-                  ))}
-                  <option value={CONTACT_VALUE}>Trên 10.000 — Liên hệ</option>
-                </select>
-              </div>
-            </div>
 
             <OptionGroup
               label="Loại in"
