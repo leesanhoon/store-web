@@ -67,7 +67,7 @@ type Props = {
     initialCategories: CategoryDto[];
 };
 
-const tabs = ["Tất cả", "Ly nhựa", "Ly giấy", "Nắp"];
+const tabs = ["Tất cả", "Ly nhựa", "Ly giấy"];
 
 const emptyPriceTier: PriceTierRow = { minQuantity: "", unitPrice: "" };
 const emptyVariant: VariantRow = {
@@ -261,7 +261,9 @@ function AdminImageUploadBox({
                             className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
                         />
                         {isExisting ? (
-                            <span className="absolute bottom-2 left-2 rounded-full bg-[#101a36]/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white/90 uppercase">Ảnh hiện tại</span>
+                            <span className="absolute bottom-2 left-2 rounded-full bg-[#101a36]/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white/90 uppercase">
+                                Ảnh hiện tại
+                            </span>
                         ) : null}
                     </>
                 ) : (
@@ -295,60 +297,62 @@ function AdminGalleryPicker({
 }) {
     return (
         <div className="rounded-[18px] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.06]">
-        <div className="grid grid-cols-3 gap-2 rounded-[calc(18px-6px)] bg-white p-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
-            <input
-                ref={inputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
-                multiple
-                onChange={onFileChange}
-                className="hidden"
-            />
-            {existingImages?.map((img) => (
-                <div key={img.id} className="group relative">
-                    <Image
-                        src={img.imageUrl}
-                        alt="Ảnh sản phẩm"
-                        width={96}
-                        height={86}
-                        className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                    />
-                    {onDeleteExisting ? (
-                        <button
-                            type="button"
-                            onClick={() => onDeleteExisting(img.id)}
-                            className="absolute -right-1.5 -top-1.5 grid h-[22px] w-[22px] place-items-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[11px] font-bold text-white shadow-md ring-2 ring-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-90"
-                            aria-label="Xóa ảnh"
-                        >
-                            ×
-                        </button>
-                    ) : null}
-                </div>
-            ))}
-            {imageSources.slice(0, 5).map((src, index) => (
-                <div key={`${src}-${index}`} className="relative">
-                    <Image
-                        src={src}
-                        alt="Ảnh sản phẩm"
-                        width={96}
-                        height={86}
-                        unoptimized={src.startsWith("blob:")}
-                        className="h-[68px] w-full rounded-[10px] border border-emerald-200 object-cover"
-                    />
-                    <span className="absolute bottom-0.5 left-0.5 rounded-full bg-emerald-600/80 px-1.5 py-px text-[8px] font-bold text-white uppercase">Mới</span>
-                </div>
-            ))}
-            <button
-                type="button"
-                onClick={onOpenPicker}
-                className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white/80 text-center text-[12px] font-extrabold text-[#101a36] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
-            >
-                <span>
-                    <span className="block text-2xl leading-none">+</span>Ảnh
-                    khác
-                </span>
-            </button>
-        </div>
+            <div className="grid grid-cols-3 gap-2 rounded-[calc(18px-6px)] bg-white p-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
+                <input
+                    ref={inputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+                    multiple
+                    onChange={onFileChange}
+                    className="hidden"
+                />
+                {existingImages?.map((img) => (
+                    <div key={img.id} className="group relative">
+                        <Image
+                            src={img.imageUrl}
+                            alt="Ảnh sản phẩm"
+                            width={96}
+                            height={86}
+                            className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                        />
+                        {onDeleteExisting ? (
+                            <button
+                                type="button"
+                                onClick={() => onDeleteExisting(img.id)}
+                                className="absolute -right-1.5 -top-1.5 grid h-[22px] w-[22px] place-items-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[11px] font-bold text-white shadow-md ring-2 ring-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-90"
+                                aria-label="Xóa ảnh"
+                            >
+                                ×
+                            </button>
+                        ) : null}
+                    </div>
+                ))}
+                {imageSources.slice(0, 5).map((src, index) => (
+                    <div key={`${src}-${index}`} className="relative">
+                        <Image
+                            src={src}
+                            alt="Ảnh sản phẩm"
+                            width={96}
+                            height={86}
+                            unoptimized={src.startsWith("blob:")}
+                            className="h-[68px] w-full rounded-[10px] border border-emerald-200 object-cover"
+                        />
+                        <span className="absolute bottom-0.5 left-0.5 rounded-full bg-emerald-600/80 px-1.5 py-px text-[8px] font-bold text-white uppercase">
+                            Mới
+                        </span>
+                    </div>
+                ))}
+                <button
+                    type="button"
+                    onClick={onOpenPicker}
+                    className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white/80 text-center text-[12px] font-extrabold text-[#101a36] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
+                >
+                    <span>
+                        <span className="block text-2xl leading-none">+</span>
+                        Ảnh khác
+                    </span>
+                </button>
+            </div>
         </div>
     );
 }
@@ -587,11 +591,14 @@ function LidSelector({
         );
     };
 
-    const compatibleLids = productDiameters.length > 0
-        ? allLids.filter((lid) =>
-              lid.prices.some((p) => productDiameters.includes(p.diameterMm)),
-          )
-        : allLids;
+    const compatibleLids =
+        productDiameters.length > 0
+            ? allLids.filter((lid) =>
+                  lid.prices.some((p) =>
+                      productDiameters.includes(p.diameterMm),
+                  ),
+              )
+            : allLids;
 
     if (allLids.length === 0) {
         return (
@@ -604,7 +611,8 @@ function LidSelector({
     if (compatibleLids.length === 0) {
         return (
             <p className="text-[12px] font-semibold text-slate-500">
-                Không có nắp nào phù hợp với ⌀ miệng ({productDiameters.map((d) => `${d}mm`).join(", ")}).
+                Không có nắp nào phù hợp với ⌀ miệng (
+                {productDiameters.map((d) => `${d}mm`).join(", ")}).
             </p>
         );
     }
@@ -613,9 +621,12 @@ function LidSelector({
         <div className="space-y-1.5">
             {compatibleLids.map((lid) => {
                 const checked = selectedIds.includes(lid.id);
-                const matchingDiameters = productDiameters.length > 0
-                    ? lid.prices.filter((p) => productDiameters.includes(p.diameterMm))
-                    : lid.prices;
+                const matchingDiameters =
+                    productDiameters.length > 0
+                        ? lid.prices.filter((p) =>
+                              productDiameters.includes(p.diameterMm),
+                          )
+                        : lid.prices;
                 return (
                     <button
                         key={lid.id}
@@ -637,14 +648,18 @@ function LidSelector({
                                 className="h-10 w-10 shrink-0 rounded-lg object-cover"
                             />
                         ) : (
-                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#101a36]/5 text-[16px]">🫙</span>
+                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#101a36]/5 text-[16px]">
+                                🫙
+                            </span>
                         )}
                         <span className="min-w-0">
                             <span className="block truncate text-[13px] font-bold text-[#101a36]">
                                 {lid.name}
                             </span>
                             <span className="block text-[10px] font-semibold text-slate-500">
-                                {lid.categoryName ? `${lid.categoryName} · ` : ""}
+                                {lid.categoryName
+                                    ? `${lid.categoryName} · `
+                                    : ""}
                                 {matchingDiameters
                                     .map((p) => `⌀${p.diameterMm}mm`)
                                     .join(", ")}
@@ -678,7 +693,8 @@ export default function AdminProductClient({
 
     const PAGE_SIZE = 10;
     const [page, setPage] = useState(1);
-    const [allProducts, setAllProducts] = useState<ProductDto[]>(initialProducts);
+    const [allProducts, setAllProducts] =
+        useState<ProductDto[]>(initialProducts);
     const [hasMore, setHasMore] = useState(initialProducts.length >= PAGE_SIZE);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
@@ -698,7 +714,9 @@ export default function AdminProductClient({
         setAllProducts((prev) => {
             if (page === 1) return productsPage.items;
             const existingIds = new Set(prev.map((p) => p.id));
-            const newItems = productsPage.items.filter((p) => !existingIds.has(p.id));
+            const newItems = productsPage.items.filter(
+                (p) => !existingIds.has(p.id),
+            );
             return [...prev, ...newItems];
         });
         setHasMore(page * PAGE_SIZE < productsPage.totalCount);
@@ -708,7 +726,8 @@ export default function AdminProductClient({
     useEffect(() => {
         const sentinel = scrollSentinelRef.current;
         if (!sentinel || !hasMore) return;
-        const scroller = document.getElementById("admin-main-content") ?? undefined;
+        const scroller =
+            document.getElementById("admin-main-content") ?? undefined;
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
@@ -755,7 +774,9 @@ export default function AdminProductClient({
     }));
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa sản phẩm" : "Thêm sản phẩm";
-    const editingProduct = productDetail ?? (selectedId ? allProducts.find((p) => p.id === selectedId) : null);
+    const editingProduct =
+        productDetail ??
+        (selectedId ? allProducts.find((p) => p.id === selectedId) : null);
     const existingAvatar = editingProduct?.avatarImageUrl ?? null;
     const existingGallery = editingProduct?.galleryImages ?? [];
 
@@ -920,7 +941,11 @@ export default function AdminProductClient({
                     lidIds: form.lidIds.length > 0 ? form.lidIds : undefined,
                 });
                 if (hasNewImages) {
-                    await addProductImages(selectedId, avatarImage, galleryImages.length > 0 ? galleryImages : undefined);
+                    await addProductImages(
+                        selectedId,
+                        avatarImage,
+                        galleryImages.length > 0 ? galleryImages : undefined,
+                    );
                 }
                 setMessage("Đã cập nhật sản phẩm.");
             } else {
@@ -1094,7 +1119,11 @@ export default function AdminProductClient({
                                 existingImages={existingGallery}
                                 onFileChange={handleGalleryFileChange}
                                 onOpenPicker={openGalleryPicker}
-                                onDeleteExisting={selectedId ? handleDeleteExistingImage : undefined}
+                                onDeleteExisting={
+                                    selectedId
+                                        ? handleDeleteExistingImage
+                                        : undefined
+                                }
                             />
                         </div>
                     </div>
@@ -1268,7 +1297,9 @@ export default function AdminProductClient({
                         <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#101a36] border-t-transparent" />
                     </div>
                 ) : null}
-                {hasMore ? <div ref={scrollSentinelRef} className="h-1" /> : null}
+                {hasMore ? (
+                    <div ref={scrollSentinelRef} className="h-1" />
+                ) : null}
             </section>
 
             <ConfirmModal
