@@ -3,25 +3,43 @@ import { Suspense } from "react";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import ProductCatalog from "@/components/mobile-store/ProductCatalog";
+import type { CategoryTreeNode } from "@/lib/api/categories";
 import type { LidDto } from "@/lib/api/lids";
 import type { ProductDto } from "@/lib/api/products";
-import { getCatalogLids, getCatalogProducts } from "@/lib/data/catalog";
+import {
+    getCatalogCategoryTree,
+    getCatalogLids,
+    getCatalogProducts,
+} from "@/lib/data/catalog";
 
-async function loadCatalog(): Promise<{
-    products: ProductDto[];
-    lids: LidDto[];
-    error: string;
-}> {
+function collectChildCategories(tree: CategoryTreeNode[]) {
+    const children: { id: number; name: string }[] = [];
+    for (const node of tree) {
+        for (const child of node.children) {
+            children.push({ id: child.id, name: child.name });
+        }
+    }
+    return children;
+}
+
+async function loadCatalog() {
     try {
-        const [products, lids] = await Promise.all([
+        const [products, lids, categoryTree] = await Promise.all([
             getCatalogProducts(),
             getCatalogLids(),
+            getCatalogCategoryTree().catch(() => [] as CategoryTreeNode[]),
         ]);
-        return { products, lids, error: "" };
+        return {
+            products,
+            lids,
+            categories: collectChildCategories(categoryTree),
+            error: "",
+        };
     } catch (error) {
         return {
-            products: [],
-            lids: [],
+            products: [] as ProductDto[],
+            lids: [] as LidDto[],
+            categories: [] as { id: number; name: string }[],
             error:
                 error instanceof Error
                     ? error.message
@@ -32,7 +50,7 @@ async function loadCatalog(): Promise<{
 
 export default async function ProductsPage() {
     await connection();
-    const { products, lids, error } = await loadCatalog();
+    const { products, lids, categories, error } = await loadCatalog();
     const hasItems = products.length > 0 || lids.length > 0;
 
     return (
@@ -56,7 +74,11 @@ export default async function ProductsPage() {
                             />
                         }
                     >
-                        <ProductCatalog products={products} lids={lids} />
+                        <ProductCatalog
+                            products={products}
+                            lids={lids}
+                            categories={categories}
+                        />
                     </Suspense>
                 ) : null}
             </div>
