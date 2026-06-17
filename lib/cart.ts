@@ -27,6 +27,10 @@ export type CartItem = {
   capacityMl?: number;
   diameterMm?: number;
   priceTierMinQuantity?: number;
+  isLidOnly?: boolean;
+  lidOnlyId?: number;
+  lidOnlyPriceId?: number;
+  lidOnlyDiameterMm?: number;
 };
 
 export type QuoteRequest = {
@@ -100,6 +104,18 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "conf
     ...(item.configuration ?? {}),
   };
 
+  const cartItem = item as CartItem;
+  if (cartItem.isLidOnly) {
+    return [
+      "lid",
+      cartItem.lidOnlyId ?? "",
+      cartItem.lidOnlyPriceId ?? "",
+      cartItem.lidOnlyDiameterMm ?? "",
+      item.unit,
+      config.note,
+    ].join("|");
+  }
+
   return [
     item.productId,
     item.unit,
@@ -111,9 +127,9 @@ export function getCartItemKey(item: Pick<CartItem, "productId" | "unit" | "conf
     config.lidId ?? "",
     config.lidPriceId ?? "",
     config.note,
-    (item as CartItem).variantId ?? "",
-    (item as CartItem).capacityMl ?? "",
-    (item as CartItem).diameterMm ?? "",
+    cartItem.variantId ?? "",
+    cartItem.capacityMl ?? "",
+    cartItem.diameterMm ?? "",
   ].join("|");
 }
 

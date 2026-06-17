@@ -7,7 +7,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay, { InlineSpinner } from "@/components/ui/LoadingOverlay";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
-import { MinusIcon, PlusIcon, TrashIcon } from "@/components/mobile-store/icons";
+import { TrashIcon } from "@/components/mobile-store/icons";
 import {
     clearCart,
     formatUnit,
@@ -19,6 +19,11 @@ import {
 } from "@/lib/cart";
 import { createOrder, type CreateOrderRequest } from "@/lib/api/orders";
 import { formatCurrency } from "@/lib/products/display";
+
+const QUANTITY_OPTIONS = [
+    1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
+] as const;
+const CONTACT_VALUE = "contact";
 
 type OrderForm = {
     fullName: string;
@@ -35,6 +40,7 @@ const initialForm: OrderForm = {
 };
 
 function getItemUnitPrice(item: CartItem) {
+    if (item.isLidOnly) return item.price;
     return item.price + (item.configuration.lidUnitPrice ?? 0);
 }
 
@@ -58,10 +64,9 @@ export default function CartPage() {
 
     const reloadCart = () => setItems(getCartItems());
 
-    const handleQuantityChange = (item: CartItem, delta: number) => {
+    const handleQuantityChange = (item: CartItem, newQuantity: number) => {
         const key = getCartItemKey(item);
-        const newQuantity = item.quantity + delta;
-        if (newQuantity < 100) return;
+        if (newQuantity < 1000) return;
         updateCartItemQuantity(key, newQuantity);
         reloadCart();
     };
@@ -104,12 +109,10 @@ export default function CartPage() {
             customerName: form.fullName.trim(),
             customerPhone: form.phone.trim(),
             customerEmail: null,
-            note: [
-                businessName ? `Quán: ${businessName}` : "",
-                note,
-            ]
-                .filter(Boolean)
-                .join(". ") || null,
+            note:
+                [businessName ? `Quán: ${businessName}` : "", note]
+                    .filter(Boolean)
+                    .join(". ") || null,
             items: items.map((item) => ({
                 productId: item.productId,
                 quantity: item.quantity,
@@ -217,49 +220,75 @@ export default function CartPage() {
                                                 </button>
                                             </div>
                                             <span className="cart-item-config">
-                                                {item.configuration.size} ·{" "}
-                                                {item.configuration.printMethod}
-                                                {item.configuration.lidOption &&
-                                                item.configuration.lidOption !==
-                                                    "Không nắp"
-                                                    ? ` · ${item.configuration.lidOption}`
-                                                    : ""}
+                                                {item.isLidOnly
+                                                    ? `Nắp ly · ${item.configuration.size}`
+                                                    : `${item.configuration.size} · ${item.configuration.printMethod}${
+                                                          item.configuration
+                                                              .lidOption &&
+                                                          item.configuration
+                                                              .lidOption !==
+                                                              "Không nắp"
+                                                              ? ` · ${item.configuration.lidOption}`
+                                                              : ""
+                                                      }`}
                                             </span>
                                             <span className="cart-item-unit-price">
-                                                {formatCurrency(unitPrice)} /{" "}
-                                                {formatUnit(item.unit)}
+                                                {formatCurrency(
+                                                    1000 * item.price,
+                                                )}{" "}
+                                                / {formatUnit(item.unit)}
                                             </span>
                                             <div className="cart-item-bottom">
-                                                <div className="quantity-stepper cart-quantity">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
+                                                <div className="quantity-dropdown cart-quantity">
+                                                    <select
+                                                        value={
+                                                            item.quantity <=
+                                                            10000
+                                                                ? item.quantity
+                                                                : CONTACT_VALUE
+                                                        }
+                                                        onChange={(e) => {
+                                                            if (
+                                                                e.target
+                                                                    .value ===
+                                                                CONTACT_VALUE
+                                                            ) {
+                                                                window.open(
+                                                                    "https://zalo.me/0905123456",
+                                                                    "_blank",
+                                                                );
+                                                                return;
+                                                            }
                                                             handleQuantityChange(
                                                                 item,
-                                                                -100,
-                                                            )
-                                                        }
-                                                        aria-label="Giảm số lượng"
+                                                                Number(
+                                                                    e.target
+                                                                        .value,
+                                                                ),
+                                                            );
+                                                        }}
                                                     >
-                                                        <MinusIcon className="h-4 w-4" />
-                                                    </button>
-                                                    <strong>
-                                                        {item.quantity.toLocaleString(
-                                                            "vi-VN",
+                                                        {QUANTITY_OPTIONS.map(
+                                                            (qty) => (
+                                                                <option
+                                                                    key={qty}
+                                                                    value={qty}
+                                                                >
+                                                                    {qty.toLocaleString(
+                                                                        "vi-VN",
+                                                                    )}
+                                                                </option>
+                                                            ),
                                                         )}
-                                                    </strong>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            handleQuantityChange(
-                                                                item,
-                                                                100,
-                                                            )
-                                                        }
-                                                        aria-label="Tăng số lượng"
-                                                    >
-                                                        <PlusIcon className="h-4 w-4" />
-                                                    </button>
+                                                        <option
+                                                            value={
+                                                                CONTACT_VALUE
+                                                            }
+                                                        >
+                                                            Trên 10.000 — Liên
+                                                            hệ
+                                                        </option>
+                                                    </select>
                                                 </div>
                                                 <strong className="cart-item-subtotal">
                                                     {formatCurrency(subtotal)}
@@ -281,9 +310,7 @@ export default function CartPage() {
 
                         <section className="cart-summary">
                             <div className="cart-summary-row">
-                                <span>
-                                    Tổng cộng ({items.length} sản phẩm)
-                                </span>
+                                <span>Tổng cộng ({items.length} sản phẩm)</span>
                                 <strong>{formatCurrency(totalAmount)}</strong>
                             </div>
                         </section>
@@ -355,9 +382,14 @@ export default function CartPage() {
                                 onClick={handleSubmit}
                                 className="button-primary w-full"
                             >
-                                {submitting
-                                    ? <span className="inline-flex items-center gap-2"><InlineSpinner className="h-4 w-4" /> Đang gửi...</span>
-                                    : `Gửi đặt hàng · ${formatCurrency(totalAmount)}`}
+                                {submitting ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <InlineSpinner className="h-4 w-4" />{" "}
+                                        Đang gửi...
+                                    </span>
+                                ) : (
+                                    `Gửi đặt hàng · ${formatCurrency(totalAmount)}`
+                                )}
                             </button>
                             {error ? (
                                 <p className="cart-error">{error}</p>

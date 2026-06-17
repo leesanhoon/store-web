@@ -1,4 +1,5 @@
 import { getCategories, getCategoryTree, type CategoryTreeNode } from "@/lib/api/categories";
+import { getLids, type LidDto } from "@/lib/api/lids";
 import { getProduct, getProducts, ProductDto } from "@/lib/api/products";
 
 function isMissingBackendProduct(error: unknown) {
@@ -20,6 +21,14 @@ export async function getCatalogCategoryTree(): Promise<CategoryTreeNode[]> {
 
 export async function getCatalogProducts() {
     return getProducts();
+}
+
+export async function getCatalogLids(): Promise<LidDto[]> {
+    try {
+        return await getLids();
+    } catch {
+        return [];
+    }
 }
 
 export async function getCatalogProduct(id: number): Promise<ProductDto | null> {

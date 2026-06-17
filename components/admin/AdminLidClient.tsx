@@ -250,9 +250,12 @@ export default function AdminLidClient({
     }, [hasMore, isLoadingMore]);
 
     const refreshLids = useCallback(async () => {
+        const fresh = await getLids({ page: 1, pageSize: PAGE_SIZE });
         setPage(1);
-        setAllLids([]);
-        await mutate();
+        setAllLids(fresh.items);
+        setHasMore(PAGE_SIZE < fresh.totalCount);
+        setIsLoadingMore(false);
+        mutate(fresh, { revalidate: false });
     }, [mutate]);
 
     const { data: categories = initialCategories } = useSWR<CategoryDto[]>(

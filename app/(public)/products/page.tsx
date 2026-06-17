@@ -2,31 +2,36 @@ import { Suspense } from "react";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import ProductCatalog from "@/components/mobile-store/ProductCatalog";
-import { getCatalogProducts } from "@/lib/data/catalog";
+import type { LidDto } from "@/lib/api/lids";
+import type { ProductDto } from "@/lib/api/products";
+import { getCatalogLids, getCatalogProducts } from "@/lib/data/catalog";
 
-async function loadProducts() {
+async function loadCatalog(): Promise<{ products: ProductDto[]; lids: LidDto[]; error: string }> {
   try {
-    return { products: await getCatalogProducts(), error: "" };
+    const [products, lids] = await Promise.all([getCatalogProducts(), getCatalogLids()]);
+    return { products, lids, error: "" };
   } catch (error) {
     return {
       products: [],
+      lids: [],
       error: error instanceof Error ? error.message : "Không thể tải danh sách sản phẩm.",
     };
   }
 }
 
 export default async function ProductsPage() {
-  const { products, error } = await loadProducts();
+  const { products, lids, error } = await loadCatalog();
+  const hasItems = products.length > 0 || lids.length > 0;
 
   return (
     <MobileAppShell>
       <div className="catalog-screen">
         <MobileTopBar title="Danh mục sản phẩm" backHref="/" backLabel="Quay lại trang chủ" />
         {error ? <p className="mobile-alert">{error}</p> : null}
-        {!error && products.length === 0 ? <p className="mobile-alert">Chưa có sản phẩm nào.</p> : null}
-        {products.length > 0 ? (
+        {!error && !hasItems ? <p className="mobile-alert">Chưa có sản phẩm nào.</p> : null}
+        {hasItems ? (
           <Suspense fallback={<section className="catalog-grid" aria-hidden="true" />}>
-            <ProductCatalog products={products} />
+            <ProductCatalog products={products} lids={lids} />
           </Suspense>
         ) : null}
       </div>

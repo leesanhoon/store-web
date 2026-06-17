@@ -3,7 +3,6 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { MinusIcon, PlusIcon } from "@/components/mobile-store/icons";
 import type { CompatibleLidDto, PriceTierDto, ProductVariantDto } from "@/lib/api/products";
 import {
   addToCart,
@@ -12,6 +11,9 @@ import {
   defaultCartConfiguration,
 } from "@/lib/cart";
 import { formatCurrency, getVariantLabel } from "@/lib/products/display";
+
+const QUANTITY_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000] as const;
+const CONTACT_VALUE = "contact";
 
 const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
 
@@ -109,7 +111,8 @@ export default function CartConfiguratorProvider({ children }: { children: React
   const openConfigurator = (product: OpenPayload) => {
     const firstVariant = product.variants?.[0] ?? null;
     const firstTier = getFirstPriceTier(firstVariant);
-    const quantity = product.defaultQuantity ?? firstTier?.minQuantity ?? 1000;
+    const rawQty = product.defaultQuantity ?? firstTier?.minQuantity ?? 1000;
+    const quantity = Math.min(10000, Math.max(1000, Math.ceil(rawQty / 1000) * 1000));
 
     setActiveProduct(product);
     setSelectedVariantId(firstVariant?.id ?? null);
@@ -134,7 +137,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
   ) => setConfiguration((current) => ({ ...current, [key]: value }));
 
   const setQuantity = (value: number) =>
-    setConfiguration((current) => ({ ...current, quantity: Math.max(100, value) }));
+    setConfiguration((current) => ({ ...current, quantity: Math.max(1000, value) }));
 
   const selectVariant = (variant: ProductVariantDto) => {
     const firstTier = getFirstPriceTier(variant);
@@ -146,7 +149,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
       ...current,
       cupModel: `${variant.capacityMl}ml - ${variant.diameterMm}mm`,
       size: `${variant.capacityMl}ml`,
-      quantity: Math.max(current.quantity, firstTier?.minQuantity ?? current.quantity),
+      quantity: Math.min(10000, Math.max(current.quantity, Math.ceil((firstTier?.minQuantity ?? current.quantity) / 1000) * 1000)),
       lidPriceId: undefined,
       lidDiameterMm: undefined,
       lidUnitPrice: undefined,
@@ -157,7 +160,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
     setSelectedTierMinQuantity(tier.minQuantity);
     setConfiguration((current) => ({
       ...current,
-      quantity: Math.max(current.quantity, tier.minQuantity),
+      quantity: Math.min(10000, Math.max(current.quantity, Math.ceil(tier.minQuantity / 1000) * 1000)),
     }));
   };
 
@@ -314,14 +317,24 @@ export default function CartConfiguratorProvider({ children }: { children: React
 
             <div className="sheet-control-group">
               <h3>Số lượng</h3>
-              <div className="quantity-stepper">
-                <button type="button" onClick={() => setQuantity(configuration.quantity - 100)} aria-label="Giảm số lượng">
-                  <MinusIcon className="h-5 w-5" />
-                </button>
-                <strong>{configuration.quantity.toLocaleString("vi-VN")}</strong>
-                <button type="button" onClick={() => setQuantity(configuration.quantity + 100)} aria-label="Tăng số lượng">
-                  <PlusIcon className="h-5 w-5" />
-                </button>
+              <div className="quantity-dropdown">
+                <select
+                  value={configuration.quantity <= 10000 ? configuration.quantity : CONTACT_VALUE}
+                  onChange={(e) => {
+                    if (e.target.value === CONTACT_VALUE) {
+                      window.open("https://zalo.me/0905123456", "_blank");
+                      return;
+                    }
+                    setQuantity(Number(e.target.value));
+                  }}
+                >
+                  {QUANTITY_OPTIONS.map((qty) => (
+                    <option key={qty} value={qty}>
+                      {qty.toLocaleString("vi-VN")} ly
+                    </option>
+                  ))}
+                  <option value={CONTACT_VALUE}>Trên 10.000 — Liên hệ</option>
+                </select>
               </div>
             </div>
 

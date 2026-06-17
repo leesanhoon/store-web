@@ -723,9 +723,12 @@ export default function AdminProductClient({
     }, [hasMore, isLoadingMore]);
 
     const refreshProducts = useCallback(async () => {
+        const fresh = await getProducts({ page: 1, pageSize: PAGE_SIZE });
         setPage(1);
-        setAllProducts([]);
-        await mutate();
+        setAllProducts(fresh.items);
+        setHasMore(PAGE_SIZE < fresh.totalCount);
+        setIsLoadingMore(false);
+        mutate(fresh, { revalidate: false });
     }, [mutate]);
 
     const { data: categories = initialCategories, error: categoriesError } =

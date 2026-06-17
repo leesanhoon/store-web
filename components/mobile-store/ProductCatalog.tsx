@@ -2,22 +2,34 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import LidCard from "@/components/mobile-store/LidCard";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import { useRevealOnScroll } from "@/components/mobile-store/useRevealOnScroll";
 import { SearchIcon } from "@/components/mobile-store/icons";
+import type { LidDto } from "@/lib/api/lids";
 import type { ProductDto } from "@/lib/api/products";
+import {
+  buildCatalogItems,
+  getCatalogItemCategory,
+  getCatalogItemId,
+  getCatalogItemName,
+  type CatalogItem,
+} from "@/lib/products/catalog-item";
 import { getProductDisplayInfo, normalizeText } from "@/lib/products/display";
 
 type Props = {
   products: ProductDto[];
+  lids?: LidDto[];
 };
+
+const LID_FILTER = "Nắp ly";
 
 const filters = [
   { label: "Tất cả", match: () => true },
   { label: "PET", match: (cupType: string) => cupType.includes("PET") },
   { label: "PP", match: (cupType: string) => cupType.includes("PP") },
   { label: "Ly giấy", match: (cupType: string) => cupType === "Ly giấy" },
-  { label: "Nắp ly", match: (cupType: string) => cupType === "Nắp ly" },
+  { label: LID_FILTER, match: (cupType: string) => cupType === LID_FILTER },
 ];
 
 function resolveInitialFilter(category: string | null) {
@@ -25,13 +37,15 @@ function resolveInitialFilter(category: string | null) {
   return filters.find((filter) => filter.label === category)?.label ?? filters[0].label;
 }
 
-export default function ProductCatalog({ products }: Props) {
+export default function ProductCatalog({ products, lids = [] }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
   const gridRef = useRevealOnScroll<HTMLElement>();
   const activeFilter = resolveInitialFilter(searchParams.get("category"));
+
+  const catalogItems = useMemo(() => buildCatalogItems(products, lids), [products, lids]);
 
   const updateFilter = (nextFilter: string) => {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -46,16 +60,24 @@ export default function ProductCatalog({ products }: Props) {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   };
 
-  const filteredProducts = useMemo(() => {
+  const filteredItems = useMemo(() => {
     const filter = filters.find((item) => item.label === activeFilter) ?? filters[0];
     const normalizedQuery = normalizeText(query.trim());
+    const isAll = activeFilter === filters[0].label;
+    const isLidFilter = activeFilter === LID_FILTER;
 
-    return products.filter((product) => {
-      if (!filter.match(getProductDisplayInfo(product).cupType)) return false;
+    return catalogItems.filter((item) => {
+      if (item.kind === "lid") {
+        if (!isAll && !isLidFilter) return false;
+      } else {
+        const cupType = getProductDisplayInfo(item.data).cupType;
+        if (!filter.match(cupType)) return false;
+      }
+
       if (!normalizedQuery) return true;
-      return normalizeText(`${product.name} ${product.categoryName ?? ""}`).includes(normalizedQuery);
+      return normalizeText(`${getCatalogItemName(item)} ${getCatalogItemCategory(item)}`).includes(normalizedQuery);
     });
-  }, [products, activeFilter, query]);
+  }, [catalogItems, activeFilter, query]);
 
   return (
     <>
@@ -83,13 +105,17 @@ export default function ProductCatalog({ products }: Props) {
         ))}
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <p className="mobile-alert">Không có sản phẩm phù hợp với bộ lọc này.</p>
       ) : (
         <section ref={gridRef} className="catalog-grid reveal" aria-label="Danh sách sản phẩm">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredItems.map((item) =>
+            item.kind === "lid" ? (
+              <LidCard key={getCatalogItemId(item)} lid={item.data} />
+            ) : (
+              <ProductCard key={getCatalogItemId(item)} product={item.data} />
+            ),
+          )}
         </section>
       )}
     </>
