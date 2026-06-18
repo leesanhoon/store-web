@@ -25,6 +25,8 @@ export type OrderItemDto = {
     materialName: string | null;
     printTypeId: number | null;
     printTypeName: string | null;
+    lidId: number | null;
+    lidName: string | null;
     quantity: number;
     unitPrice: number;
 };
@@ -63,6 +65,7 @@ export type CreateOrderItemRequest = {
     unitPrice: number;
     materialId?: number | null;
     printTypeId?: number | null;
+    lidId?: number | null;
 };
 
 export type UpdateOrderStatusRequest = {

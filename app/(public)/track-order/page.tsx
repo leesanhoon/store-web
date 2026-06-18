@@ -152,6 +152,9 @@ function OrderItemCard({ item, index }: { item: OrderItemDto; index: number }) {
             {item.printTypeName && (
               <DetailChip label="Kiểu in" value={item.printTypeName} />
             )}
+            {item.lidName && (
+              <DetailChip label="Nắp" value={item.lidName} />
+            )}
           </div>
         </div>
       </div>

@@ -116,7 +116,24 @@ export default function CartPage() {
             return;
         }
 
-        const lidNotes = lidItems.map(
+        const lidByProductId = new Map<number, CartItem>();
+        for (const lid of lidItems) {
+            const matchingProduct = productItems.find(
+                (p) => p.configuration.lidId === lid.configuration.lidId,
+            );
+            if (matchingProduct) {
+                lidByProductId.set(matchingProduct.productId, lid);
+            }
+        }
+
+        const unmatchedLids = lidItems.filter(
+            (lid) =>
+                !productItems.some(
+                    (p) => p.configuration.lidId === lid.configuration.lidId,
+                ),
+        );
+
+        const lidNotes = unmatchedLids.map(
             (item) =>
                 `Nắp: ${item.name} ⌀${item.configuration.lidDiameterMm ?? ""}mm x${item.quantity.toLocaleString("vi-VN")} (${formatCurrency(item.price)}/cái)`,
         );
@@ -129,20 +146,23 @@ export default function CartPage() {
             .filter(Boolean)
             .join(". ");
 
-        console.log("Product items:", productItems);
-
         const payload: CreateOrderRequest = {
             customerName: form.fullName.trim(),
             customerPhone: form.phone.trim(),
             customerEmail: null,
             note: allNotes || null,
-            items: productItems.map((item) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: getItemUnitPrice(item),
-                materialId: null,
-                printTypeId: null,
-            })),
+            items: productItems.map((item) => {
+                const matchedLid = lidByProductId.get(item.productId);
+                const lidPrice = matchedLid ? matchedLid.price : 0;
+                return {
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    unitPrice: getItemUnitPrice(item) + lidPrice,
+                    materialId: null,
+                    printTypeId: null,
+                    lidId: item.configuration.lidId ?? null,
+                };
+            }),
         };
 
         try {
