@@ -9,11 +9,11 @@ import { formatCurrency } from "@/lib/products/display";
 
 /* ── Status colour map ── */
 const STATUS_CONFIG: Record<OrderStatus, { bg: string; text: string; ring: string; dot: string }> = {
-  draft: { bg: "bg-slate-50", text: "text-slate-700", ring: "ring-slate-200", dot: "bg-slate-400" },
-  confirmed: { bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200", dot: "bg-amber-500" },
-  shipping: { bg: "bg-sky-50", text: "text-sky-700", ring: "ring-sky-200", dot: "bg-sky-500" },
-  completed: { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", dot: "bg-emerald-500" },
-  cancelled: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", dot: "bg-rose-500" },
+  PendingConfirmation: { bg: "bg-slate-50", text: "text-slate-700", ring: "ring-slate-200", dot: "bg-slate-400" },
+  Confirmed: { bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200", dot: "bg-amber-500" },
+  Shipping: { bg: "bg-sky-50", text: "text-sky-700", ring: "ring-sky-200", dot: "bg-sky-500" },
+  Completed: { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", dot: "bg-emerald-500" },
+  Cancelled: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", dot: "bg-rose-500" },
 };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
@@ -28,11 +28,11 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 }
 
 /* ── Timeline ── */
-const STATUS_STEPS: OrderStatus[] = ["draft", "confirmed", "shipping", "completed"];
+const STATUS_STEPS: OrderStatus[] = ["PendingConfirmation", "Confirmed", "Shipping", "Completed"];
 const STEP_ICONS = ["📋", "✓", "🚚", "✨"];
 
 function OrderTimeline({ status }: { status: OrderStatus }) {
-  if (status === "cancelled") {
+  if (status === "Cancelled") {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-gradient-to-r from-rose-50 to-rose-100/40 px-5 py-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-lg">✕</span>

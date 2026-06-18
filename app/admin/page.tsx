@@ -11,15 +11,15 @@ import {
 } from "@/components/admin/admin-ui";
 
 const STATUS_DOT: Record<string, string> = {
-    draft: "bg-slate-400",
-    confirmed: "bg-amber-500",
-    shipping: "bg-sky-500",
+    PendingConfirmation: "bg-slate-400",
+    Confirmed: "bg-amber-500",
+    Shipping: "bg-sky-500",
 };
 
 const STATUS_ACCENT: Record<string, string> = {
-    draft: "border-slate-200",
-    confirmed: "border-amber-200",
-    shipping: "border-sky-200",
+    PendingConfirmation: "border-slate-200",
+    Confirmed: "border-amber-200",
+    Shipping: "border-sky-200",
 };
 
 function PendingOrdersSection({
@@ -107,9 +107,9 @@ export default async function AdminPage() {
     const allItems = allOrdersResponse.items;
 
     // Backend doesn't filter by status — filter client-side
-    const draftItems = allItems.filter((o) => o.status === "draft");
-    const confirmedItems = allItems.filter((o) => o.status === "confirmed");
-    const shippingItems = allItems.filter((o) => o.status === "shipping");
+    const draftItems = allItems.filter((o) => o.status === "PendingConfirmation");
+    const confirmedItems = allItems.filter((o) => o.status === "Confirmed");
+    const shippingItems = allItems.filter((o) => o.status === "Shipping");
 
     const productsWithVariants = products.filter((p) => p.variants.length > 0);
 
@@ -218,21 +218,21 @@ export default async function AdminPage() {
                 title="Chờ xác nhận"
                 orders={draftItems}
                 total={draftItems.length}
-                status="draft"
+                status="PendingConfirmation"
                 emptyText="Không có đơn chờ xác nhận"
             />
             <PendingOrdersSection
                 title="Đã xác nhận"
                 orders={confirmedItems}
                 total={confirmedItems.length}
-                status="confirmed"
+                status="Confirmed"
                 emptyText="Không có đơn đã xác nhận"
             />
             <PendingOrdersSection
                 title="Đang giao hàng"
                 orders={shippingItems}
                 total={shippingItems.length}
-                status="shipping"
+                status="Shipping"
                 emptyText="Không có đơn đang giao"
             />
         </div>

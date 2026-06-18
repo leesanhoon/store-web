@@ -224,7 +224,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
     if (selectedLid && selectedLidVariant) {
       const lidPrice = selectedLidVariant.priceTiers[0]?.unitPrice ?? 0;
       addToCart({
-        productId: 0,
+        productId: selectedLid.id,
         name: selectedLid.name,
         price: lidPrice,
         categoryName: activeProduct.categoryName,

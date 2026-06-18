@@ -2,10 +2,10 @@ import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/api/orders";
 
 type Props = { status: OrderStatus };
 
-const STATUS_STEPS: OrderStatus[] = ["draft", "confirmed", "shipping", "completed"];
+const STATUS_STEPS: OrderStatus[] = ["PendingConfirmation", "Confirmed", "Shipping", "Completed"];
 
 export default function OrderTimeline({ status }: Props) {
-  if (status === "cancelled") {
+  if (status === "Cancelled") {
     return (
       <div className="rounded-full border border-rose-200 bg-rose-50 px-3 py-3 text-center text-xs font-semibold text-rose-600">
         Đã hủy

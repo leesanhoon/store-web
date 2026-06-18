@@ -105,43 +105,10 @@ export default function CartPage() {
 
         const businessName = form.businessName.trim();
         const note = form.note.trim();
-        const productItems = items.filter((item) => !item.isLidOnly);
-        const lidItems = items.filter((item) => item.isLidOnly);
-
-        if (productItems.length === 0) {
-            setError(
-                "Giỏ hàng cần có ít nhất một sản phẩm ly. Nắp chỉ có thể đặt kèm theo ly.",
-            );
-            setSubmitting(false);
-            return;
-        }
-
-        const lidByProductId = new Map<number, CartItem>();
-        for (const lid of lidItems) {
-            const matchingProduct = productItems.find(
-                (p) => p.configuration.lidId === lid.configuration.lidId,
-            );
-            if (matchingProduct) {
-                lidByProductId.set(matchingProduct.productId, lid);
-            }
-        }
-
-        const unmatchedLids = lidItems.filter(
-            (lid) =>
-                !productItems.some(
-                    (p) => p.configuration.lidId === lid.configuration.lidId,
-                ),
-        );
-
-        const lidNotes = unmatchedLids.map(
-            (item) =>
-                `Nắp: ${item.name} ⌀${item.configuration.lidDiameterMm ?? ""}mm x${item.quantity.toLocaleString("vi-VN")} (${formatCurrency(item.price)}/cái)`,
-        );
 
         const allNotes = [
             businessName ? `Quán: ${businessName}` : "",
             note,
-            ...lidNotes,
         ]
             .filter(Boolean)
             .join(". ");
@@ -151,18 +118,14 @@ export default function CartPage() {
             customerPhone: form.phone.trim(),
             customerEmail: null,
             note: allNotes || null,
-            items: productItems.map((item) => {
-                const matchedLid = lidByProductId.get(item.productId);
-                const lidPrice = matchedLid ? matchedLid.price : 0;
-                return {
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    unitPrice: getItemUnitPrice(item) + lidPrice,
-                    materialId: null,
-                    printTypeId: null,
-                    lidId: item.configuration.lidId ?? null,
-                };
-            }),
+            items: items.map((item) => ({
+                productId: item.isLidOnly ? (item.lidOnlyId ?? item.productId) : item.productId,
+                quantity: item.quantity,
+                unitPrice: getItemUnitPrice(item),
+                materialId: null,
+                printTypeId: null,
+                lidId: item.isLidOnly ? null : (item.configuration.lidId ?? null),
+            })),
         };
 
         try {

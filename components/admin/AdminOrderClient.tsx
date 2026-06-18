@@ -21,7 +21,7 @@ import {
     type OrderSummaryDto,
 } from "@/lib/api/orders";
 
-const ALL_STATUSES: (OrderStatus | "all")[] = ["all", "draft", "confirmed", "shipping", "completed", "cancelled"];
+const ALL_STATUSES: (OrderStatus | "all")[] = ["all", "PendingConfirmation", "Confirmed", "Shipping", "Completed", "Cancelled"];
 
 const STATUS_LABEL: Record<string, string> = {
     all: "Tất cả",
@@ -30,13 +30,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 function statusTone(status: OrderStatus): "neutral" | "success" | "warning" | "info" | "danger" {
     switch (status) {
-        case "completed":
+        case "Completed":
             return "success";
-        case "confirmed":
+        case "Confirmed":
             return "warning";
-        case "shipping":
+        case "Shipping":
             return "info";
-        case "cancelled":
+        case "Cancelled":
             return "danger";
         default:
             return "neutral";
@@ -99,7 +99,7 @@ function OrderRow({
     const [cancelConfirm, setCancelConfirm] = useState(false);
 
     const handleTransition = async (newStatus: OrderStatus) => {
-        if (newStatus === "cancelled") {
+        if (newStatus === "Cancelled") {
             setCancelConfirm(true);
             return;
         }
@@ -114,7 +114,7 @@ function OrderRow({
     const confirmCancel = async () => {
         setUpdating(true);
         try {
-            await onStatusChange(order.id, "cancelled");
+            await onStatusChange(order.id, "Cancelled");
         } finally {
             setUpdating(false);
             setCancelConfirm(false);
@@ -161,7 +161,7 @@ function OrderRow({
                                 disabled={updating}
                                 onClick={() => handleTransition(next)}
                                 className={`group inline-flex items-center gap-1.5 rounded-full py-2 pl-3.5 pr-2 text-[11px] font-extrabold transition-all duration-300 ease-[var(--ease-spring)] active:scale-[0.95] disabled:opacity-50 ${
-                                    next === "cancelled"
+                                    next === "Cancelled"
                                         ? "border border-rose-200 bg-rose-50 text-rose-600"
                                         : "border border-[#eadfce] bg-white text-[#101a36] shadow-sm hover:shadow-md"
                                 }`}
@@ -172,12 +172,12 @@ function OrderRow({
                                 </span>
                                 <span
                                     className={`inline-flex h-5 w-5 items-center justify-center rounded-full transition-transform duration-300 ease-[var(--ease-spring)] group-hover:translate-x-0.5 ${
-                                        next === "cancelled"
+                                        next === "Cancelled"
                                             ? "bg-rose-100"
                                             : "bg-[#101a36]/[0.05]"
                                     }`}
                                 >
-                                    {next === "cancelled" ? <XMini /> : <ChevronRightMini />}
+                                    {next === "Cancelled" ? <XMini /> : <ChevronRightMini />}
                                 </span>
                             </button>
                         ))}
@@ -214,8 +214,8 @@ export default function AdminOrderClient() {
     const { data: statusCounts } = useSWR("admin-order-counts", async () => {
         const [all, confirmed, shipping] = await Promise.all([
             getOrders(1, 1),
-            getOrders(1, 1, "confirmed"),
-            getOrders(1, 1, "shipping"),
+            getOrders(1, 1, "Confirmed"),
+            getOrders(1, 1, "Shipping"),
         ]);
         return {
             all: all.totalCount,

@@ -28,7 +28,7 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
         const unitPrice = getUnitPrice(selectedVariant);
 
         addToCart({
-            productId: 0,
+            productId: product.id,
             name: product.name,
             price: unitPrice,
             categoryName: product.categoryName,
