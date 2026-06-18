@@ -803,7 +803,7 @@ h1, h2, h3,
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   scrollbar-width: none;
 }
 
@@ -1032,7 +1032,7 @@ h1, h2, h3,
   gap: 10px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  /* touch-action: pan-x; */
+  touch-action: pan-x pan-y;
   padding-bottom: 2px;
   scrollbar-width: none;
 }
@@ -1576,7 +1576,7 @@ h1, h2, h3,
   gap: 9px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   padding-bottom: 2px;
   scrollbar-width: none;
 }
