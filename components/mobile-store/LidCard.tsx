@@ -22,8 +22,16 @@ export default function LidCard({ lid, compact = false }: Props) {
     const sizes = getLidSizes(lid);
 
     return (
-        <article className={compact ? "mobile-product-card compact" : "mobile-product-card"}>
-            <Link href={detailHref} className="mobile-product-image" aria-label={lid.name}>
+        <article
+            className={
+                compact ? "mobile-product-card compact" : "mobile-product-card"
+            }
+        >
+            <Link
+                href={detailHref}
+                className="mobile-product-image"
+                aria-label={lid.name}
+            >
                 <Image
                     src={imageSrc}
                     alt={lid.name}
@@ -36,14 +44,18 @@ export default function LidCard({ lid, compact = false }: Props) {
             </Link>
             <div className="mobile-product-body">
                 <h3>{lid.name}</h3>
-                <p className="mobile-product-price">{formatLidPriceRange(lid)}</p>
-                {!compact && sizes ? <p className="mobile-product-moq">{sizes}</p> : null}
+                <p className="mobile-product-price">
+                    {formatLidPriceRange(lid)}
+                </p>
+                {!compact && sizes ? (
+                    <p className="mobile-product-moq">{sizes}</p>
+                ) : null}
             </div>
-            {!compact ? (
+            {/* {!compact ? (
                 <Link href={detailHref} className="button-primary w-full text-center block">
                     + Thêm
                 </Link>
-            ) : null}
+            ) : null} */}
         </article>
     );
 }
