@@ -2307,7 +2307,7 @@ h1, h2, h3,
 
 .detail-spec-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   border: 1px solid rgba(16, 26, 54, 0.05);
   border-radius: 20px;

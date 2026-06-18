@@ -146,10 +146,14 @@ export default async function ProductDetailPage({
                     </section>
 
                     <section className="detail-product-copy">
-                        <span className="detail-eyebrow">{product.categoryName}</span>
+                        <span className="detail-eyebrow">
+                            {product.categoryName}
+                        </span>
                         <h2>{product.name}</h2>
                         {product.description ? (
-                            <p className="detail-description">{product.description}</p>
+                            <p className="detail-description">
+                                {product.description}
+                            </p>
                         ) : null}
                     </section>
 
@@ -160,16 +164,12 @@ export default async function ProductDetailPage({
     }
 
     const specs = [
-        { label: "Dung tích", value: info.volume, icon: DropletIcon },
-        { label: "Chất liệu", value: info.material, icon: LayersIcon },
+        { label: "Nhiều kích thước", icon: DropletIcon },
         {
-            label: "Đặt tối thiểu",
-            value: minMoq
-                ? `${new Intl.NumberFormat("vi-VN").format(minMoq)} ly`
-                : "1.000 ly",
+            label: "Đặt tối thiểu 1000 ly",
             icon: BoxIcon,
         },
-        { label: "In logo", value: "theo yêu cầu", icon: PencilIcon },
+        { label: "In logo theo yêu cầu", icon: PencilIcon },
     ];
 
     return (
@@ -218,7 +218,7 @@ export default async function ProductDetailPage({
                             <article key={spec.label}>
                                 <Icon className="h-6 w-6" />
                                 <span>{spec.label}</span>
-                                <strong>{spec.value}</strong>
+                                {/* <strong>{spec.value}</strong> */}
                             </article>
                         );
                     })}
