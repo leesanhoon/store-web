@@ -19,7 +19,10 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-    title: { default: "In ly DTP Quảng Ngãi", template: "%s | In ly DTP Quảng Ngãi" },
+    title: {
+        default: "In ly DTP - CN Quảng Ngãi",
+        template: "%s | In ly DTP - CN Quảng Ngãi",
+    },
     description:
         "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
 };
@@ -33,7 +36,10 @@ export default function RootLayout({
                 className={`${beVietnamPro.variable} ${plusJakarta.variable} ${beVietnamPro.className} min-h-[100dvh] bg-background text-foreground antialiased`}
                 suppressHydrationWarning
             >
-                <Script id="strip-extension-hydration-attrs" strategy="beforeInteractive">
+                <Script
+                    id="strip-extension-hydration-attrs"
+                    strategy="beforeInteractive"
+                >
                     {`
             (function () {
               function stripBisAttributes(root) {

@@ -250,14 +250,14 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
                         >
                             <Image
                                 src="/images/logo.png"
-                                alt="In ly DTP Quảng Ngãi"
+                                alt="In ly DTP - CN Quảng Ngãi"
                                 width={42}
                                 height={26}
                                 className="h-6 w-auto object-contain"
                                 priority
                             />
                             <span className="text-[19px] font-extrabold leading-none tracking-tight">
-                                In ly DTP Quảng Ngãi
+                                In ly DTP - CN Quảng Ngãi
                             </span>
                         </Link>
 

@@ -60,16 +60,16 @@ export default async function Home() {
                     <Link
                         href="/"
                         className="brand-lockup"
-                        aria-label="In ly DTP Quảng Ngãi"
+                        aria-label="In ly DTP - CN Quảng Ngãi"
                     >
                         <Image
                             src="/images/logo.png"
-                            alt="In ly DTP Quảng Ngãi"
+                            alt="In ly DTP - CN Quảng Ngãi"
                             width={44}
                             height={44}
                             priority
                         />
-                        <span>In ly DTP Quảng Ngãi</span>
+                        <span>In ly DTP - CN Quảng Ngãi</span>
                     </Link>
                 </header>
 

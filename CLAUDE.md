@@ -16,7 +16,7 @@ No test framework is configured.
 
 ## Architecture
 
-**Next.js 16** app with React 19, Tailwind CSS 4, and TypeScript. Mobile-first e-commerce storefront for a Vietnamese cup/lid printing business ("In ly DTP Quảng Ngãi"). The UI language is Vietnamese.
+**Next.js 16** app with React 19, Tailwind CSS 4, and TypeScript. Mobile-first e-commerce storefront for a Vietnamese cup/lid printing business ("In ly DTP - CN Quảng Ngãi"). The UI language is Vietnamese.
 
 ### Route groups
 
