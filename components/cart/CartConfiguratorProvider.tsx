@@ -386,11 +386,7 @@ export default function CartConfiguratorProvider({
                                     {formatCurrency(totalUnitPrice)} / ly
                                 </p>
                                 <p className="sheet-moq">
-                                    Đặt tối thiểu{" "}
-                                    {new Intl.NumberFormat("vi-VN").format(
-                                        selectedTier?.minQuantity ?? 1000,
-                                    )}{" "}
-                                    ly
+                                    Đặt tối thiểu 1000 ly
                                 </p>
                             </div>
                         </div>
