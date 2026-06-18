@@ -35,7 +35,7 @@
 
 ## 2. API 1 — Tạo đơn hàng
 
-Gọi khi khách nhấn **"Gửi đặt hàng"** trên trang giỏ hàng.
+Gọi khi khách nhấn **"Gửi báo giá"** trên trang giỏ hàng.
 
 ### Request
 

@@ -106,10 +106,7 @@ export default function CartPage() {
         const businessName = form.businessName.trim();
         const note = form.note.trim();
 
-        const allNotes = [
-            businessName ? `Quán: ${businessName}` : "",
-            note,
-        ]
+        const allNotes = [businessName ? `Quán: ${businessName}` : "", note]
             .filter(Boolean)
             .join(". ");
 
@@ -119,12 +116,16 @@ export default function CartPage() {
             customerEmail: null,
             note: allNotes || null,
             items: items.map((item) => ({
-                productId: item.isLidOnly ? (item.lidOnlyId ?? item.productId) : item.productId,
+                productId: item.isLidOnly
+                    ? (item.lidOnlyId ?? item.productId)
+                    : item.productId,
                 quantity: item.quantity,
                 unitPrice: getItemUnitPrice(item),
                 materialId: null,
                 printTypeId: null,
-                lidId: item.isLidOnly ? null : (item.configuration.lidId ?? null),
+                lidId: item.isLidOnly
+                    ? null
+                    : (item.configuration.lidId ?? null),
             })),
         };
 
@@ -138,7 +139,7 @@ export default function CartPage() {
             setError(
                 err instanceof Error
                     ? err.message
-                    : "Không thể gửi đặt hàng. Vui lòng thử lại.",
+                    : "Không thể gửi báo giá. Vui lòng thử lại.",
             );
         } finally {
             setSubmitting(false);
@@ -394,7 +395,7 @@ export default function CartPage() {
                                         Đang gửi...
                                     </span>
                                 ) : (
-                                    `Gửi đặt hàng · ${formatCurrency(totalAmount)}`
+                                    `Gửi báo giá · ${formatCurrency(totalAmount)}`
                                 )}
                             </button>
                             {error ? (
