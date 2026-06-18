@@ -69,11 +69,11 @@ type Props = {
 
 const tabs = ["Tất cả", "Ly nhựa", "Ly giấy"];
 
-// const DEFAULT_QUANTITIES = ["1000", "3000", "5000", "10000", "20000"];
-// const defaultPriceTiers: PriceTierRow[] = DEFAULT_QUANTITIES.map((q) => ({
-//     minQuantity: q,
-//     unitPrice: "",
-// }));
+const DEFAULT_QUANTITIES = [""];
+const defaultPriceTiers: PriceTierRow[] = DEFAULT_QUANTITIES.map((q) => ({
+    minQuantity: q,
+    unitPrice: "",
+}));
 const emptyPriceTier: PriceTierRow = { minQuantity: "", unitPrice: "" };
 const emptyVariant: VariantRow = {
     capacityMl: "",
