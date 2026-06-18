@@ -1032,7 +1032,7 @@ h1, h2, h3,
   gap: 10px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  touch-action: pan-x;
+  /* touch-action: pan-x; */
   padding-bottom: 2px;
   scrollbar-width: none;
 }
