@@ -69,16 +69,16 @@ type Props = {
 
 const tabs = ["Tất cả", "Ly nhựa", "Ly giấy"];
 
-const DEFAULT_QUANTITIES = ["1000", "3000", "5000", "10000", "20000"];
-const defaultPriceTiers: PriceTierRow[] = DEFAULT_QUANTITIES.map((q) => ({
-    minQuantity: q,
-    unitPrice: "",
-}));
+// const DEFAULT_QUANTITIES = ["1000", "3000", "5000", "10000", "20000"];
+// const defaultPriceTiers: PriceTierRow[] = DEFAULT_QUANTITIES.map((q) => ({
+//     minQuantity: q,
+//     unitPrice: "",
+// }));
 const emptyPriceTier: PriceTierRow = { minQuantity: "", unitPrice: "" };
 const emptyVariant: VariantRow = {
     capacityMl: "",
     diameterMm: "",
-    priceTiers: defaultPriceTiers.map((t) => ({ ...t })),
+    priceTiers: [{ ...emptyPriceTier }],
 };
 const initialForm: ProductForm = {
     name: "",
@@ -87,7 +87,7 @@ const initialForm: ProductForm = {
     variants: [
         {
             ...emptyVariant,
-            priceTiers: defaultPriceTiers.map((t) => ({ ...t })),
+            priceTiers: [{ ...emptyPriceTier }],
         },
     ],
     compatibleProductIds: [],
@@ -380,7 +380,7 @@ function VariantEditor({
             {
                 capacityMl: "",
                 diameterMm: "",
-                priceTiers: defaultPriceTiers.map((t) => ({ ...t })),
+                priceTiers: [{ ...emptyPriceTier }],
             },
         ]);
     };
@@ -813,7 +813,8 @@ export default function AdminProductClient({
             label: c.name,
         }));
     const productDiameters = useMemo(
-        () => form.variants.map((v) => Number(v.diameterMm)).filter((d) => d > 0),
+        () =>
+            form.variants.map((v) => Number(v.diameterMm)).filter((d) => d > 0),
         [form.variants],
     );
     useEffect(() => {
@@ -821,13 +822,17 @@ export default function AdminProductClient({
         if (allLids.length === 0 || productDiameters.length === 0) return;
         const compatibleIds = allLids
             .filter((lid) =>
-                lid.variants.some((v) => productDiameters.includes(v.diameterMm)),
+                lid.variants.some((v) =>
+                    productDiameters.includes(v.diameterMm),
+                ),
             )
             .map((lid) => lid.id);
         setForm((prev) => {
             if (
                 prev.compatibleProductIds.length === compatibleIds.length &&
-                prev.compatibleProductIds.every((id) => compatibleIds.includes(id))
+                prev.compatibleProductIds.every((id) =>
+                    compatibleIds.includes(id),
+                )
             )
                 return prev;
             return { ...prev, compatibleProductIds: compatibleIds };

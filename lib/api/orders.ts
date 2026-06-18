@@ -2,6 +2,16 @@ import { apiClient, type PaginatedResponse } from "@/lib/api/http";
 
 export type OrderStatus = "PendingConfirmation" | "Confirmed" | "Shipping" | "Completed" | "Cancelled";
 
+const STATUS_LOOKUP: Record<string, OrderStatus> = Object.fromEntries(
+    (["PendingConfirmation", "Confirmed", "Shipping", "Completed", "Cancelled"] as const).map(
+        (s) => [s.toLowerCase(), s],
+    ),
+);
+
+export function normalizeOrderStatus(raw: string): OrderStatus {
+    return STATUS_LOOKUP[raw.toLowerCase()] ?? "PendingConfirmation";
+}
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
     PendingConfirmation: "Chờ xác nhận",
     Confirmed: "Đã xác nhận",
@@ -72,8 +82,13 @@ export type UpdateOrderStatusRequest = {
     status: OrderStatus;
 };
 
+function normalizeDetailStatus(dto: OrderDetailDto): OrderDetailDto {
+    return { ...dto, status: normalizeOrderStatus(dto.status) };
+}
+
 export async function createOrder(payload: CreateOrderRequest): Promise<OrderDetailDto> {
-    return apiClient.post<OrderDetailDto, CreateOrderRequest>("/api/v1/orders", payload);
+    const result = await apiClient.post<OrderDetailDto, CreateOrderRequest>("/api/v1/orders", payload);
+    return normalizeDetailStatus(result);
 }
 
 export async function trackOrder(orderId: number, phone: string): Promise<OrderDetailDto | null> {
@@ -82,7 +97,8 @@ export async function trackOrder(orderId: number, phone: string): Promise<OrderD
         phone,
     });
     try {
-        return await apiClient.get<OrderDetailDto>(`/api/v1/orders/track?${params}`);
+        const result = await apiClient.get<OrderDetailDto>(`/api/v1/orders/track?${params}`);
+        return normalizeDetailStatus(result);
     } catch (err) {
         if (err && typeof err === "object" && "status" in err && (err as { status: number }).status === 404) {
             return null;
@@ -101,9 +117,12 @@ export async function getOrders(
         pageSize: String(pageSize),
     });
     if (status) params.set("status", status);
-    return apiClient.get<PaginatedResponse<OrderSummaryDto>>(`/api/v1/orders?${params}`);
+    const result = await apiClient.get<PaginatedResponse<OrderSummaryDto>>(`/api/v1/orders?${params}`);
+    result.items = result.items.map((o) => ({ ...o, status: normalizeOrderStatus(o.status) }));
+    return result;
 }
 
 export async function updateOrderStatus(orderId: number, status: OrderStatus): Promise<OrderDetailDto> {
-    return apiClient.patch<OrderDetailDto, UpdateOrderStatusRequest>(`/api/v1/orders/${orderId}/status`, { status });
+    const result = await apiClient.patch<OrderDetailDto, UpdateOrderStatusRequest>(`/api/v1/orders/${orderId}/status`, { status });
+    return normalizeDetailStatus(result);
 }
