@@ -812,6 +812,28 @@ export default function AdminProductClient({
             value: String(c.id),
             label: c.name,
         }));
+    const productDiameters = useMemo(
+        () => form.variants.map((v) => Number(v.diameterMm)).filter((d) => d > 0),
+        [form.variants],
+    );
+    useEffect(() => {
+        if (selectedId) return;
+        if (allLids.length === 0 || productDiameters.length === 0) return;
+        const compatibleIds = allLids
+            .filter((lid) =>
+                lid.variants.some((v) => productDiameters.includes(v.diameterMm)),
+            )
+            .map((lid) => lid.id);
+        setForm((prev) => {
+            if (
+                prev.compatibleProductIds.length === compatibleIds.length &&
+                prev.compatibleProductIds.every((id) => compatibleIds.includes(id))
+            )
+                return prev;
+            return { ...prev, compatibleProductIds: compatibleIds };
+        });
+    }, [selectedId, allLids, productDiameters]);
+
     const isFormMode = mode === "create" || selectedId !== null;
     const formTitle = selectedId ? "Sửa sản phẩm" : "Thêm sản phẩm";
     const editingProduct =
