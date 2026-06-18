@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
-import type { CompatibleLidDto, ProductVariantDto } from "@/lib/api/products";
+import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import type { CartUnit } from "@/lib/cart";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
   price: number;
   categoryName: string;
   variants?: ProductVariantDto[];
-  compatibleLids?: CompatibleLidDto[];
+  compatibleLids?: ProductDto[];
   unit?: CartUnit;
   quantity?: number;
   label?: string;

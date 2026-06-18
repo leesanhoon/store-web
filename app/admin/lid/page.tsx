@@ -1,15 +1,16 @@
 import { connection } from "next/server";
-import { getLids } from "@/lib/api/lids";
+import { getProducts, isLidProduct } from "@/lib/api/products";
 import { getCategories } from "@/lib/api/categories";
 import AdminLidClient from "@/components/admin/AdminLidClient";
 
 export default async function AdminLidPage() {
     await connection();
-    const [lidResult, categoryResult] = await Promise.allSettled([
-        getLids({ page: 1, pageSize: 10 }),
+    const [productResult, categoryResult] = await Promise.allSettled([
+        getProducts(),
         getCategories(),
     ]);
-    const lids = lidResult.status === "fulfilled" ? lidResult.value.items : [];
+    const allProducts = productResult.status === "fulfilled" ? productResult.value : [];
+    const lids = allProducts.filter(isLidProduct);
     const categories = categoryResult.status === "fulfilled" ? categoryResult.value : [];
 
     return <AdminLidClient initialLids={lids} initialCategories={categories} />;

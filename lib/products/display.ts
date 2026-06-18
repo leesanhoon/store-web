@@ -86,6 +86,9 @@ export function formatPriceRange(product: Pick<ProductDto, "variants">): string 
 }
 
 export function getVariantLabel(variant: ProductVariantDto): string {
+  if (variant.capacityMl === 0) {
+    return variant.sizeName || `⌀${variant.diameterMm}mm`;
+  }
   return `${variant.capacityMl}ml - ⌀${variant.diameterMm}mm`;
 }
 

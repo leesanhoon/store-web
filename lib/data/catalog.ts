@@ -1,6 +1,5 @@
 import { getCategories, getCategoryTree, type CategoryTreeNode } from "@/lib/api/categories";
-import { getLids, type LidDto } from "@/lib/api/lids";
-import { getProduct, getProducts, ProductDto } from "@/lib/api/products";
+import { getProduct, getProducts, isLidProduct, type ProductDto } from "@/lib/api/products";
 
 function isMissingBackendProduct(error: unknown) {
     if (!(error instanceof Error)) {
@@ -23,9 +22,10 @@ export async function getCatalogProducts() {
     return getProducts();
 }
 
-export async function getCatalogLids(): Promise<LidDto[]> {
+export async function getCatalogLids(): Promise<ProductDto[]> {
     try {
-        return await getLids();
+        const products = await getProducts();
+        return products.filter(isLidProduct);
     } catch {
         return [];
     }

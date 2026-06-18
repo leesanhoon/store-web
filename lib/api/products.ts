@@ -18,13 +18,14 @@ export type ProductVariantDto = {
     id: number;
     capacityMl: number;
     diameterMm: number;
+    sizeName: string | null;
     priceTiers: PriceTierDto[];
 };
 
 export type ProductLidLinkDto = {
     id: number;
-    lidId: number;
-    lidName: string;
+    compatibleProductId: number;
+    compatibleProductName: string;
 };
 
 export type ProductDto = {
@@ -50,7 +51,7 @@ export type CreateProductPayload = {
     description?: string;
     categoryId: number;
     variants: CreateProductVariant[];
-    lidIds?: number[];
+    compatibleProductIds?: number[];
 };
 
 export type ProductUploadPayload = CreateProductPayload & {
@@ -63,7 +64,7 @@ export type UpdateProductPayload = {
     description?: string;
     categoryId: number;
     variants: CreateProductVariant[];
-    lidIds?: number[];
+    compatibleProductIds?: number[];
 };
 
 type CollectionResponse<T> = T[] | { items?: T[]; value?: T[]; Value?: T[]; totalCount?: number; page?: number; pageSize?: number };
@@ -117,9 +118,9 @@ function toFormData(payload: ProductUploadPayload) {
         });
     });
 
-    if (payload.lidIds) {
-        for (const lidId of payload.lidIds) {
-            formData.append("LidIds", String(lidId));
+    if (payload.compatibleProductIds) {
+        for (const id of payload.compatibleProductIds) {
+            formData.append("CompatibleProductIds", String(id));
         }
     }
 
@@ -203,21 +204,11 @@ export async function deleteProductImage(productId: number, imageId: number) {
     );
 }
 
-export type CompatibleLidDto = {
-    id: number;
-    name: string;
-    description: string | null;
-    categoryId: number;
-    categoryName: string;
-    avatarImageUrl: string | null;
-    prices: Array<{
-        id: number;
-        diameterMm: number;
-        sizeName: string;
-        unitPrice: number;
-    }>;
-};
+export function isLidProduct(product: ProductDto): boolean {
+    return product.variants.length > 0 && product.variants.every(v => v.capacityMl === 0);
+}
 
-export async function getCompatibleLids(productId: number) {
-    return apiClient.get<CompatibleLidDto[]>(`/api/v1/Products/${productId}/compatible-lids`);
+export async function getCompatibleLids(productId: number): Promise<ProductDto[]> {
+    const response = await apiClient.get<CollectionResponse<ProductDto>>(`/api/v1/Products/${productId}/compatible-lids`);
+    return unwrapCollection(response).map(normalizeProduct);
 }

@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { getProducts } from "@/lib/api/products";
-import { getLids } from "@/lib/api/lids";
+import { isLidProduct } from "@/lib/api/products";
 import { getPartners } from "@/lib/api/partners";
 import { getOrders, ORDER_STATUS_LABELS, type OrderSummaryDto, type OrderStatus } from "@/lib/api/orders";
 import {
@@ -97,12 +97,12 @@ function PendingOrdersSection({
 
 export default async function AdminPage() {
     await connection();
-    const [products, lids, partnersResponse, allOrdersResponse] = await Promise.all([
+    const [products, partnersResponse, allOrdersResponse] = await Promise.all([
         getProducts().catch(() => []),
-        getLids().catch(() => []),
         getPartners({ pageSize: 100 }).catch(() => ({ items: [] })),
         getOrders(1, 100).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100 })),
     ]);
+    const lids = products.filter(isLidProduct);
     const partnerCount = partnersResponse.items.length;
     const allItems = allOrdersResponse.items;
 

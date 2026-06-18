@@ -9,16 +9,17 @@ import { CategoryDto, getCategories } from "@/lib/api/categories";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
-    addLidImages,
-    createLid,
-    deleteLid,
-    deleteLidImage,
-    getLid,
-    getLids,
-    updateLid,
-    validateLidImages,
-    LidDto,
-} from "@/lib/api/lids";
+    addProductImages,
+    createProduct,
+    deleteProduct,
+    deleteProductImage,
+    getProduct,
+    getProducts,
+    isLidProduct,
+    updateProduct,
+    validateProductImages,
+    type ProductDto,
+} from "@/lib/api/products";
 import {
     AdminCard,
     AdminField,
@@ -29,7 +30,7 @@ import {
     adminFormatMoney,
 } from "@/components/admin/admin-ui";
 
-type LidPriceRow = {
+type LidVariantRow = {
     diameterMm: string;
     sizeName: string;
     unitPrice: string;
@@ -39,15 +40,15 @@ type LidForm = {
     name: string;
     description: string;
     categoryId: string;
-    prices: LidPriceRow[];
+    variants: LidVariantRow[];
 };
 
 type Props = {
-    initialLids: LidDto[];
+    initialLids: ProductDto[];
     initialCategories: CategoryDto[];
 };
 
-const emptyPriceRow: LidPriceRow = {
+const emptyVariantRow: LidVariantRow = {
     diameterMm: "",
     sizeName: "",
     unitPrice: "",
@@ -56,7 +57,7 @@ const initialForm: LidForm = {
     name: "",
     description: "",
     categoryId: "",
-    prices: [{ ...emptyPriceRow }],
+    variants: [{ ...emptyVariantRow }],
 };
 
 function PlusIcon() {
@@ -186,6 +187,13 @@ function preserveAdminScroll() {
     window.setTimeout(restore, 320);
 }
 
+async function fetchLidProducts(params?: { page: number; pageSize: number }): Promise<PaginatedResponse<ProductDto>> {
+    const result = await getProducts(params ?? { page: 1, pageSize: 50 });
+    const paginated = result as PaginatedResponse<ProductDto>;
+    const filtered = paginated.items.filter(isLidProduct);
+    return { ...paginated, items: filtered, totalCount: filtered.length };
+}
+
 export default function AdminLidClient({
     initialLids,
     initialCategories,
@@ -204,19 +212,19 @@ export default function AdminLidClient({
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 50;
     const [page, setPage] = useState(1);
-    const [allLids, setAllLids] = useState<LidDto[]>(initialLids);
-    const [hasMore, setHasMore] = useState(initialLids.length >= PAGE_SIZE);
+    const [allLids, setAllLids] = useState<ProductDto[]>(initialLids);
+    const [hasMore, setHasMore] = useState(initialLids.length >= 10);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
 
     const {
         data: lidsPage,
         mutate,
-    } = useSWR<PaginatedResponse<LidDto>>(
-        [`/api/v1/Lids`, page],
-        () => getLids({ page, pageSize: PAGE_SIZE }),
+    } = useSWR<PaginatedResponse<ProductDto>>(
+        [`lid-products-admin`, page],
+        () => fetchLidProducts({ page, pageSize: PAGE_SIZE }),
         { revalidateOnFocus: false },
     );
 
@@ -228,7 +236,7 @@ export default function AdminLidClient({
             const newItems = lidsPage.items.filter((l) => !existingIds.has(l.id));
             return [...prev, ...newItems];
         });
-        setHasMore(page * PAGE_SIZE < lidsPage.totalCount);
+        setHasMore(lidsPage.items.length >= 10);
         setIsLoadingMore(false);
     }, [lidsPage, page]);
 
@@ -250,10 +258,10 @@ export default function AdminLidClient({
     }, [hasMore, isLoadingMore]);
 
     const refreshLids = useCallback(async () => {
-        const fresh = await getLids({ page: 1, pageSize: PAGE_SIZE });
+        const fresh = await fetchLidProducts({ page: 1, pageSize: PAGE_SIZE });
         setPage(1);
         setAllLids(fresh.items);
-        setHasMore(PAGE_SIZE < fresh.totalCount);
+        setHasMore(fresh.items.length >= 10);
         setIsLoadingMore(false);
         mutate(fresh, { revalidate: false });
     }, [mutate]);
@@ -263,9 +271,9 @@ export default function AdminLidClient({
         getCategories,
         { fallbackData: initialCategories },
     );
-    const { data: lidDetail } = useSWR<LidDto>(
-        selectedId ? `/api/v1/Lids/${selectedId}` : null,
-        () => getLid(selectedId!),
+    const { data: lidDetail } = useSWR<ProductDto>(
+        selectedId ? `/api/v1/Products/${selectedId}` : null,
+        () => getProduct(selectedId!),
     );
 
     const isFormMode = mode === "create" || selectedId !== null;
@@ -347,20 +355,20 @@ export default function AdminLidClient({
         router.push("/admin/lid");
     };
 
-    const editLid = (lid: LidDto) => {
-        setSelectedId(lid.id);
+    const editLid = (product: ProductDto) => {
+        setSelectedId(product.id);
         setForm({
-            name: lid.name,
-            description: lid.description ?? "",
-            categoryId: String(lid.categoryId),
-            prices:
-                lid.prices.length > 0
-                    ? lid.prices.map((p) => ({
-                          diameterMm: String(p.diameterMm),
-                          sizeName: p.sizeName ?? "",
-                          unitPrice: String(p.unitPrice),
+            name: product.name,
+            description: product.description ?? "",
+            categoryId: String(product.categoryId),
+            variants:
+                product.variants.length > 0
+                    ? product.variants.map((v) => ({
+                          diameterMm: String(v.diameterMm),
+                          sizeName: v.sizeName ?? "",
+                          unitPrice: String(v.priceTiers[0]?.unitPrice ?? 0),
                       }))
-                    : [{ ...emptyPriceRow }],
+                    : [{ ...emptyVariantRow }],
         });
         setAvatarImage(null);
         setGalleryImages([]);
@@ -369,31 +377,31 @@ export default function AdminLidClient({
         router.push("/admin/lid?mode=edit");
     };
 
-    const addPriceRow = () => {
+    const addVariantRow = () => {
         setForm((prev) => ({
             ...prev,
-            prices: [...prev.prices, { ...emptyPriceRow }],
+            variants: [...prev.variants, { ...emptyVariantRow }],
         }));
     };
 
-    const removePriceRow = (index: number) => {
+    const removeVariantRow = (index: number) => {
         setForm((prev) => ({
             ...prev,
-            prices:
-                prev.prices.length <= 1
-                    ? prev.prices
-                    : prev.prices.filter((_, i) => i !== index),
+            variants:
+                prev.variants.length <= 1
+                    ? prev.variants
+                    : prev.variants.filter((_, i) => i !== index),
         }));
     };
 
-    const updatePriceRow = (
+    const updateVariantRow = (
         index: number,
-        field: keyof LidPriceRow,
+        field: keyof LidVariantRow,
         value: string,
     ) => {
         setForm((prev) => ({
             ...prev,
-            prices: prev.prices.map((row, i) =>
+            variants: prev.variants.map((row, i) =>
                 i === index ? { ...row, [field]: value } : row,
             ),
         }));
@@ -402,7 +410,7 @@ export default function AdminLidClient({
     const handleDeleteExistingImage = async (imageId: number) => {
         if (!selectedId) return;
         try {
-            await deleteLidImage(selectedId, imageId);
+            await deleteProductImage(selectedId, imageId);
             await refreshLids();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
@@ -417,15 +425,15 @@ export default function AdminLidClient({
             return;
         }
 
-        const prices = form.prices
-            .filter((p) => p.diameterMm && p.unitPrice)
-            .map((p) => ({
-                diameterMm: Number(p.diameterMm),
-                sizeName: p.sizeName.trim() || undefined,
-                unitPrice: Number(p.unitPrice),
+        const variants = form.variants
+            .filter((v) => v.diameterMm && v.unitPrice)
+            .map((v) => ({
+                capacityMl: 0,
+                diameterMm: Number(v.diameterMm),
+                priceTiers: [{ minQuantity: 1, unitPrice: Number(v.unitPrice) }],
             }));
 
-        if (prices.length === 0) {
+        if (variants.length === 0) {
             setError("Cần ít nhất 1 dòng giá hợp lệ (đường kính và đơn giá).");
             return;
         }
@@ -437,7 +445,7 @@ export default function AdminLidClient({
 
         const hasNewImages = avatarImage || galleryImages.length > 0;
         const imageError = hasNewImages
-            ? validateLidImages(avatarImage, galleryImages)
+            ? validateProductImages(avatarImage, galleryImages)
             : "";
         if (imageError) {
             setError(imageError);
@@ -450,14 +458,14 @@ export default function AdminLidClient({
 
         try {
             if (selectedId) {
-                await updateLid(selectedId, {
+                await updateProduct(selectedId, {
                     name: form.name.trim(),
                     description: form.description.trim() || undefined,
                     categoryId,
-                    prices,
+                    variants,
                 });
                 if (hasNewImages) {
-                    await addLidImages(
+                    await addProductImages(
                         selectedId,
                         avatarImage,
                         galleryImages.length > 0 ? galleryImages : undefined,
@@ -465,11 +473,11 @@ export default function AdminLidClient({
                 }
                 setMessage("Đã cập nhật nắp.");
             } else {
-                await createLid({
+                await createProduct({
                     name: form.name.trim(),
                     description: form.description.trim() || undefined,
                     categoryId,
-                    prices,
+                    variants,
                     avatarImage,
                     galleryImages,
                 });
@@ -492,7 +500,7 @@ export default function AdminLidClient({
         setMessage("");
         setError("");
         try {
-            await deleteLid(deleteTarget);
+            await deleteProduct(deleteTarget);
             await refreshLids();
             if (selectedId === deleteTarget) closeForm();
             setMessage("Đã xóa nắp.");
@@ -596,13 +604,13 @@ export default function AdminLidClient({
                             </h2>
                             <button
                                 type="button"
-                                onClick={addPriceRow}
+                                onClick={addVariantRow}
                                 className="inline-flex items-center gap-1 rounded-lg bg-[#101a36] px-2.5 py-1.5 text-[11px] font-extrabold text-white"
                             >
                                 + Thêm dòng
                             </button>
                         </div>
-                        {form.prices.map((row, index) => (
+                        {form.variants.map((row, index) => (
                             <div
                                 key={index}
                                 className="grid grid-cols-[1fr_1fr_1fr_36px] gap-2 items-end"
@@ -617,7 +625,7 @@ export default function AdminLidClient({
                                         type="number"
                                         value={row.diameterMm}
                                         onChange={(e) =>
-                                            updatePriceRow(
+                                            updateVariantRow(
                                                 index,
                                                 "diameterMm",
                                                 e.target.value,
@@ -626,24 +634,6 @@ export default function AdminLidClient({
                                         placeholder="90"
                                     />
                                 </label>
-                                {/* <label className="block">
-                                    {index === 0 ? (
-                                        <span className="mb-1 block text-[11px] font-bold text-slate-500">
-                                            Tên size
-                                        </span>
-                                    ) : null}
-                                    <AdminField
-                                        value={row.sizeName}
-                                        onChange={(e) =>
-                                            updatePriceRow(
-                                                index,
-                                                "sizeName",
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Size S"
-                                    />
-                                </label> */}
                                 <label className="block">
                                     {index === 0 ? (
                                         <span className="mb-1 block text-[11px] font-bold text-slate-500">
@@ -654,7 +644,7 @@ export default function AdminLidClient({
                                         type="number"
                                         value={row.unitPrice}
                                         onChange={(e) =>
-                                            updatePriceRow(
+                                            updateVariantRow(
                                                 index,
                                                 "unitPrice",
                                                 e.target.value,
@@ -665,7 +655,7 @@ export default function AdminLidClient({
                                 </label>
                                 <button
                                     type="button"
-                                    onClick={() => removePriceRow(index)}
+                                    onClick={() => removeVariantRow(index)}
                                     className="grid h-[44px] w-9 place-items-center rounded-xl text-rose-500 transition hover:bg-rose-50"
                                     aria-label="Xóa dòng"
                                 >
@@ -912,13 +902,13 @@ export default function AdminLidClient({
                                     </p>
                                 ) : null}
                                 <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {lid.prices.map((price) => (
+                                    {lid.variants.map((variant) => (
                                         <span
-                                            key={price.id}
+                                            key={variant.id}
                                             className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-[#3d4860]"
                                         >
-                                            ⌀{price.diameterMm}mm —{" "}
-                                            {adminFormatMoney(price.unitPrice)}
+                                            ⌀{variant.diameterMm}mm —{" "}
+                                            {adminFormatMoney(variant.priceTiers[0]?.unitPrice ?? 0)}
                                         </span>
                                     ))}
                                 </div>

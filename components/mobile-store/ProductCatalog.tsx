@@ -6,7 +6,6 @@ import LidCard from "@/components/mobile-store/LidCard";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import { useRevealOnScroll } from "@/components/mobile-store/useRevealOnScroll";
 import { SearchIcon } from "@/components/mobile-store/icons";
-import type { LidDto } from "@/lib/api/lids";
 import type { ProductDto } from "@/lib/api/products";
 import {
     buildCatalogItems,
@@ -21,7 +20,7 @@ type CategoryFilter = { id: number; name: string };
 
 type Props = {
     products: ProductDto[];
-    lids?: LidDto[];
+    lids?: ProductDto[];
     categories?: CategoryFilter[];
 };
 

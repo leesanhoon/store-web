@@ -13,8 +13,9 @@ import {
     LayersIcon,
     PencilIcon,
 } from "@/components/mobile-store/icons";
+import LidDetailClient from "@/components/mobile-store/LidDetailClient";
 import type { ProductDto } from "@/lib/api/products";
-import { getCompatibleLids } from "@/lib/api/products";
+import { getCompatibleLids, isLidProduct } from "@/lib/api/products";
 import { getCatalogProduct, getCatalogProducts } from "@/lib/data/catalog";
 import {
     formatCurrency,
@@ -114,15 +115,49 @@ export default async function ProductDetailPage({
     const product = await loadProduct(id);
     if (!product) notFound();
 
+    const isLid = isLidProduct(product);
     const info = getProductDisplayInfo(product);
     const imageSrc = getProductImageSrc(product);
     const gallerySources = getProductGallerySources(product, imageSrc);
     const minPrice = getMinPrice(product) ?? 0;
     const minMoq = getMinMoq(product);
+
     const [relatedProducts, compatibleLids] = await Promise.all([
         loadRelatedProducts(product),
-        loadCompatibleLids(product.id),
+        isLid ? Promise.resolve([]) : loadCompatibleLids(product.id),
     ]);
+
+    if (isLid) {
+        return (
+            <MobileAppShell>
+                <div className="product-detail-screen">
+                    <MobileTopBar
+                        title="Chi tiết nắp ly"
+                        backHref="/products?category=Nắp ly"
+                        backLabel="Quay lại danh mục"
+                    />
+
+                    <section className="detail-hero-image">
+                        <ProductImageGallery
+                            images={gallerySources}
+                            productName={product.name}
+                            priorityImage
+                        />
+                    </section>
+
+                    <section className="detail-product-copy">
+                        <span className="detail-eyebrow">{product.categoryName}</span>
+                        <h2>{product.name}</h2>
+                        {product.description ? (
+                            <p className="detail-description">{product.description}</p>
+                        ) : null}
+                    </section>
+
+                    <LidDetailClient product={product} imageSrc={imageSrc} />
+                </div>
+            </MobileAppShell>
+        );
+    }
 
     const specs = [
         { label: "Dung tích", value: info.volume, icon: DropletIcon },

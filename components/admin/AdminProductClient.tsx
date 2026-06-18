@@ -17,7 +17,7 @@ import useSWR from "swr";
 import { CategoryDto, getCategories } from "@/lib/api/categories";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
-import { getLids, LidDto } from "@/lib/api/lids";
+import { isLidProduct } from "@/lib/api/products";
 import {
     addProductImages,
     createProduct,
@@ -59,7 +59,7 @@ type ProductForm = {
     description: string;
     categoryId: string;
     variants: VariantRow[];
-    lidIds: number[];
+    compatibleProductIds: number[];
 };
 
 type Props = {
@@ -80,7 +80,7 @@ const initialForm: ProductForm = {
     description: "",
     categoryId: "",
     variants: [{ ...emptyVariant, priceTiers: [{ ...emptyPriceTier }] }],
-    lidIds: [],
+    compatibleProductIds: [],
 };
 
 function normalizeSearch(value: string) {
@@ -579,7 +579,7 @@ function LidSelector({
     onChange,
 }: {
     selectedIds: number[];
-    allLids: LidDto[];
+    allLids: ProductDto[];
     productDiameters: number[];
     onChange: (ids: number[]) => void;
 }) {
@@ -594,8 +594,8 @@ function LidSelector({
     const compatibleLids =
         productDiameters.length > 0
             ? allLids.filter((lid) =>
-                  lid.prices.some((p) =>
-                      productDiameters.includes(p.diameterMm),
+                  lid.variants.some((v) =>
+                      productDiameters.includes(v.diameterMm),
                   ),
               )
             : allLids;
@@ -623,10 +623,10 @@ function LidSelector({
                 const checked = selectedIds.includes(lid.id);
                 const matchingDiameters =
                     productDiameters.length > 0
-                        ? lid.prices.filter((p) =>
-                              productDiameters.includes(p.diameterMm),
+                        ? lid.variants.filter((v) =>
+                              productDiameters.includes(v.diameterMm),
                           )
-                        : lid.prices;
+                        : lid.variants;
                 return (
                     <button
                         key={lid.id}
@@ -661,7 +661,7 @@ function LidSelector({
                                     ? `${lid.categoryName} · `
                                     : ""}
                                 {matchingDiameters
-                                    .map((p) => `⌀${p.diameterMm}mm`)
+                                    .map((v) => `⌀${v.diameterMm}mm`)
                                     .join(", ")}
                             </span>
                         </span>
@@ -754,9 +754,14 @@ export default function AdminProductClient({
         useSWR<CategoryDto[]>("/api/v1/Categories", getCategories, {
             fallbackData: initialCategories,
         });
-    const { data: allLids = [] } = useSWR<LidDto[]>("/api/v1/Lids", getLids, {
-        fallbackData: [],
-    });
+    const { data: allLids = [] } = useSWR<ProductDto[]>(
+        "lid-products",
+        async () => {
+            const products = await getProducts();
+            return products.filter(isLidProduct);
+        },
+        { fallbackData: [] },
+    );
     const { data: productDetail } = useSWR<ProductDto>(
         selectedId ? `/api/v1/Products/${selectedId}` : null,
         () => getProduct(selectedId!),
@@ -882,7 +887,7 @@ export default function AdminProductClient({
                               priceTiers: [{ ...emptyPriceTier }],
                           },
                       ],
-            lidIds: product.lids.map((l) => l.lidId),
+            compatibleProductIds: product.lids.map((l) => l.compatibleProductId),
         });
         setAvatarImage(null);
         setGalleryImages([]);
@@ -943,7 +948,7 @@ export default function AdminProductClient({
                     description: form.description.trim() || undefined,
                     categoryId,
                     variants,
-                    lidIds: form.lidIds.length > 0 ? form.lidIds : undefined,
+                    compatibleProductIds: form.compatibleProductIds.length > 0 ? form.compatibleProductIds : undefined,
                 });
                 if (hasNewImages) {
                     await addProductImages(
@@ -959,7 +964,7 @@ export default function AdminProductClient({
                     description: form.description.trim() || undefined,
                     categoryId,
                     variants,
-                    lidIds: form.lidIds.length > 0 ? form.lidIds : undefined,
+                    compatibleProductIds: form.compatibleProductIds.length > 0 ? form.compatibleProductIds : undefined,
                     avatarImage,
                     galleryImages,
                 });
@@ -1094,13 +1099,13 @@ export default function AdminProductClient({
                             Nắp tương thích
                         </h2>
                         <LidSelector
-                            selectedIds={form.lidIds}
+                            selectedIds={form.compatibleProductIds}
                             allLids={allLids}
                             productDiameters={form.variants
                                 .map((v) => Number(v.diameterMm))
                                 .filter((d) => d > 0)}
-                            onChange={(lidIds) =>
-                                setForm((prev) => ({ ...prev, lidIds }))
+                            onChange={(compatibleProductIds) =>
+                                setForm((prev) => ({ ...prev, compatibleProductIds }))
                             }
                         />
                     </AdminCard>

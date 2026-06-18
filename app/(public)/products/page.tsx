@@ -4,7 +4,6 @@ import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import ProductCatalog from "@/components/mobile-store/ProductCatalog";
 import type { CategoryTreeNode } from "@/lib/api/categories";
-import type { LidDto } from "@/lib/api/lids";
 import type { ProductDto } from "@/lib/api/products";
 import {
     getCatalogCategoryTree,
@@ -38,7 +37,7 @@ async function loadCatalog() {
     } catch (error) {
         return {
             products: [] as ProductDto[],
-            lids: [] as LidDto[],
+            lids: [] as ProductDto[],
             categories: [] as { id: number; name: string }[],
             error:
                 error instanceof Error

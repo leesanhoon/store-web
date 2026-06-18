@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { LidDto, LidPriceDto } from "@/lib/api/lids";
+import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import { addToCart, defaultCartConfiguration } from "@/lib/cart";
 import { formatCurrency } from "@/lib/products/display";
 
@@ -9,43 +9,47 @@ const QUANTITY_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 
 const CONTACT_VALUE = "contact";
 
 type Props = {
-    lid: LidDto;
+    product: ProductDto;
     imageSrc: string;
 };
 
-export default function LidDetailClient({ lid, imageSrc }: Props) {
-    const sortedPrices = [...lid.prices].sort((a, b) => b.diameterMm - a.diameterMm);
-    const [selectedPrice, setSelectedPrice] = useState<LidPriceDto | null>(sortedPrices[0] ?? null);
+export default function LidDetailClient({ product, imageSrc }: Props) {
+    const sortedVariants = [...product.variants].sort((a, b) => b.diameterMm - a.diameterMm);
+    const [selectedVariant, setSelectedVariant] = useState<ProductVariantDto | null>(sortedVariants[0] ?? null);
     const [quantity, setQuantity] = useState(1000);
     const [added, setAdded] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
+    const getUnitPrice = (variant: ProductVariantDto | null) =>
+        variant?.priceTiers[0]?.unitPrice ?? 0;
+
     const handleConfirm = () => {
-        if (!selectedPrice) return;
+        if (!selectedVariant) return;
+        const unitPrice = getUnitPrice(selectedVariant);
 
         addToCart({
             productId: 0,
-            name: lid.name,
-            price: selectedPrice.unitPrice,
-            categoryName: lid.categoryName,
+            name: product.name,
+            price: unitPrice,
+            categoryName: product.categoryName,
             unit: "thung",
             quantity,
             imageSrc,
             isLidOnly: true,
-            lidOnlyId: lid.id,
-            lidOnlyPriceId: selectedPrice.id,
-            lidOnlyDiameterMm: selectedPrice.diameterMm,
+            lidOnlyId: product.id,
+            lidOnlyPriceId: selectedVariant.id,
+            lidOnlyDiameterMm: selectedVariant.diameterMm,
             configuration: {
                 ...defaultCartConfiguration,
-                cupModel: `Nắp ⌀${selectedPrice.diameterMm}mm`,
-                size: `⌀${selectedPrice.diameterMm}mm`,
+                cupModel: `Nắp ⌀${selectedVariant.diameterMm}mm`,
+                size: `⌀${selectedVariant.diameterMm}mm`,
                 material: "Nắp ly",
                 printMethod: "Không in",
-                lidOption: lid.name,
-                lidId: lid.id,
-                lidName: lid.name,
-                lidPriceId: selectedPrice.id,
-                lidDiameterMm: selectedPrice.diameterMm,
+                lidOption: product.name,
+                lidId: product.id,
+                lidName: product.name,
+                lidPriceId: selectedVariant.id,
+                lidDiameterMm: selectedVariant.diameterMm,
                 lidUnitPrice: 0,
             },
         });
@@ -57,21 +61,21 @@ export default function LidDetailClient({ lid, imageSrc }: Props) {
 
     return (
         <>
-            {sortedPrices.length > 0 ? (
+            {sortedVariants.length > 0 ? (
                 <section className="detail-section">
                     <div className="mobile-section-heading">
                         <h3>Chọn kích thước</h3>
                     </div>
                     <div className="lid-size-options">
-                        {sortedPrices.map((price) => (
+                        {sortedVariants.map((variant) => (
                             <button
-                                key={price.id}
+                                key={variant.id}
                                 type="button"
-                                className={selectedPrice?.id === price.id ? "active" : undefined}
-                                onClick={() => setSelectedPrice(price)}
+                                className={selectedVariant?.id === variant.id ? "active" : undefined}
+                                onClick={() => setSelectedVariant(variant)}
                             >
-                                <strong>⌀{price.diameterMm}mm</strong>
-                                <span>{formatCurrency(price.unitPrice)}</span>
+                                <strong>{variant.sizeName || `⌀${variant.diameterMm}mm`}</strong>
+                                <span>{formatCurrency(getUnitPrice(variant))}</span>
                             </button>
                         ))}
                     </div>
@@ -107,13 +111,13 @@ export default function LidDetailClient({ lid, imageSrc }: Props) {
                 <button
                     type="button"
                     onClick={handleConfirm}
-                    disabled={!selectedPrice}
+                    disabled={!selectedVariant}
                     className="button-primary w-full"
                 >
                     {added
                         ? "Đã thêm vào giỏ hàng ✓"
-                        : selectedPrice
-                            ? `Thêm vào giỏ hàng - ${formatCurrency(selectedPrice.unitPrice * quantity)}`
+                        : selectedVariant
+                            ? `Thêm vào giỏ hàng - ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
                             : "Chọn kích thước"}
                 </button>
             </div>

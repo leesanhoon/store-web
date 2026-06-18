@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import type { CompatibleLidDto, PriceTierDto, ProductVariantDto } from "@/lib/api/products";
+import type { PriceTierDto, ProductDto, ProductVariantDto } from "@/lib/api/products";
 import {
   addToCart,
   CartConfiguration,
@@ -20,7 +20,7 @@ type CartProduct = {
   price: number;
   categoryName: string;
   variants?: ProductVariantDto[];
-  compatibleLids?: CompatibleLidDto[];
+  compatibleLids?: ProductDto[];
   unit?: CartUnit;
   defaultQuantity?: number;
   imageSrc?: string | null;
@@ -96,13 +96,13 @@ export default function CartConfiguratorProvider({ children }: { children: React
   const activeUnitPrice = selectedTier?.unitPrice ?? activeProduct?.price ?? 0;
 
   const selectedLid = activeProduct?.compatibleLids?.find((lid) => lid.id === selectedLidId) ?? null;
-  const selectedLidPrice = selectedLid?.prices.find((p) => p.id === selectedLidPriceId) ?? null;
-  const lidUnitPrice = selectedLidPrice?.unitPrice ?? 0;
+  const selectedLidVariant = selectedLid?.variants.find((v) => v.id === selectedLidPriceId) ?? null;
+  const lidUnitPrice = selectedLidVariant?.priceTiers[0]?.unitPrice ?? 0;
   const totalUnitPrice = activeUnitPrice + lidUnitPrice;
 
-  const getMatchingLidPrices = (lid: CompatibleLidDto) => {
-    if (!selectedVariant) return lid.prices;
-    return lid.prices.filter((p) => p.diameterMm === selectedVariant.diameterMm);
+  const getMatchingLidVariants = (lid: ProductDto) => {
+    if (!selectedVariant) return lid.variants;
+    return lid.variants.filter((v) => v.diameterMm === selectedVariant.diameterMm);
   };
 
   const openConfigurator = (product: OpenPayload) => {
@@ -158,7 +158,7 @@ export default function CartConfiguratorProvider({ children }: { children: React
     }));
   };
 
-  const selectLid = (lid: CompatibleLidDto | null) => {
+  const selectLid = (lid: ProductDto | null) => {
     if (!lid) {
       setSelectedLidId(null);
       setSelectedLidPriceId(null);
@@ -174,27 +174,27 @@ export default function CartConfiguratorProvider({ children }: { children: React
       return;
     }
     setSelectedLidId(lid.id);
-    const matching = getMatchingLidPrices(lid);
-    const firstPrice = matching[0] ?? null;
-    setSelectedLidPriceId(firstPrice?.id ?? null);
+    const matching = getMatchingLidVariants(lid);
+    const firstVariant = matching[0] ?? null;
+    setSelectedLidPriceId(firstVariant?.id ?? null);
     setConfiguration((current) => ({
       ...current,
       lidOption: lid.name,
       lidId: lid.id,
       lidName: lid.name,
-      lidPriceId: firstPrice?.id,
-      lidDiameterMm: firstPrice?.diameterMm,
-      lidUnitPrice: firstPrice?.unitPrice,
+      lidPriceId: firstVariant?.id,
+      lidDiameterMm: firstVariant?.diameterMm,
+      lidUnitPrice: firstVariant?.priceTiers[0]?.unitPrice,
     }));
   };
 
-  const selectLidPrice = (price: CompatibleLidDto["prices"][number]) => {
-    setSelectedLidPriceId(price.id);
+  const selectLidVariant = (variant: ProductVariantDto) => {
+    setSelectedLidPriceId(variant.id);
     setConfiguration((current) => ({
       ...current,
-      lidPriceId: price.id,
-      lidDiameterMm: price.diameterMm,
-      lidUnitPrice: price.unitPrice,
+      lidPriceId: variant.id,
+      lidDiameterMm: variant.diameterMm,
+      lidUnitPrice: variant.priceTiers[0]?.unitPrice,
     }));
   };
 
@@ -221,30 +221,31 @@ export default function CartConfiguratorProvider({ children }: { children: React
       priceTierMinQuantity: selectedTier?.minQuantity,
     });
 
-    if (selectedLid && selectedLidPrice) {
+    if (selectedLid && selectedLidVariant) {
+      const lidPrice = selectedLidVariant.priceTiers[0]?.unitPrice ?? 0;
       addToCart({
         productId: 0,
         name: selectedLid.name,
-        price: selectedLidPrice.unitPrice,
+        price: lidPrice,
         categoryName: activeProduct.categoryName,
         unit: "thung",
         quantity: configuration.quantity,
         imageSrc: selectedLid.avatarImageUrl,
         isLidOnly: true,
         lidOnlyId: selectedLid.id,
-        lidOnlyPriceId: selectedLidPrice.id,
-        lidOnlyDiameterMm: selectedLidPrice.diameterMm,
+        lidOnlyPriceId: selectedLidVariant.id,
+        lidOnlyDiameterMm: selectedLidVariant.diameterMm,
         configuration: {
           ...defaultCartConfiguration,
-          cupModel: `Nắp ⌀${selectedLidPrice.diameterMm}mm`,
-          size: `⌀${selectedLidPrice.diameterMm}mm`,
+          cupModel: `Nắp ⌀${selectedLidVariant.diameterMm}mm`,
+          size: `⌀${selectedLidVariant.diameterMm}mm`,
           material: "Nắp ly",
           printMethod: "Không in",
           lidOption: selectedLid.name,
           lidId: selectedLid.id,
           lidName: selectedLid.name,
-          lidPriceId: selectedLidPrice.id,
-          lidDiameterMm: selectedLidPrice.diameterMm,
+          lidPriceId: selectedLidVariant.id,
+          lidDiameterMm: selectedLidVariant.diameterMm,
           lidUnitPrice: 0,
         },
       });
@@ -371,17 +372,17 @@ export default function CartConfiguratorProvider({ children }: { children: React
                   </button>
                 ))}
               </div>
-              {selectedLid && getMatchingLidPrices(selectedLid).length > 0 ? (
+              {selectedLid && getMatchingLidVariants(selectedLid).length > 0 ? (
                 <div className="sheet-tier-options">
-                  {getMatchingLidPrices(selectedLid).map((price) => (
+                  {getMatchingLidVariants(selectedLid).map((variant) => (
                     <button
-                      key={price.id}
+                      key={variant.id}
                       type="button"
-                      onClick={() => selectLidPrice(price)}
-                      className={selectedLidPriceId === price.id ? "active" : undefined}
+                      onClick={() => selectLidVariant(variant)}
+                      className={selectedLidPriceId === variant.id ? "active" : undefined}
                     >
-                      <span>{price.sizeName || `${price.diameterMm}mm`}</span>
-                      <strong>{formatCurrency(price.unitPrice)}</strong>
+                      <span>{variant.sizeName || `${variant.diameterMm}mm`}</span>
+                      <strong>{formatCurrency(variant.priceTiers[0]?.unitPrice ?? 0)}</strong>
                     </button>
                   ))}
                 </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { LidDto } from "@/lib/api/lids";
+import type { ProductDto } from "@/lib/api/products";
 import {
     formatLidPriceRange,
     getCatalogItemImage,
@@ -11,14 +11,14 @@ import {
 } from "@/lib/products/catalog-item";
 
 type Props = {
-    lid: LidDto;
+    lid: ProductDto;
     compact?: boolean;
 };
 
 export default function LidCard({ lid, compact = false }: Props) {
     const item: CatalogLid = { kind: "lid", data: lid };
     const imageSrc = getCatalogItemImage(item);
-    const detailHref = `/lid/${lid.id}`;
+    const detailHref = `/product/${lid.id}`;
     const sizes = getLidSizes(lid);
 
     return (
