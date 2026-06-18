@@ -20,9 +20,7 @@ import {
 import { createOrder, type CreateOrderRequest } from "@/lib/api/orders";
 import { formatCurrency } from "@/lib/products/display";
 
-const QUANTITY_OPTIONS = [
-    1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
-] as const;
+const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
 const CONTACT_VALUE = "contact";
 
 type OrderForm = {
