@@ -5,7 +5,7 @@ import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import { addToCart, defaultCartConfiguration } from "@/lib/cart";
 import { formatCurrency } from "@/lib/products/display";
 
-const QUANTITY_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000] as const;
+const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
 const CONTACT_VALUE = "contact";
 
 type Props = {
@@ -14,8 +14,11 @@ type Props = {
 };
 
 export default function LidDetailClient({ product, imageSrc }: Props) {
-    const sortedVariants = [...product.variants].sort((a, b) => b.diameterMm - a.diameterMm);
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariantDto | null>(sortedVariants[0] ?? null);
+    const sortedVariants = [...product.variants].sort(
+        (a, b) => b.diameterMm - a.diameterMm,
+    );
+    const [selectedVariant, setSelectedVariant] =
+        useState<ProductVariantDto | null>(sortedVariants[0] ?? null);
     const [quantity, setQuantity] = useState(1000);
     const [added, setAdded] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -71,11 +74,20 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                             <button
                                 key={variant.id}
                                 type="button"
-                                className={selectedVariant?.id === variant.id ? "active" : undefined}
+                                className={
+                                    selectedVariant?.id === variant.id
+                                        ? "active"
+                                        : undefined
+                                }
                                 onClick={() => setSelectedVariant(variant)}
                             >
-                                <strong>{variant.sizeName || `⌀${variant.diameterMm}mm`}</strong>
-                                <span>{formatCurrency(getUnitPrice(variant))}</span>
+                                <strong>
+                                    {variant.sizeName ||
+                                        `⌀${variant.diameterMm}mm`}
+                                </strong>
+                                <span>
+                                    {formatCurrency(getUnitPrice(variant))}
+                                </span>
                             </button>
                         ))}
                     </div>
@@ -91,7 +103,10 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                         value={quantity <= 10000 ? quantity : CONTACT_VALUE}
                         onChange={(e) => {
                             if (e.target.value === CONTACT_VALUE) {
-                                window.open("https://zalo.me/0905123456", "_blank");
+                                window.open(
+                                    "https://zalo.me/0905123456",
+                                    "_blank",
+                                );
                                 return;
                             }
                             setQuantity(Number(e.target.value));
@@ -102,7 +117,9 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                                 {qty.toLocaleString("vi-VN")} ly
                             </option>
                         ))}
-                        <option value={CONTACT_VALUE}>Trên 10.000 — Liên hệ</option>
+                        <option value={CONTACT_VALUE}>
+                            Trên 10.000 — Liên hệ
+                        </option>
                     </select>
                 </div>
             </section>
@@ -117,8 +134,8 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                     {added
                         ? "Đã thêm vào giỏ hàng ✓"
                         : selectedVariant
-                            ? `Thêm vào giỏ hàng - ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
-                            : "Chọn kích thước"}
+                          ? `Thêm vào giỏ hàng - ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
+                          : "Chọn kích thước"}
                 </button>
             </div>
         </>
