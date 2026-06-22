@@ -69,11 +69,6 @@ type Props = {
 
 const tabs = ["Tất cả", "Ly nhựa", "Ly giấy"];
 
-const DEFAULT_QUANTITIES = [""];
-const defaultPriceTiers: PriceTierRow[] = DEFAULT_QUANTITIES.map((q) => ({
-    minQuantity: q,
-    unitPrice: "",
-}));
 const emptyPriceTier: PriceTierRow = { minQuantity: "", unitPrice: "" };
 const emptyVariant: VariantRow = {
     capacityMl: "",
@@ -412,11 +407,9 @@ function VariantEditor({
 
     const addPriceTier = (vIndex: number) => {
         const v = variants[vIndex];
-        const usedQtys = new Set(v.priceTiers.map((t) => t.minQuantity));
-        const nextDefault = DEFAULT_QUANTITIES.find((q) => !usedQtys.has(q));
         updatePriceTiers(vIndex, [
             ...v.priceTiers,
-            { minQuantity: nextDefault ?? "", unitPrice: "" },
+            { ...emptyPriceTier },
         ]);
     };
 
@@ -523,81 +516,67 @@ function VariantEditor({
                                 + Thêm mức giá
                             </button>
                         </div>
-                        {variant.priceTiers.map((tier, tIndex) => {
-                            const isDefault = DEFAULT_QUANTITIES.includes(
-                                tier.minQuantity,
-                            );
-                            return (
-                                <div
-                                    key={tIndex}
-                                    className="grid grid-cols-[1fr_1fr_32px] gap-2 items-end"
-                                >
-                                    <label className="block">
-                                        {tIndex === 0 ? (
-                                            <span className="mb-1 block text-[10px] font-bold text-slate-500">
-                                                Từ SL
-                                            </span>
-                                        ) : null}
-                                        <AdminField
-                                            type="number"
-                                            value={tier.minQuantity}
-                                            onChange={(e) =>
-                                                updateTier(
-                                                    vIndex,
-                                                    tIndex,
-                                                    "minQuantity",
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="1000"
-                                            readOnly={isDefault}
-                                            style={
-                                                isDefault
-                                                    ? {
-                                                          background: "#f1f5f9",
-                                                          color: "#64748b",
-                                                      }
-                                                    : undefined
-                                            }
-                                        />
-                                    </label>
-                                    <label className="block">
-                                        {tIndex === 0 ? (
-                                            <span className="mb-1 block text-[10px] font-bold text-slate-500">
-                                                Đơn giá (đ)
-                                            </span>
-                                        ) : null}
-                                        <AdminField
-                                            type="number"
-                                            value={tier.unitPrice}
-                                            onChange={(e) =>
-                                                updateTier(
-                                                    vIndex,
-                                                    tIndex,
-                                                    "unitPrice",
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="850"
-                                        />
-                                    </label>
-                                    {!isDefault ? (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                removePriceTier(vIndex, tIndex)
-                                            }
-                                            className="grid h-[44px] w-8 place-items-center rounded-xl text-rose-500 hover:bg-rose-50"
-                                            aria-label="Xóa mức giá"
-                                        >
-                                            ×
-                                        </button>
-                                    ) : (
-                                        <div />
-                                    )}
-                                </div>
-                            );
-                        })}
+                        {variant.priceTiers.map((tier, tIndex) => (
+                            <div
+                                key={tIndex}
+                                className="grid grid-cols-[1fr_1fr_32px] gap-2 items-end"
+                            >
+                                <label className="block">
+                                    {tIndex === 0 ? (
+                                        <span className="mb-1 block text-[10px] font-bold text-slate-500">
+                                            Từ SL
+                                        </span>
+                                    ) : null}
+                                    <AdminField
+                                        type="number"
+                                        value={tier.minQuantity}
+                                        onChange={(e) =>
+                                            updateTier(
+                                                vIndex,
+                                                tIndex,
+                                                "minQuantity",
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="1000"
+                                    />
+                                </label>
+                                <label className="block">
+                                    {tIndex === 0 ? (
+                                        <span className="mb-1 block text-[10px] font-bold text-slate-500">
+                                            Đơn giá (đ)
+                                        </span>
+                                    ) : null}
+                                    <AdminField
+                                        type="number"
+                                        value={tier.unitPrice}
+                                        onChange={(e) =>
+                                            updateTier(
+                                                vIndex,
+                                                tIndex,
+                                                "unitPrice",
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="850"
+                                    />
+                                </label>
+                                {variant.priceTiers.length > 1 ? (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            removePriceTier(vIndex, tIndex)
+                                        }
+                                        className="grid h-[44px] w-8 place-items-center rounded-xl text-rose-500 hover:bg-rose-50"
+                                        aria-label="Xóa mức giá"
+                                    >
+                                        ×
+                                    </button>
+                                ) : (
+                                    <div />
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </AdminCard>
             ))}
