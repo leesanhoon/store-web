@@ -161,16 +161,7 @@ export default function AdminCategoryPage() {
     };
 
     useEffect(() => {
-        void getCategoryTree()
-            .then(setTree)
-            .catch((err) =>
-                setLoadError(
-                    err instanceof Error
-                        ? err.message
-                        : "Không thể tải danh mục.",
-                ),
-            )
-            .finally(() => setLoading(false));
+        fetchTree();
     }, []);
 
     const startAddRoot = () => {

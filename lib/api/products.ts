@@ -43,6 +43,7 @@ export type ProductDto = {
 export type CreateProductVariant = {
     capacityMl: number;
     diameterMm: number;
+    sizeName?: string;
     priceTiers: Array<{ minQuantity: number; unitPrice: number }>;
 };
 
@@ -112,6 +113,7 @@ function toFormData(payload: ProductUploadPayload) {
     payload.variants.forEach((v, i) => {
         formData.append(`Variants[${i}].CapacityMl`, String(v.capacityMl));
         formData.append(`Variants[${i}].DiameterMm`, String(v.diameterMm));
+        formData.append(`Variants[${i}].SizeName`, v.sizeName ?? "");
         v.priceTiers.forEach((t, j) => {
             formData.append(`Variants[${i}].PriceTiers[${j}].MinQuantity`, String(t.minQuantity));
             formData.append(`Variants[${i}].PriceTiers[${j}].UnitPrice`, String(t.unitPrice));

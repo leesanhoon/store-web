@@ -29,6 +29,15 @@ import {
     AdminTextArea,
     adminFormatMoney,
 } from "@/components/admin/admin-ui";
+import {
+    PlusIcon,
+    EditIcon,
+    DeleteIcon,
+    UploadIcon,
+    FieldLabel,
+    preserveAdminScroll,
+    normalizeSearch,
+} from "@/components/admin/shared";
 
 type LidVariantRow = {
     diameterMm: string;
@@ -45,6 +54,7 @@ type LidForm = {
 
 type Props = {
     initialLids: ProductDto[];
+    initialHasMore?: boolean;
     initialCategories: CategoryDto[];
 };
 
@@ -60,85 +70,6 @@ const initialForm: LidForm = {
     variants: [{ ...emptyVariantRow }],
 };
 
-function PlusIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-5 w-5"
-            aria-hidden="true"
-        >
-            <path
-                d="M12 5v14M5 12h14"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
-}
-
-function EditIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-5 w-5"
-            aria-hidden="true"
-        >
-            <path
-                d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0 0-3l-.5-.5a2.1 2.1 0 0 0-3 0l-10 10L4 20Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function DeleteIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-5 w-5"
-            aria-hidden="true"
-        >
-            <path
-                d="M6 7h12M10 11v6M14 11v6M8 7l1 13h6l1-13M10 7V5h4v2"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function UploadIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-9 w-9"
-            aria-hidden="true"
-        >
-            <path
-                d="M12 16V7m0 0 4 4m-4-4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M7 18a4 4 0 1 1 .9-7.9A5 5 0 0 1 17.7 11 3.5 3.5 0 1 1 18 18H7Z"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
 
 function IconButton({
     label,
@@ -161,41 +92,18 @@ function IconButton({
     );
 }
 
-function FieldLabel({
-    children,
-    required,
-}: {
-    children: React.ReactNode;
-    required?: boolean;
-}) {
-    return (
-        <span className="mb-1.5 block text-[13px] font-extrabold text-[#101a36]">
-            {children}{" "}
-            {required ? <span className="text-red-500">*</span> : null}
-        </span>
-    );
-}
 
-function preserveAdminScroll() {
-    const scroller = document.getElementById("admin-main-content");
-    const scrollTop = scroller?.scrollTop ?? 0;
-    const restore = () => {
-        if (scroller) scroller.scrollTop = scrollTop;
-    };
-    window.requestAnimationFrame(restore);
-    window.setTimeout(restore, 120);
-    window.setTimeout(restore, 320);
-}
-
-async function fetchLidProducts(params?: { page: number; pageSize: number }): Promise<PaginatedResponse<ProductDto>> {
+async function fetchLidProducts(params?: { page: number; pageSize: number }): Promise<PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }> {
     const result = await getProducts(params ?? { page: 1, pageSize: 50 });
     const paginated = result as PaginatedResponse<ProductDto>;
     const filtered = paginated.items.filter(isLidProduct);
-    return { ...paginated, items: filtered, totalCount: filtered.length };
+    const rawPageWasFull = paginated.items.length >= (params?.pageSize ?? 50);
+    return { ...paginated, items: filtered, totalCount: paginated.totalCount, rawPageWasFull };
 }
 
 export default function AdminLidClient({
     initialLids,
+    initialHasMore,
     initialCategories,
 }: Props) {
     const router = useRouter();
@@ -215,17 +123,26 @@ export default function AdminLidClient({
     const PAGE_SIZE = 50;
     const [page, setPage] = useState(1);
     const [allLids, setAllLids] = useState<ProductDto[]>(initialLids);
-    const [hasMore, setHasMore] = useState(initialLids.length >= 10);
+    const [hasMore, setHasMore] = useState(initialHasMore ?? false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
+
+    const initialPageData = useMemo(
+        () => ({
+            items: initialLids,
+            totalCount: initialLids.length,
+            rawPageWasFull: initialHasMore ?? false,
+        } as PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }),
+        [initialLids, initialHasMore],
+    );
 
     const {
         data: lidsPage,
         mutate,
-    } = useSWR<PaginatedResponse<ProductDto>>(
+    } = useSWR<PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }>(
         [`lid-products-admin`, page],
         () => fetchLidProducts({ page, pageSize: PAGE_SIZE }),
-        { revalidateOnFocus: false },
+        { revalidateOnFocus: false, fallbackData: page === 1 ? initialPageData : undefined },
     );
 
     useEffect(() => {
@@ -236,7 +153,7 @@ export default function AdminLidClient({
             const newItems = lidsPage.items.filter((l) => !existingIds.has(l.id));
             return [...prev, ...newItems];
         });
-        setHasMore(lidsPage.items.length >= 10);
+        setHasMore(lidsPage.rawPageWasFull);
         setIsLoadingMore(false);
     }, [lidsPage, page]);
 
@@ -261,7 +178,7 @@ export default function AdminLidClient({
         const fresh = await fetchLidProducts({ page: 1, pageSize: PAGE_SIZE });
         setPage(1);
         setAllLids(fresh.items);
-        setHasMore(fresh.items.length >= 10);
+        setHasMore(fresh.rawPageWasFull);
         setIsLoadingMore(false);
         mutate(fresh, { revalidate: false });
     }, [mutate]);
@@ -301,9 +218,6 @@ export default function AdminLidClient({
             })),
         [galleryImages],
     );
-
-    const normalizeSearch = (value: string) =>
-        value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
     const visibleLids = allLids.filter((lid) => {
         if (!searchTerm.trim()) return true;
@@ -430,6 +344,7 @@ export default function AdminLidClient({
             .map((v) => ({
                 capacityMl: 0,
                 diameterMm: Number(v.diameterMm),
+                sizeName: v.sizeName ?? "",
                 priceTiers: [{ minQuantity: 1, unitPrice: Number(v.unitPrice) }],
             }));
 
@@ -651,6 +566,25 @@ export default function AdminLidClient({
                                             )
                                         }
                                         placeholder="350"
+                                    />
+                                </label>
+                                <label className="block">
+                                    {index === 0 ? (
+                                        <span className="mb-1 block text-[11px] font-bold text-slate-500">
+                                            Tên size
+                                        </span>
+                                    ) : null}
+                                    <AdminField
+                                        type="text"
+                                        value={row.sizeName}
+                                        onChange={(e) =>
+                                            updateVariantRow(
+                                                index,
+                                                "sizeName",
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="S, M, L..."
                                     />
                                 </label>
                                 <button
