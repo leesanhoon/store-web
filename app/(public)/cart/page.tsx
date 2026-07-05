@@ -119,8 +119,6 @@ export default function CartPage() {
                     : item.productId,
                 quantity: item.quantity,
                 unitPrice: getItemUnitPrice(item),
-                materialId: null,
-                printTypeId: null,
                 lidId: item.isLidOnly
                     ? null
                     : (item.configuration.lidId ?? null),

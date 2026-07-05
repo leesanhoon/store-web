@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosRequestConfig, type RawAxiosRequestHeaders } from "axios";
+import { getAdminToken } from "@/lib/admin-auth";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -154,6 +155,13 @@ async function request<TResponse, TBody = unknown>(
         ...(!isMultipart && hasBody ? { "Content-Type": "application/json" } : {}),
         ...headers,
     };
+
+    // Add Authorization header if token exists
+    const token = getAdminToken();
+    if (token) {
+        Object.assign(requestHeaders, { Authorization: `Bearer ${token}` });
+    }
+
     const url = `${API_BASE_URL}${path}`;
 
     logCurlRequest(method, url, requestHeaders, body);

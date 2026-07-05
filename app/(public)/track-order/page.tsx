@@ -146,12 +146,6 @@ function OrderItemCard({ item, index }: { item: OrderItemDto; index: number }) {
           <div className="mt-3 flex flex-wrap gap-1.5">
             <DetailChip label="Số lượng" value={item.quantity.toLocaleString("vi-VN")} />
             <DetailChip label="Đơn giá" value={formatCurrency(item.unitPrice)} />
-            {item.materialName && (
-              <DetailChip label="Chất liệu" value={item.materialName} />
-            )}
-            {item.printTypeName && (
-              <DetailChip label="Kiểu in" value={item.printTypeName} />
-            )}
             {item.lidName && (
               <DetailChip label="Nắp" value={item.lidName} />
             )}

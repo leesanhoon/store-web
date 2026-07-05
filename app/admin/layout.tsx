@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, Suspense } from "react";
 import AdminAuthGate from "@/components/admin/AdminAuthGate";
-import { clearAdminAuthenticated } from "@/lib/admin-auth";
+import { clearAdminToken } from "@/lib/admin-auth";
 
 const adminNav = [
     { href: "/admin", label: "Tổng quan", icon: "home" },
@@ -225,7 +225,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
     const mode = searchParams.get("mode");
 
     const logout = () => {
-        clearAdminAuthenticated();
+        clearAdminToken();
         router.replace("/account");
     };
 

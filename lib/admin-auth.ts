@@ -1,16 +1,20 @@
-export const ADMIN_AUTH_STORAGE_KEY = "cup_store_admin_auth";
-export const ADMIN_USERNAME = "admin";
-export const ADMIN_PASSWORD = "123456";
+export const ADMIN_AUTH_TOKEN_KEY = "cup_store_admin_token";
 
 export function isAdminAuthenticated() {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === "true";
+  const token = window.localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
+  return !!token;
 }
 
-export function setAdminAuthenticated() {
-  window.localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, "true");
+export function setAdminToken(token: string) {
+  window.localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, token);
 }
 
-export function clearAdminAuthenticated() {
-  window.localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
+export function getAdminToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
+}
+
+export function clearAdminToken() {
+  window.localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
 }

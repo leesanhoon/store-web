@@ -31,10 +31,6 @@ export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 export type OrderItemDto = {
     productId: number;
     productName: string;
-    materialId: number | null;
-    materialName: string | null;
-    printTypeId: number | null;
-    printTypeName: string | null;
     lidId: number | null;
     lidName: string | null;
     quantity: number;
@@ -73,8 +69,6 @@ export type CreateOrderItemRequest = {
     productId: number;
     quantity: number;
     unitPrice: number;
-    materialId?: number | null;
-    printTypeId?: number | null;
     lidId?: number | null;
 };
 

@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import {
-    ADMIN_PASSWORD,
-    ADMIN_USERNAME,
     isAdminAuthenticated,
-    setAdminAuthenticated,
+    setAdminToken,
 } from "@/lib/admin-auth";
+import { apiClient } from "@/lib/api/http";
 
 function LockIcon() {
     return (
@@ -58,16 +57,27 @@ function AccountContent() {
         }
     }, [nextPath, router]);
 
-    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (username.trim() !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-            setError("Tài khoản hoặc mật khẩu không đúng.");
+
+        if (!username.trim() || !password) {
+            setError("Tài khoản và mật khẩu không được để trống.");
             return;
         }
 
-        setError("");
-        setAdminAuthenticated();
-        router.replace(nextPath);
+        try {
+            const response = await apiClient.post<{ token: string; expiresIn: number }>(
+                "/api/v1/auth/login",
+                { username: username.trim(), password }
+            );
+
+            setError("");
+            setAdminToken(response.token);
+            router.replace(nextPath);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Tài khoản hoặc mật khẩu không đúng.";
+            setError(message);
+        }
     };
 
     return (
