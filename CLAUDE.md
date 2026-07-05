@@ -4,6 +4,31 @@ This project uses a **file-based task queue** (`tasks/` directory) to coordinate
 between a **Lead** (planner/reviewer) and **Worker** (executor) role via
 **Claude Code Desktop**.
 
+## Design System: Stripe
+
+This project uses a Stripe-inspired design system. Before writing any UI code,
+read `.claude/skills/stripe-design/SKILL.md` for complete tokens and rules.
+
+### Quick Reference
+
+- **Primary purple**: `#533afd` — CTAs, links, interactive
+- **Headings**: `#061b31` (deep navy) — NEVER black
+- **Body text**: `#64748d` (slate)
+- **Background**: `#ffffff` (white), `#1c1e54` (dark brand sections)
+- **Font**: Source Sans 3 weight 300 (primary), Source Code Pro (code)
+- **Font feature**: `font-feature-settings: "ss01"` on ALL text
+- **Shadows**: blue-tinted `rgba(50,50,93,0.25)` + `rgba(0,0,0,0.1)` layered
+- **Border radius**: 4px-8px — NO pill shapes
+- **Section rhythm**: light section → dark (`#1c1e54`) section → light
+- **Max width**: ~1080px, base spacing unit 8px
+
+Anti-patterns to avoid:
+- ❌ Neutral gray shadows (always tint blue)
+- ❌ Bold/pill-shaped buttons (4px radius only)
+- ❌ Weight 600+ for headings (use 300)
+- ❌ Warm accents for interactive elements (purple is primary)
+- ❌ Pure black text (use `#061b31` always)
+
 ## Directory Structure
 
 ```
