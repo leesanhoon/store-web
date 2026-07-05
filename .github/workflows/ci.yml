@@ -17,8 +17,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -28,7 +28,4 @@ jobs:
 
       - name: Build
         run: npm run build
-        env:
-          # TODO: Consider using secrets.NEXT_PUBLIC_API_BASE_URL if build needs
-          # to target a different environment than the default
-          # NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+        env: {}
