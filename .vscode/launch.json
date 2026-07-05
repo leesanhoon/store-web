@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Frontend (Next.js)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/next",
+      "args": ["dev"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "port": 9229
+    },
+    {
+      "name": "Frontend Browser Debug",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "pathMapping": {
+        "/": "${workspaceFolder}/",
+        "/_next": "${workspaceFolder}/.next"
+      },
+      "sourceMapPathOverrides": {
+        "webpack:///": "${webRoot}/",
+        "webpack:///./*": "${webRoot}/*"
+      }
+    }
+  ],
+  "compounds": []
+}
