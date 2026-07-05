@@ -77,7 +77,7 @@ Lead                                    Worker
 4. **Always read the full task before starting**
 5. **Worker: if unsure, write `blocked.md` — never guess**
 6. **Lead: always review code against plan.md AND task.md — not just "does it run" but "does it match the architecture"**
-7. **Commit messages: Lead decides when and what to commit**
+7. **NO auto-commit, NO auto-push** — only commit/push when the user explicitly and directly asks. Modifying code is NEVER permission to commit or push.
 
 ## Task File Formats
 
