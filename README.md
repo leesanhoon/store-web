@@ -19,7 +19,7 @@ Customers browse the catalog, configure print options, build a cart, and submit 
 | Data fetching | SWR (client-side) |
 | Components | Radix UI Select |
 | Language | TypeScript 5 |
-| Fonts | Plus Jakarta Sans (display) + Be Vietnam Pro (body) |
+| Fonts | Source Sans 3 via `next/font` (Latin + Vietnamese) |
 
 ---
 
@@ -70,13 +70,14 @@ The app connects to the hosted backend by default (`https://backend-api-dotnet9.
 
 | Route | Description |
 |---|---|
-| `/` | Home page with hero slider, featured products, gallery |
+| `/` | Home: static hero, category tiles, featured products, ordering process, partners |
 | `/products` | Catalog with search + category filter |
-| `/product/[id]` | Product detail — options, wishlist, share, add-to-cart |
+| `/product/[id]` | Product detail — capacities, price tiers, share, add-to-cart |
 | `/cart` | Cart → quote request flow |
 | `/track-order` | Order lookup by id/phone |
 | `/gallery` | Printed cup showcase |
-| `/account` | Customer area (wishlist) |
+
+**`app/account/`** — Admin sign-in at `/account`, outside the storefront chrome (the admin gate redirects here)
 
 **`app/admin/`** — Admin dashboard (client-side auth gate)
 
@@ -98,8 +99,6 @@ Backend (.NET 9 API)
 
 Browser (localStorage)
   ├── Cart + quotes         (lib/cart.ts)
-  ├── Orders                (lib/orders.ts)
-  ├── Wishlist              (lib/wishlist.ts)
   └── Admin session         (lib/admin-auth.ts)
 ```
 
@@ -109,7 +108,7 @@ The backend returns inconsistent collection shapes (array, `{items}`, `{value}`,
 
 | Directory | Purpose |
 |---|---|
-| `components/mobile-store/` | Storefront UI — MobileAppShell, ProductCatalog, HeroSlider, etc. |
+| `components/mobile-store/` | Storefront UI — SiteChrome (header, footer, bottom nav), ProductCatalog, ProductCard, etc. |
 | `components/admin/` | Admin panel — AuthGate, ProductClient, OrderClient, shared UI |
 | `components/cart/` | CartConfiguratorProvider (wraps root layout) |
 
@@ -117,19 +116,19 @@ The backend returns inconsistent collection shapes (array, `{items}`, `{value}`,
 
 ## Design System
 
-The visual identity is defined as design tokens in `app/globals.css`:
+Stripe-inspired structure with the logo's forest green as primary. Full spec: [`DESIGN.md`](DESIGN.md); rules for agents: `.claude/skills/stripe-design/SKILL.md`. Tokens live in `app/globals.css` (`@theme static`).
 
-**Typography** — Plus Jakarta Sans for headings, Be Vietnam Pro for body. Both include Vietnamese diacritics.
+**Palette** — Primary green `#006e3e` (from the logo; hover, active and soft are derived with `color-mix()`), navy ink `#061b31` for headings and prices, slate body `#425466`, dark forest `#0b2e22` for the process band and footer. Status colours (success, warning, danger) always sit on their soft background with an icon.
 
-**Palette** — Two hues only:
-- Navy ink `#101a36` — primary text and UI elements
-- Teal accent `#0f766e` — interactive elements and highlights
+**Typography** — Source Sans 3 only, via `next/font` (Vietnamese subset, tabular digits by default). Body 400; weight 300 only for display text ≥40px; 700+ never used.
 
-**Cards** — "Double-Bezel" architecture: navy hairline border + inset highlight + navy-tinted shadows + concentric radii.
+**Cards** — Flat: white, 1px `#e5edf5` border, 4-8px radius, blue-tinted layered shadows (`--shadow-sm/md/lg`).
 
 **Motion** — Spring-based easing (`--ease-spring`, `--ease-out-soft`) with three duration tokens (`--dur-fast`, `--dur-mid`, `--dur-slow`). Transforms and opacity only.
 
-**Layout** — 430px phone-frame shell (`MobileAppShell`) with sticky top bars for a native-app feel on all screen sizes.
+**Layout** — Responsive, mobile-first (breakpoints 768px and 1024px, 1080px container). `SiteChrome` renders a sticky header, a dark footer and, below 768px, a fixed bottom nav. The admin has a sidebar at ≥1024px and a bottom nav below.
+
+**CSS** — `app/globals.css` imports one file per area from `app/styles/` (`base`, `shell`, `home`, `catalog`, `product`, `configurator`, `cart`, `pages`, `admin`); each file has one owner. Breakpoints use `min-width` only.
 
 ---
 
@@ -139,11 +138,9 @@ The visual identity is defined as design tokens in `app/globals.css`:
 |---|---|---|
 | `dtp_cart_items` | `lib/cart.ts` | Cart items |
 | `dtp_quote_requests` | `lib/cart.ts` | Submitted quote requests |
-| `dtp_orders` | `lib/orders.ts` | Local order records |
-| `dtp_wishlist` | `lib/wishlist.ts` | Wishlisted product IDs |
-| `cup_store_admin_auth` | `lib/admin-auth.ts` | Admin login flag |
+| `cup_store_admin_token` | `lib/admin-auth.ts` | Admin auth token |
 
-Cart and wishlist changes emit custom DOM events (`dtp-cart-changed`, `dtp-wishlist-changed`) for cross-component sync.
+Cart changes emit a custom DOM event (`dtp-cart-changed`) for cross-component sync.
 
 ---
 
@@ -161,14 +158,15 @@ Admin auth is a **client-side demo gate** — a boolean flag in localStorage. Cr
 store-web/
 ├── app/
 │   ├── layout.tsx                  # Root layout (<html lang="vi">, fonts, providers)
-│   ├── globals.css                 # Tailwind v4 + design tokens
+│   ├── globals.css                 # Tailwind v4 + design tokens, imports styles/
+│   ├── styles/                     # Per-area CSS (base, shell, home, catalog, …, admin)
+│   ├── account/                    # Admin sign-in (/account)
 │   ├── (public)/                   # Customer storefront
 │   │   ├── page.tsx                # Home
 │   │   ├── products/               # Catalog
 │   │   ├── product/[id]/           # Product detail
 │   │   ├── cart/                   # Cart → quote
 │   │   ├── track-order/            # Order tracking
-│   │   ├── account/                # Customer area
 │   │   └── gallery/                # Gallery
 │   └── admin/                      # Admin panel
 │       ├── product/                # Product CRUD
@@ -176,7 +174,7 @@ store-web/
 │       ├── category/               # Category management
 │       └── order/                  # Order management
 ├── components/
-│   ├── mobile-store/               # Storefront components
+│   ├── mobile-store/               # Storefront components (SiteChrome, catalog, product)
 │   ├── admin/                      # Admin components
 │   └── cart/                       # Cart provider
 └── lib/
@@ -188,7 +186,6 @@ store-web/
     │   └── gallery.ts              # Gallery + home features
     ├── data/                       # Server-component data helpers
     ├── cart.ts                     # Cart state (localStorage)
-    ├── orders.ts                   # Order state (localStorage)
-    ├── wishlist.ts                 # Wishlist (localStorage)
+    ├── site.ts                     # Contact data (phone, Zalo, address, hours)
     └── admin-auth.ts               # Demo admin auth
 ```
