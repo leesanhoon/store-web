@@ -1,71 +1,71 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import AddToCartButton from "@/components/AddToCartButton";
-import type { ProductDto } from "@/lib/api/products";
+import { isLidProduct, type ProductDto } from "@/lib/api/products";
+import { getCatalogItemImage, getLidSizes } from "@/lib/products/catalog-item";
 import {
-    formatPriceRange,
+    formatCurrency,
+    getMinMoq,
     getMinPrice,
-    getProductDisplayInfo,
     getProductImageSrc,
 } from "@/lib/products/display";
 
 type Props = {
     product: ProductDto;
     compact?: boolean;
+    /** Above-the-fold cards: preload the image instead of lazy loading it. */
+    priority?: boolean;
 };
 
-export default function ProductCard({ product, compact = false }: Props) {
-    const info = getProductDisplayInfo(product);
-    const imageSrc = getProductImageSrc(product);
-    const detailHref = `/product/${product.id}`;
-    const minPrice = getMinPrice(product) ?? 0;
+export default function ProductCard({
+    product,
+    compact = false,
+    priority = false,
+}: Props) {
+    const isLid = isLidProduct(product);
+    const imageSrc = isLid
+        ? getCatalogItemImage({ kind: "lid", data: product })
+        : getProductImageSrc(product);
+    const minPrice = getMinPrice(product);
+    const minMoq = getMinMoq(product);
+    const detail = isLid
+        ? getLidSizes(product)
+        : minMoq
+          ? `Tối thiểu ${minMoq.toLocaleString("vi-VN")} ly`
+          : "";
 
     return (
-        <article
+        <Link
+            href={`/product/${product.id}`}
             className={
                 compact ? "mobile-product-card compact" : "mobile-product-card"
             }
         >
-            <Link
-                href={detailHref}
-                className="mobile-product-image"
-                aria-label={product.name}
-            >
+            <div className="mobile-product-image">
                 <Image
                     src={imageSrc}
-                    alt={product.name}
-                    width={520}
-                    height={420}
-                    className="h-full w-full object-cover"
-                    loading={compact ? "lazy" : "eager"}
-                    quality={88}
+                    alt=""
+                    fill
+                    sizes="(min-width:1024px) 260px, (min-width:768px) 33vw, 50vw"
+                    preload={priority}
+                    className="object-cover"
                 />
-            </Link>
+            </div>
             <div className="mobile-product-body">
                 <h3>{product.name}</h3>
                 <p className="mobile-product-price">
-                    {formatPriceRange(product)}
+                    {minPrice === null ? (
+                        "Liên hệ"
+                    ) : (
+                        <>
+                            Từ {formatCurrency(minPrice)}{" "}
+                            <span>/{isLid ? "nắp" : "ly"}</span>
+                        </>
+                    )}
                 </p>
-                {!compact ? (
-                    <p className="mobile-product-moq">
-                        Đặt tối thiểu {info.minimumQuantity.replace("Từ ", "")}{" "}
-                        ly
-                    </p>
+                {!compact && detail ? (
+                    <p className="mobile-product-moq">{detail}</p>
                 ) : null}
             </div>
-            {/* {!compact ? (
-                <AddToCartButton
-                    productId={product.id}
-                    name={product.name}
-                    price={minPrice}
-                    categoryName={product.categoryName || info.cupType}
-                    variants={product.variants}
-                    imageSrc={imageSrc}
-                    label="+ Thêm"
-                />
-            ) : null} */}
-        </article>
+        </Link>
     );
 }

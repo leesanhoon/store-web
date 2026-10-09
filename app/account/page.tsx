@@ -1,44 +1,16 @@
 "use client";
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import MobileAppShell from "@/components/mobile-store/MobileAppShell";
-import MobileTopBar from "@/components/mobile-store/MobileTopBar";
+import { AdminField } from "@/components/admin/admin-ui";
+import { InlineSpinner } from "@/components/ui/LoadingOverlay";
 import {
     isAdminAuthenticated,
     setAdminToken,
 } from "@/lib/admin-auth";
-import { apiClient } from "@/lib/api/http";
-
-function LockIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-7 w-7"
-            aria-hidden="true"
-        >
-            <path
-                d="M7 10V8a5 5 0 0 1 10 0v2"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-            />
-            <path
-                d="M6 10h12v10H6V10Z"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M12 14v2.5"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
-}
+import { apiClient, ApiError } from "@/lib/api/http";
 
 function AccountContent() {
     const router = useRouter();
@@ -46,6 +18,7 @@ function AccountContent() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [pending, setPending] = useState(false);
     const nextPath = useMemo(() => {
         const next = searchParams.get("next");
         return next?.startsWith("/admin") ? next : "/admin";
@@ -65,6 +38,7 @@ function AccountContent() {
             return;
         }
 
+        setPending(true);
         try {
             const response = await apiClient.post<{ token: string; expiresIn: number }>(
                 "/api/v1/auth/login",
@@ -73,102 +47,124 @@ function AccountContent() {
 
             setError("");
             setAdminToken(response.token);
+            // pending stays on until the redirect unmounts the page
             router.replace(nextPath);
         } catch (err) {
-            const message = err instanceof Error ? err.message : "Tài khoản hoặc mật khẩu không đúng.";
-            setError(message);
+            const badCredentials =
+                err instanceof ApiError && (err.status === 400 || err.status === 401);
+            setError(
+                badCredentials
+                    ? "Sai tài khoản hoặc mật khẩu."
+                    : "Không đăng nhập được. Vui lòng thử lại sau ít phút."
+            );
+            setPending(false);
         }
     };
 
     return (
-        <MobileAppShell>
-            <div className="catalog-screen text-[#101a36]">
-                <MobileTopBar title="Đăng nhập" backHref="/" backLabel="Quay lại trang chủ" />
-                <section className="rounded-[18px] border border-[#eadfce] bg-white p-4 shadow-[0_22px_45px_-36px_rgba(15,23,42,0.45)]">
-                    <div className="flex items-center gap-3">
-                        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
-                            <LockIcon />
-                        </span>
-                        <div>
-                            <p className="text-[12px] font-extrabold uppercase tracking-[0.12em] text-emerald-700">
-                                Admin
-                            </p>
-                            <h1 className="text-[23px] font-extrabold leading-tight">
-                                Đăng nhập
-                            </h1>
-                        </div>
-                    </div>
+        <section
+            aria-labelledby="login-title"
+            className="w-full max-w-[400px] rounded-lg border border-line bg-white p-6 shadow-sm sm:p-8"
+        >
+            <Link href="/" className="inline-flex min-h-11 items-center">
+                <Image
+                    src="/images/logo.png"
+                    alt="In ly DTP - CN Quảng Ngãi"
+                    width={61}
+                    height={40}
+                    className="h-10 w-auto"
+                    priority
+                />
+            </Link>
 
-                    <form onSubmit={onSubmit} className="mt-5 space-y-3.5">
-                        <label className="block">
-                            <span className="mb-1.5 block text-[13px] font-extrabold">
-                                Tài khoản
-                            </span>
-                            <input
-                                value={username}
-                                onChange={(event) =>
-                                    setUsername(event.target.value)
-                                }
-                                autoComplete="username"
-                                placeholder="Nhập tài khoản"
-                                className="h-12 w-full rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10"
-                            />
-                        </label>
+            <h1
+                id="login-title"
+                className="mt-4 text-2xl font-semibold leading-tight text-ink"
+            >
+                Đăng nhập quản trị
+            </h1>
 
-                        <label className="block">
-                            <span className="mb-1.5 block text-[13px] font-extrabold">
-                                Mật khẩu
-                            </span>
-                            <input
-                                value={password}
-                                onChange={(event) =>
-                                    setPassword(event.target.value)
-                                }
-                                type="password"
-                                autoComplete="current-password"
-                                placeholder="Nhập mật khẩu"
-                                className="h-12 w-full rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-[14px] font-bold outline-none placeholder:text-slate-400 focus:border-[#101a36] focus:ring-2 focus:ring-[#101a36]/10"
-                            />
-                        </label>
+            <form onSubmit={onSubmit} noValidate className="mt-6 space-y-4">
+                <div>
+                    <label
+                        htmlFor="admin-username"
+                        className="mb-1.5 block text-sm font-medium text-label"
+                    >
+                        Tài khoản
+                    </label>
+                    <AdminField
+                        id="admin-username"
+                        name="username"
+                        value={username}
+                        onChange={(event) => setUsername(event.target.value)}
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        required
+                        aria-describedby={error ? "login-error" : undefined}
+                    />
+                </div>
 
-                        {error ? (
-                            <p className="rounded-[14px] border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-bold text-rose-700">
-                                {error}
-                            </p>
-                        ) : null}
+                <div>
+                    <label
+                        htmlFor="admin-password"
+                        className="mb-1.5 block text-sm font-medium text-label"
+                    >
+                        Mật khẩu
+                    </label>
+                    <AdminField
+                        id="admin-password"
+                        name="password"
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        autoComplete="current-password"
+                        required
+                        aria-describedby={error ? "login-error" : undefined}
+                    />
+                </div>
 
-                        <button
-                            type="submit"
-                            className="mt-2 inline-flex min-h-12 w-full items-center justify-center rounded-[16px] bg-[#101a36] px-4 py-3 text-[15px] font-extrabold text-white shadow-[0_18px_30px_-22px_rgba(16,26,54,0.9)] transition hover:bg-[#1c2a4d] active:scale-[0.98]"
-                        >
-                            Đăng nhập
-                        </button>
-                    </form>
-                </section>
-            </div>
-        </MobileAppShell>
+                {error ? (
+                    <p
+                        id="login-error"
+                        role="alert"
+                        className="rounded-sm border border-danger/20 bg-danger-soft px-3 py-2 text-sm text-danger"
+                    >
+                        {error}
+                    </p>
+                ) : null}
+
+                <button
+                    type="submit"
+                    disabled={pending}
+                    className="button-primary w-full"
+                >
+                    {pending ? (
+                        <>
+                            <InlineSpinner className="h-4 w-4" />
+                            Đang đăng nhập…
+                        </>
+                    ) : (
+                        "Đăng nhập"
+                    )}
+                </button>
+            </form>
+        </section>
     );
 }
 
 export default function AccountPage() {
     return (
-        <Suspense
-            fallback={
-                <MobileAppShell>
-                    <main className="grid min-h-full place-items-center bg-[#fffaf2] px-4 pb-24 pt-5 text-center text-[#101a36]">
-                        <div>
-                            <p className="text-[15px] font-extrabold">
-                                Đang mở đăng nhập
-                            </p>
-                            <p className="mt-2 text-[12px] font-semibold text-slate-500">
-                                Vui lòng chờ trong giây lát.
-                            </p>
-                        </div>
-                    </main>
-                </MobileAppShell>
-            }
-        >
-            <AccountContent />
-        </Suspense>
+        <main className="grid min-h-dvh place-items-center bg-surface px-4 py-12">
+            <Suspense
+                fallback={
+                    <p role="status" className="text-sm text-muted">
+                        Đang mở đăng nhập…
+                    </p>
+                }
+            >
+                <AccountContent />
+            </Suspense>
+        </main>
     );
 }

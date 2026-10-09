@@ -1,0 +1,358 @@
+/* ── Home: full-bleed sections, each with its own .site-container ── */
+
+/* shell.css makes .home-screen a grid with gaps; home sections are bands that must touch */
+.home-screen {
+  display: block;
+}
+
+.home-section {
+  padding-block: 48px;
+}
+
+/* Two white sections in a row share one gap */
+.home-section:not(.home-band) + .home-section:not(.home-band) {
+  padding-top: 0;
+}
+
+/* .site-main already pads the bottom of the page */
+.home-section:not(.home-band):last-child {
+  padding-bottom: 0;
+}
+
+.home-band {
+  background: var(--color-surface);
+}
+
+.home-section .mobile-section-heading {
+  margin-bottom: 24px;
+}
+
+/* ── Hero ── */
+
+.home-hero {
+  padding-top: 32px;
+}
+
+.home-hero-inner {
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+
+.home-hero h1 {
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+}
+
+.home-hero-lead {
+  max-width: 36rem;
+  margin-top: 16px;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.home-hero-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.home-hero-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+  color: var(--color-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.home-hero-points li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-hero-points svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.home-hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+}
+
+/* ── Category tiles ── */
+
+.home-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home-category-tile {
+  display: flex;
+  height: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: 12px 16px;
+  color: var(--color-ink);
+  font-weight: 500;
+  line-height: 1.35;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--dur-fast) var(--ease-out-soft),
+    color var(--dur-fast) var(--ease-out-soft);
+}
+
+.home-category-tile span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.home-category-tile svg {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+@media (hover: hover) {
+  .home-category-tile:hover,
+  .home-category-tile:hover svg {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+/* ── Featured products (also the generic loading skeleton grid) ── */
+
+.home-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ── "Quy trình đặt in" dark band ── */
+
+.home-process {
+  background: var(--color-dark);
+  color: var(--color-dark-body);
+}
+
+.home-process-title {
+  color: #fff;
+  font-size: 24px;
+}
+
+.home-process-steps {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.home-process-step {
+  border: 1px solid color-mix(in srgb, var(--color-dark-body) 24%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.home-process-index {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-dark-accent) 16%, transparent);
+  color: var(--color-dark-accent);
+  font-weight: 600;
+}
+
+.home-process-step h3 {
+  margin-top: 16px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.home-process-step p {
+  margin-top: 8px;
+}
+
+.home-process-cta {
+  margin-top: 32px;
+}
+
+/* ── Partners ── */
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.partner-tile {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--dur-mid) var(--ease-out-soft),
+    transform var(--dur-mid) var(--ease-out-soft);
+}
+
+@media (hover: hover) {
+  .partner-tile:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+}
+
+.partner-tile-image {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.partner-tile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partner-tile-body {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+}
+
+.partner-tile-name {
+  color: var(--color-ink);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.partner-tile-meta {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.partners-cta-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 24px 16px;
+}
+
+.partners-cta-panel h3 {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.partners-cta-panel p {
+  margin-top: 8px;
+}
+
+/* ── Breakpoints ── */
+
+@media (min-width: 768px) {
+  .home-hero {
+    padding-top: 48px;
+  }
+
+  .home-hero h1 {
+    font-size: 44px;
+    font-weight: 300;
+    line-height: 52px;
+    letter-spacing: -0.02em;
+  }
+
+  .home-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .home-category-grid,
+  .home-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .home-process-title {
+    font-size: 32px;
+  }
+
+  .home-process-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .partners-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .partners-cta-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+    padding: 32px;
+  }
+
+  .partners-cta-panel h3 {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-section {
+    padding-block: 96px;
+  }
+
+  .home-hero {
+    padding-top: 64px;
+  }
+
+  .home-hero-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 48px;
+  }
+
+  .home-hero h1 {
+    font-size: 52px;
+    line-height: 60px;
+  }
+
+  .home-category-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .home-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .home-process-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+}

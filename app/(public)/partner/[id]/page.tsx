@@ -2,16 +2,15 @@ import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import {
-    ChevronRightIcon,
-    BoxIcon,
-    DropletIcon,
-    LayersIcon,
+    CalendarIcon,
+    MapPinIcon,
+    PhoneIcon,
 } from "@/components/mobile-store/icons";
 import type { PartnerDto } from "@/lib/api/partners";
 import { getCatalogPartner } from "@/lib/data/partners";
+import { SITE } from "@/lib/site";
 
 async function loadPartner(id: string) {
     const partnerId = Number(id);
@@ -19,14 +18,13 @@ async function loadPartner(id: string) {
     return getCatalogPartner(partnerId);
 }
 
+// The avatar already sits in the profile card, so it is not repeated in the photo grid.
 function getGalleryImages(partner: PartnerDto) {
     const sorted = [...partner.galleryImages]
         .sort((a, b) => a.displayOrder - b.displayOrder)
-        .map((img) => img.imageUrl);
-    const sources = partner.avatarImageUrl
-        ? [partner.avatarImageUrl, ...sorted]
-        : sorted;
-    return [...new Set(sources)];
+        .map((img) => img.imageUrl)
+        .filter((src) => src !== partner.avatarImageUrl);
+    return [...new Set(sorted)];
 }
 
 function formatDate(isoDate: string) {
@@ -60,129 +58,116 @@ export default async function PartnerDetailPage({
     if (!partner) notFound();
 
     const galleryImages = getGalleryImages(partner);
-    const phoneHref = partner.phoneNumber
-        ? `tel:${partner.phoneNumber.replace(/[^\d+]/g, "")}`
-        : null;
 
     const infoItems = [
-        { label: "Địa chỉ", value: partner.address, icon: LayersIcon },
+        { label: "Địa chỉ", value: partner.address, icon: MapPinIcon },
         {
             label: "Điện thoại",
             value: partner.phoneNumber ?? "Chưa cập nhật",
-            icon: DropletIcon,
+            icon: PhoneIcon,
         },
         {
             label: "Tham gia",
             value: formatDate(partner.createdAtUtc),
-            icon: BoxIcon,
+            icon: CalendarIcon,
         },
-    ];
+    ].filter((item) => item.value);
 
     return (
-        <MobileAppShell>
-            <div className="partner-detail-screen">
-                <MobileTopBar
-                    title="Thông tin đối tác"
-                    backHref="/"
-                    backLabel="Quay lại trang chủ"
-                />
+        <div className="partner-detail-screen">
+            <MobileTopBar
+                title="Thông tin đối tác"
+                titleAs="p"
+                backHref="/"
+                backLabel="Quay lại trang chủ"
+            />
 
-                {/* Profile Card */}
-                <section className="partner-profile-card">
-                    <div className="partner-profile-core">
-                        <div className="partner-profile-avatar">
-                            {partner.avatarImageUrl ? (
-                                <Image
-                                    src={partner.avatarImageUrl}
-                                    alt={partner.name}
-                                    width={128}
-                                    height={128}
-                                    className="partner-profile-avatar-img"
-                                />
-                            ) : (
-                                <span>{getInitials(partner.name)}</span>
-                            )}
+            <section className="partner-profile-card">
+                <div className="partner-profile-avatar">
+                    {partner.avatarImageUrl ? (
+                        <Image
+                            src={partner.avatarImageUrl}
+                            alt=""
+                            width={128}
+                            height={128}
+                            className="partner-profile-avatar-img"
+                        />
+                    ) : (
+                        <span aria-hidden="true">
+                            {getInitials(partner.name)}
+                        </span>
+                    )}
+                </div>
+
+                <div className="partner-info">
+                    <span className="detail-eyebrow">Đối tác F&amp;B</span>
+                    <h1>{partner.name}</h1>
+                    {partner.description && (
+                        <p className="partner-description">
+                            {partner.description}
+                        </p>
+                    )}
+                </div>
+
+                <div className="partner-profile-actions">
+                    {SITE.zaloHref ? (
+                        <a
+                            href={SITE.zaloHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="button-primary"
+                        >
+                            Đặt mẫu ly tương tự
+                        </a>
+                    ) : null}
+                    <Link href="/products" className="button-secondary">
+                        Xem sản phẩm
+                    </Link>
+                </div>
+            </section>
+
+            <dl className="partner-info-grid">
+                {infoItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <div key={item.label} className="partner-info-item">
+                            <Icon className="h-6 w-6" />
+                            <dt>{item.label}</dt>
+                            <dd>{item.value}</dd>
                         </div>
+                    );
+                })}
+            </dl>
 
-                        <div className="partner-info">
-                            <span className="detail-eyebrow">
-                                Đối tác F&B
-                            </span>
-                            <h2>{partner.name}</h2>
-                            {partner.description && (
-                                <p className="partner-description">
-                                    {partner.description}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="partner-profile-actions">
-                            {phoneHref ? (
-                                <Link
-                                    href={phoneHref}
-                                    className="partner-contact-btn"
-                                >
-                                    <span>Gọi đối tác</span>
-                                </Link>
-                            ) : null}
-                            <Link
-                                href="/products"
-                                className="partner-products-btn"
-                            >
-                                <span>Xem sản phẩm</span>
-                                <span className="partner-products-icon">
-                                    <ChevronRightIcon className="h-4 w-4" />
-                                </span>
-                            </Link>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Info Grid */}
+            {galleryImages.length > 0 ? (
                 <section
-                    className="partner-info-grid"
-                    aria-label="Thông tin đối tác"
+                    className="partner-gallery-section"
+                    aria-labelledby="partner-gallery-title"
                 >
-                    {infoItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <article key={item.label}>
-                                <Icon className="h-6 w-6" />
-                                <span>{item.label}</span>
-                                <strong>{item.value}</strong>
-                            </article>
-                        );
-                    })}
+                    <div className="partner-gallery-header">
+                        <h2 id="partner-gallery-title">
+                            Sản phẩm đang sử dụng
+                        </h2>
+                        <span className="partner-gallery-count">
+                            {galleryImages.length} ảnh
+                        </span>
+                    </div>
+                    <ul className="partner-gallery-grid">
+                        {galleryImages.map((src, index) => (
+                            <li key={src} className="partner-gallery-item">
+                                <Image
+                                    src={src}
+                                    alt={`${partner.name} — sản phẩm ${index + 1}`}
+                                    width={800}
+                                    height={600}
+                                    sizes="(min-width:1024px) 340px, (min-width:768px) 33vw, 50vw"
+                                    className="partner-gallery-img"
+                                />
+                            </li>
+                        ))}
+                    </ul>
                 </section>
-
-                {/* Product Gallery */}
-                {galleryImages.length > 0 ? (
-                    <section className="partner-gallery-section">
-                        <div className="partner-gallery-header">
-                            <h3>Sản phẩm đang sử dụng</h3>
-                            <span className="partner-gallery-count">
-                                {galleryImages.length} ảnh
-                            </span>
-                        </div>
-                        <div className="partner-gallery-grid">
-                            {galleryImages.map((src, index) => (
-                                <div
-                                    key={src}
-                                    className={`partner-gallery-item ${index === 0 ? "partner-gallery-item-featured" : ""}`}
-                                >
-                                    <Image
-                                        src={src}
-                                        alt={`${partner.name} — sản phẩm ${index + 1}`}
-                                        width={600}
-                                        height={400}
-                                        className="partner-gallery-img"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                ) : null}
-            </div>
-        </MobileAppShell>
+            ) : null}
+        </div>
     );
 }

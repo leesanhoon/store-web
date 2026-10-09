@@ -1,0 +1,255 @@
+/* ── Catalog: search, category filters, product grid ── */
+
+.catalog-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.catalog-sidebar,
+.catalog-results {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 12px;
+}
+
+.catalog-search {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 0 12px;
+  color: var(--color-muted);
+  cursor: text;
+}
+
+.catalog-search:focus-within {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.catalog-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  /* 16px stops iOS Safari from zooming in on focus */
+  font-size: 16px;
+}
+
+/* The wrapper draws the focus ring (see :focus-within above) */
+.catalog-search input:focus-visible {
+  outline-color: transparent;
+}
+
+.catalog-search input::placeholder {
+  color: var(--color-muted);
+}
+
+/* Category filters: wrapping pills; a vertical list in the ≥1024 sidebar */
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-pills button {
+  min-height: 44px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 0 16px;
+  color: var(--color-label);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-soft),
+    border-color var(--dur-fast) var(--ease-out-soft),
+    color var(--dur-fast) var(--ease-out-soft);
+}
+
+@media (hover: hover) {
+  .filter-pills button:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+.filter-pills button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.catalog-count {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.catalog-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ── Product card: the whole card is one link ── */
+
+.mobile-product-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  transition:
+    transform var(--dur-fast) var(--ease-out-soft),
+    box-shadow var(--dur-mid) var(--ease-out-soft);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .mobile-product-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+}
+
+.mobile-product-image {
+  position: relative;
+  aspect-ratio: 1;
+  border-bottom: 1px solid var(--color-line);
+  background: #fff;
+}
+
+.mobile-product-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+}
+
+.mobile-product-body h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Pushed to the bottom so prices line up across a grid row */
+.mobile-product-price {
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--color-price);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.mobile-product-price span {
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.mobile-product-moq {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-body);
+  font-size: 13px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mobile-product-card.compact .mobile-product-body {
+  padding: 10px;
+}
+
+.mobile-product-card.compact .mobile-product-body h3 {
+  font-size: 15px;
+}
+
+@media (min-width: 768px) {
+  .filter-pills button {
+    min-height: 40px;
+  }
+
+  .catalog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalog-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    align-items: start;
+    gap: 32px;
+  }
+
+  /* Sticky sidebar; a long category list scrolls inside it */
+  .catalog-sidebar {
+    position: sticky;
+    top: calc(var(--header-h) + 16px);
+    display: flex;
+    max-height: calc(100dvh - var(--header-h) - 32px);
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .catalog-search {
+    flex-shrink: 0;
+  }
+
+  .filter-pills {
+    min-height: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .filter-pills button {
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    padding: 0 12px;
+    text-align: left;
+    /* Inset ring: the scrolling list would clip an outer one */
+    outline-offset: -2px;
+  }
+
+  /* Sidebar rows show state with a fill, not an outline box */
+  .filter-pills button,
+  .filter-pills button:hover,
+  .filter-pills button[aria-pressed="true"] {
+    border-color: transparent;
+  }
+
+  .filter-pills button:not([aria-pressed="true"]):hover {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .catalog-grid {
+    gap: 24px;
+  }
+}

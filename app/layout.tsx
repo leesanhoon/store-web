@@ -1,21 +1,13 @@
-﻿import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Plus_Jakarta_Sans } from "next/font/google";
+﻿import type { Metadata, Viewport } from "next";
+import { Source_Sans_3 } from "next/font/google";
 import Script from "next/script";
 import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider";
 import "./globals.css";
 
-const beVietnamPro = Be_Vietnam_Pro({
+const sourceSans = Source_Sans_3({
     subsets: ["latin", "vietnamese"],
-    weight: ["400", "500", "600", "700", "800"],
+    variable: "--font-source-sans",
     display: "swap",
-    variable: "--font-be-vietnam",
-});
-
-const plusJakarta = Plus_Jakarta_Sans({
-    subsets: ["latin", "vietnamese"],
-    weight: ["500", "600", "700", "800"],
-    display: "swap",
-    variable: "--font-jakarta",
 });
 
 export const metadata: Metadata = {
@@ -24,16 +16,26 @@ export const metadata: Metadata = {
         template: "%s | In ly DTP - CN Quảng Ngãi",
     },
     description:
-        "Website mobile-first cho danh mục ly, nắp ly và yêu cầu báo giá in logo.",
+        "In ly nhựa PET, PP, ly giấy in logo cho quán café, trà sữa tại Quảng Ngãi. Báo giá nhanh, thiết kế miễn phí.",
+};
+
+// viewportFit "cover" makes env(safe-area-inset-*) non-zero on iOS
+export const viewport: Viewport = {
+    viewportFit: "cover",
+    themeColor: "#ffffff",
 };
 
 export default function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="vi" suppressHydrationWarning>
+        <html
+            lang="vi"
+            className={sourceSans.variable}
+            suppressHydrationWarning
+        >
             <body
-                className={`${beVietnamPro.variable} ${plusJakarta.variable} ${beVietnamPro.className} min-h-[100dvh] bg-background text-foreground antialiased`}
+                className="min-h-[100dvh] antialiased"
                 suppressHydrationWarning
             >
                 <Script

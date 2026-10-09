@@ -3,25 +3,32 @@ import Image from "next/image";
 type Props = {
     src: string;
     label: string;
+    description?: string;
 };
 
-export default function GalleryImageCard({ src, label }: Props) {
+export default function GalleryImageCard({ src, label, description }: Props) {
+    // The caption below is the accessible name, so the image itself is decorative.
+    const detail = description && description !== label ? description : "";
+
     return (
-        <div className="overflow-hidden rounded-3xl border border-[#e6e0d8] bg-white shadow-soft">
-            <div className="relative aspect-[4/5] bg-[#fbfaf7]">
+        <figure className="overflow-hidden rounded-md border border-line bg-white shadow-sm">
+            <div className="relative aspect-[4/5] border-b border-line bg-surface">
                 <Image
                     src={src}
-                    alt={label}
+                    alt=""
                     fill
                     className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 25vw"
+                    sizes="(min-width:1024px) 260px, (min-width:768px) 33vw, 50vw"
                     loading="lazy"
                     quality={82}
                 />
             </div>
-            <div className="border-t border-[#eee7de] px-4 py-3">
-                <p className="text-sm font-semibold text-header">{label}</p>
-            </div>
-        </div>
+            <figcaption className="grid gap-1 p-3">
+                <span className="text-sm font-semibold text-ink">{label}</span>
+                {detail ? (
+                    <span className="text-sm text-muted">{detail}</span>
+                ) : null}
+            </figcaption>
+        </figure>
     );
 }

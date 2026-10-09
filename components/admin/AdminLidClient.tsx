@@ -1,7 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    FormEvent,
+    ReactNode,
+    Ref,
+    useCallback,
+    useEffect,
+    useId,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { PaginatedResponse } from "@/lib/api/http";
@@ -22,6 +33,7 @@ import {
 } from "@/lib/api/products";
 import {
     AdminCard,
+    AdminEmptyState,
     AdminField,
     AdminPrimaryButton,
     AdminSectionHeader,
@@ -58,6 +70,8 @@ type Props = {
     initialCategories: CategoryDto[];
 };
 
+type LidPage = PaginatedResponse<ProductDto> & { rawPageWasFull: boolean };
+
 const emptyVariantRow: LidVariantRow = {
     diameterMm: "",
     sizeName: "",
@@ -70,21 +84,53 @@ const initialForm: LidForm = {
     variants: [{ ...emptyVariantRow }],
 };
 
+const NOTICE_TONES = {
+    success: "border-success/30 bg-success-soft text-success",
+    danger: "border-danger/30 bg-danger-soft text-danger",
+};
+
+function Notice({
+    tone,
+    className = "",
+    ref,
+    children,
+}: {
+    tone: keyof typeof NOTICE_TONES;
+    className?: string;
+    ref?: Ref<HTMLDivElement>;
+    children: ReactNode;
+}) {
+    return (
+        <div
+            ref={ref}
+            role={tone === "danger" ? "alert" : "status"}
+            className={`rounded-lg border p-3 text-sm font-medium ${NOTICE_TONES[tone]} ${className}`}
+        >
+            {children}
+        </div>
+    );
+}
 
 function IconButton({
     label,
     onClick,
+    tone = "neutral",
     children,
 }: {
     label: string;
     onClick: () => void;
-    children: React.ReactNode;
+    tone?: "neutral" | "danger";
+    children: ReactNode;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#eadfce] bg-white text-[#4c596c] shadow-sm transition active:scale-[0.96]"
+            className={`grid h-11 w-11 place-items-center rounded-md border bg-white transition-colors ${
+                tone === "danger"
+                    ? "border-danger/30 text-danger hover:bg-danger-soft"
+                    : "border-line text-label hover:border-primary hover:text-primary"
+            }`}
             aria-label={label}
         >
             {children}
@@ -92,13 +138,20 @@ function IconButton({
     );
 }
 
-
-async function fetchLidProducts(params?: { page: number; pageSize: number }): Promise<PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }> {
+async function fetchLidProducts(params?: {
+    page: number;
+    pageSize: number;
+}): Promise<LidPage> {
     const result = await getProducts(params ?? { page: 1, pageSize: 50 });
     const paginated = result as PaginatedResponse<ProductDto>;
     const filtered = paginated.items.filter(isLidProduct);
     const rawPageWasFull = paginated.items.length >= (params?.pageSize ?? 50);
-    return { ...paginated, items: filtered, totalCount: paginated.totalCount, rawPageWasFull };
+    return {
+        ...paginated,
+        items: filtered,
+        totalCount: paginated.totalCount,
+        rawPageWasFull,
+    };
 }
 
 export default function AdminLidClient({
@@ -111,6 +164,8 @@ export default function AdminLidClient({
     const mode = searchParams.get("mode");
     const avatarInputRef = useRef<HTMLInputElement | null>(null);
     const galleryInputRef = useRef<HTMLInputElement | null>(null);
+    const errorRef = useRef<HTMLDivElement | null>(null);
+    const rowIdPrefix = useId();
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [form, setForm] = useState<LidForm>(initialForm);
     const [searchTerm, setSearchTerm] = useState("");
@@ -119,6 +174,10 @@ export default function AdminLidClient({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [imageDeleteTarget, setImageDeleteTarget] = useState<number | null>(
+        null,
+    );
+    const [isDeletingImage, setIsDeletingImage] = useState(false);
 
     const PAGE_SIZE = 50;
     const [page, setPage] = useState(1);
@@ -128,39 +187,45 @@ export default function AdminLidClient({
     const scrollSentinelRef = useRef<HTMLDivElement | null>(null);
 
     const initialPageData = useMemo(
-        () => ({
-            items: initialLids,
-            totalCount: initialLids.length,
-            rawPageWasFull: initialHasMore ?? false,
-        } as PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }),
+        () =>
+            ({
+                items: initialLids,
+                totalCount: initialLids.length,
+                rawPageWasFull: initialHasMore ?? false,
+            }) as LidPage,
         [initialLids, initialHasMore],
     );
 
-    const {
-        data: lidsPage,
-        mutate,
-    } = useSWR<PaginatedResponse<ProductDto> & { rawPageWasFull: boolean }>(
+    const { data: lidsPage, mutate } = useSWR<LidPage>(
         [`lid-products-admin`, page],
         () => fetchLidProducts({ page, pageSize: PAGE_SIZE }),
-        { revalidateOnFocus: false, fallbackData: page === 1 ? initialPageData : undefined },
+        {
+            revalidateOnFocus: false,
+            fallbackData: page === 1 ? initialPageData : undefined,
+        },
     );
 
-    useEffect(() => {
-        if (!lidsPage) return;
+    // Merge each newly fetched page into the accumulated list. Adjusted during render
+    // (not in an effect) whenever SWR hands back a different page object.
+    const [mergedPage, setMergedPage] = useState<LidPage>();
+    if (lidsPage && lidsPage !== mergedPage) {
+        setMergedPage(lidsPage);
         setAllLids((prev) => {
             if (page === 1) return lidsPage.items;
             const existingIds = new Set(prev.map((l) => l.id));
-            const newItems = lidsPage.items.filter((l) => !existingIds.has(l.id));
+            const newItems = lidsPage.items.filter(
+                (l) => !existingIds.has(l.id),
+            );
             return [...prev, ...newItems];
         });
         setHasMore(lidsPage.rawPageWasFull);
         setIsLoadingMore(false);
-    }, [lidsPage, page]);
+    }
 
     useEffect(() => {
         const sentinel = scrollSentinelRef.current;
         if (!sentinel || !hasMore) return;
-        const scroller = document.getElementById("admin-main-content") ?? undefined;
+        // The window scrolls (no inner admin scroller), so observe against the viewport
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
@@ -168,7 +233,7 @@ export default function AdminLidClient({
                     setPage((p) => p + 1);
                 }
             },
-            { root: scroller, rootMargin: "200px" },
+            { root: null, rootMargin: "200px" },
         );
         observer.observe(sentinel);
         return () => observer.disconnect();
@@ -193,7 +258,9 @@ export default function AdminLidClient({
         () => getProduct(selectedId!),
     );
 
-    const isFormMode = mode === "create" || selectedId !== null;
+    // (P-fix) `?mode=edit` is required too, so browser Back from the edit form returns to the list
+    const isFormMode =
+        mode === "create" || (mode === "edit" && selectedId !== null);
     const formTitle = selectedId ? "Sửa nắp" : "Thêm nắp mới";
     const editingLid =
         lidDetail ??
@@ -201,10 +268,13 @@ export default function AdminLidClient({
     const existingAvatar = editingLid?.avatarImageUrl ?? null;
     const existingGallery = editingLid?.galleryImages ?? [];
 
-    const categorySelectOptions = categories.map((c) => ({
-        value: String(c.id),
-        label: c.name,
-    }));
+    // Root categories are not assignable, same as the product form
+    const categorySelectOptions = categories
+        .filter((c) => !c.isRoot)
+        .map((c) => ({
+            value: String(c.id),
+            label: c.name,
+        }));
 
     const avatarPreviewUrl = useMemo(
         () => (avatarImage ? URL.createObjectURL(avatarImage) : ""),
@@ -226,6 +296,12 @@ export default function AdminLidClient({
         );
         return text.includes(normalizeSearch(searchTerm.trim()));
     });
+
+    // The banner sits above the form while the save button is in the sticky bar: render it now, then bring it into view
+    const showError = (text: string) => {
+        flushSync(() => setError(text));
+        errorRef.current?.scrollIntoView({ block: "center" });
+    };
 
     const openAvatarPicker = () => {
         preserveAdminScroll();
@@ -321,13 +397,17 @@ export default function AdminLidClient({
         }));
     };
 
-    const handleDeleteExistingImage = async (imageId: number) => {
-        if (!selectedId) return;
+    const confirmDeleteExistingImage = async () => {
+        if (!selectedId || imageDeleteTarget === null) return;
+        setIsDeletingImage(true);
         try {
-            await deleteProductImage(selectedId, imageId);
+            await deleteProductImage(selectedId, imageDeleteTarget);
             await refreshLids();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
+            showError(err instanceof Error ? err.message : "Không thể xóa ảnh.");
+        } finally {
+            setIsDeletingImage(false);
+            setImageDeleteTarget(null);
         }
     };
 
@@ -335,7 +415,7 @@ export default function AdminLidClient({
         event.preventDefault();
         const categoryId = Number(form.categoryId);
         if (!form.name.trim() || Number.isNaN(categoryId) || categoryId <= 0) {
-            setError("Vui lòng nhập tên nắp và chọn danh mục.");
+            showError("Vui lòng nhập tên nắp và chọn danh mục.");
             return;
         }
 
@@ -349,12 +429,12 @@ export default function AdminLidClient({
             }));
 
         if (variants.length === 0) {
-            setError("Cần ít nhất 1 dòng giá hợp lệ (đường kính và đơn giá).");
+            showError("Cần ít nhất 1 dòng giá hợp lệ (đường kính và đơn giá).");
             return;
         }
 
         if (!selectedId && !avatarImage) {
-            setError("Vui lòng chọn ảnh đại diện cho nắp ly.");
+            showError("Vui lòng chọn ảnh đại diện cho nắp ly.");
             return;
         }
 
@@ -363,7 +443,7 @@ export default function AdminLidClient({
             ? validateProductImages(avatarImage, galleryImages)
             : "";
         if (imageError) {
-            setError(imageError);
+            showError(imageError);
             return;
         }
 
@@ -401,7 +481,7 @@ export default function AdminLidClient({
             await refreshLids();
             closeForm();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Không thể lưu nắp.");
+            showError(err instanceof Error ? err.message : "Không thể lưu nắp.");
         } finally {
             setIsSubmitting(false);
         }
@@ -409,7 +489,7 @@ export default function AdminLidClient({
 
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-    const confirmDelete = useCallback(async () => {
+    const confirmDelete = async () => {
         if (deleteTarget === null) return;
         setIsSubmitting(true);
         setMessage("");
@@ -425,17 +505,18 @@ export default function AdminLidClient({
             setIsSubmitting(false);
             setDeleteTarget(null);
         }
-    }, [deleteTarget, selectedId, closeForm, refreshLids]);
+    };
 
     if (isFormMode) {
         const displayAvatarUrl = avatarPreviewUrl || existingAvatar || "";
+        const isExistingAvatar = !avatarPreviewUrl && !!existingAvatar;
         return (
-            <div className="text-[#101a36]">
-                <div className="flex items-center gap-3">
+            <div>
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={closeForm}
-                        className="grid h-10 w-10 place-items-center rounded-full text-[#101a36]"
+                        className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink transition-colors hover:bg-primary-soft hover:text-primary"
                         aria-label="Quay lại"
                     >
                         <svg
@@ -453,204 +534,229 @@ export default function AdminLidClient({
                             />
                         </svg>
                     </button>
-                    <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">
+                    <h1 className="text-2xl font-semibold leading-tight text-ink">
                         {formTitle}
                     </h1>
                 </div>
 
                 {message ? (
-                    <AdminCard className="mt-3 border-emerald-200 bg-emerald-50 p-3 text-[13px] font-bold text-emerald-700">
+                    <Notice tone="success" className="mt-4">
                         {message}
-                    </AdminCard>
+                    </Notice>
                 ) : null}
                 {error ? (
-                    <AdminCard className="mt-3 border-rose-200 bg-rose-50 p-3 text-[13px] font-bold text-rose-700">
+                    <Notice ref={errorRef} tone="danger" className="mt-4">
                         {error}
-                    </AdminCard>
+                    </Notice>
                 ) : null}
 
-                <form onSubmit={onSubmit} className="mt-4 space-y-4">
-                    <label className="block">
-                        <FieldLabel required>Tên nắp</FieldLabel>
-                        <AdminField
-                            value={form.name}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    name: e.target.value,
-                                }))
-                            }
-                            placeholder="Ví dụ: Nắp vòm trong suốt"
-                        />
-                    </label>
-                    <label className="block">
-                        <FieldLabel required>Danh mục</FieldLabel>
-                        <AdminSelect
-                            value={form.categoryId}
-                            onValueChange={(value) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    categoryId: value,
-                                }))
-                            }
-                            placeholder="Chọn danh mục"
-                            options={categorySelectOptions}
-                        />
-                    </label>
-                    <label className="block">
-                        <FieldLabel>Mô tả</FieldLabel>
-                        <AdminTextArea
-                            rows={2}
-                            value={form.description}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    description: e.target.value,
-                                }))
-                            }
-                            placeholder="Mô tả nắp..."
-                        />
-                    </label>
+                <form onSubmit={onSubmit} className="mt-4">
+                    <div className="lg:grid lg:grid-cols-3 lg:items-start lg:gap-6">
+                        <div className="min-w-0 space-y-4 lg:col-span-2">
+                            <AdminCard className="space-y-4 p-4">
+                                <label className="block">
+                                    <FieldLabel required>Tên nắp</FieldLabel>
+                                    <AdminField
+                                        value={form.name}
+                                        onChange={(e) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                name: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Ví dụ: Nắp vòm trong suốt"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <FieldLabel required>Danh mục</FieldLabel>
+                                    <AdminSelect
+                                        value={form.categoryId}
+                                        onValueChange={(value) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                categoryId: value,
+                                            }))
+                                        }
+                                        placeholder="Chọn danh mục"
+                                        options={categorySelectOptions}
+                                    />
+                                </label>
+                                <label className="block">
+                                    <FieldLabel>Mô tả</FieldLabel>
+                                    <AdminTextArea
+                                        rows={2}
+                                        value={form.description}
+                                        onChange={(e) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                description: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Mô tả nắp..."
+                                    />
+                                </label>
+                            </AdminCard>
 
-                    <AdminCard className="space-y-3 p-3.5">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-[14px] font-extrabold">
-                                Bảng giá theo đường kính
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={addVariantRow}
-                                className="inline-flex items-center gap-1 rounded-lg bg-[#101a36] px-2.5 py-1.5 text-[11px] font-extrabold text-white"
-                            >
-                                + Thêm dòng
-                            </button>
+                            <AdminCard className="p-4">
+                                <h2 className="text-base font-semibold text-ink">
+                                    Bảng giá theo đường kính
+                                </h2>
+                                <div className="mt-3 space-y-3">
+                                    {form.variants.map((row, index) => {
+                                        const rowLabelId = `${rowIdPrefix}-row-${index}`;
+                                        return (
+                                            <div
+                                                key={index}
+                                                role="group"
+                                                aria-labelledby={rowLabelId}
+                                                className="rounded-md border border-line bg-surface p-3"
+                                            >
+                                                <div className="flex min-h-11 items-center justify-between gap-2">
+                                                    <h3
+                                                        id={rowLabelId}
+                                                        className="text-sm font-semibold text-ink"
+                                                    >
+                                                        Dòng {index + 1}
+                                                    </h3>
+                                                    {/* The last row cannot be removed */}
+                                                    {form.variants.length > 1 ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeVariantRow(index)
+                                                            }
+                                                            className="min-h-11 rounded-sm px-3 text-sm font-semibold text-danger transition-colors hover:bg-danger-soft"
+                                                            aria-label={`Xóa dòng ${index + 1}`}
+                                                        >
+                                                            Xóa
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                                <div className="mt-2 grid gap-3 md:grid-cols-3">
+                                                    <label className="block">
+                                                        <FieldLabel>
+                                                            Đường kính (mm)
+                                                        </FieldLabel>
+                                                        <AdminField
+                                                            type="number"
+                                                            inputMode="numeric"
+                                                            min={0}
+                                                            value={row.diameterMm}
+                                                            onChange={(e) =>
+                                                                updateVariantRow(
+                                                                    index,
+                                                                    "diameterMm",
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="90"
+                                                        />
+                                                    </label>
+                                                    <label className="block">
+                                                        <FieldLabel>
+                                                            Đơn giá (đ)
+                                                        </FieldLabel>
+                                                        <AdminField
+                                                            type="number"
+                                                            inputMode="numeric"
+                                                            min={0}
+                                                            value={row.unitPrice}
+                                                            onChange={(e) =>
+                                                                updateVariantRow(
+                                                                    index,
+                                                                    "unitPrice",
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="350"
+                                                        />
+                                                    </label>
+                                                    <label className="block">
+                                                        <FieldLabel>Tên size</FieldLabel>
+                                                        <AdminField
+                                                            type="text"
+                                                            value={row.sizeName}
+                                                            onChange={(e) =>
+                                                                updateVariantRow(
+                                                                    index,
+                                                                    "sizeName",
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            placeholder="S, M, L..."
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <AdminPrimaryButton
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={addVariantRow}
+                                    className="mt-3 w-full md:w-auto"
+                                >
+                                    <PlusIcon />
+                                    Thêm dòng
+                                </AdminPrimaryButton>
+                            </AdminCard>
                         </div>
-                        {form.variants.map((row, index) => (
-                            <div
-                                key={index}
-                                className="grid grid-cols-[1fr_1fr_1fr_36px] gap-2 items-end"
-                            >
-                                <label className="block">
-                                    {index === 0 ? (
-                                        <span className="mb-1 block text-[11px] font-bold text-slate-500">
-                                            ⌀ mm
-                                        </span>
-                                    ) : null}
-                                    <AdminField
-                                        type="number"
-                                        value={row.diameterMm}
-                                        onChange={(e) =>
-                                            updateVariantRow(
-                                                index,
-                                                "diameterMm",
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="90"
-                                    />
-                                </label>
-                                <label className="block">
-                                    {index === 0 ? (
-                                        <span className="mb-1 block text-[11px] font-bold text-slate-500">
-                                            Đơn giá (đ)
-                                        </span>
-                                    ) : null}
-                                    <AdminField
-                                        type="number"
-                                        value={row.unitPrice}
-                                        onChange={(e) =>
-                                            updateVariantRow(
-                                                index,
-                                                "unitPrice",
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="350"
-                                    />
-                                </label>
-                                <label className="block">
-                                    {index === 0 ? (
-                                        <span className="mb-1 block text-[11px] font-bold text-slate-500">
-                                            Tên size
-                                        </span>
-                                    ) : null}
-                                    <AdminField
-                                        type="text"
-                                        value={row.sizeName}
-                                        onChange={(e) =>
-                                            updateVariantRow(
-                                                index,
-                                                "sizeName",
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="S, M, L..."
-                                    />
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={() => removeVariantRow(index)}
-                                    className="grid h-[44px] w-9 place-items-center rounded-xl text-rose-500 transition hover:bg-rose-50"
-                                    aria-label="Xóa dòng"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        ))}
-                    </AdminCard>
 
-                    {/* Image upload section */}
-                    <div className="grid gap-4 min-[431px]:grid-cols-[0.95fr_1.05fr]">
-                        <div>
-                            <FieldLabel>Ảnh đại diện</FieldLabel>
-                            <div className="rounded-[18px] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.06]">
-                                <input
-                                    ref={avatarInputRef}
-                                    type="file"
-                                    accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
-                                    onChange={handleAvatarFileChange}
-                                    className="hidden"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={openAvatarPicker}
-                                    className="relative grid min-h-[136px] w-full place-items-center rounded-[calc(18px-6px)] bg-white p-3 text-center text-[#3d4860] shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] min-[431px]:min-h-[154px]"
-                                >
-                                    {displayAvatarUrl ? (
-                                        <>
+                        <AdminCard className="mt-4 grid min-w-0 gap-4 p-4 md:grid-cols-2 lg:mt-0 lg:grid-cols-1">
+                            <div>
+                                <FieldLabel required={!selectedId}>
+                                    Ảnh đại diện
+                                </FieldLabel>
+                                <div className="relative">
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+                                        onChange={handleAvatarFileChange}
+                                        className="hidden"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={openAvatarPicker}
+                                        aria-label={
+                                            displayAvatarUrl
+                                                ? "Đổi ảnh đại diện"
+                                                : undefined
+                                        }
+                                        className="grid min-h-40 w-full place-items-center rounded-lg border border-dashed border-line-strong bg-white p-2 text-center text-ink transition-colors hover:border-primary hover:text-primary"
+                                    >
+                                        {displayAvatarUrl ? (
                                             <Image
                                                 src={displayAvatarUrl}
-                                                alt="Ảnh đại diện xem trước"
-                                                width={220}
-                                                height={180}
+                                                alt=""
+                                                width={400}
+                                                height={300}
                                                 unoptimized={displayAvatarUrl.startsWith(
                                                     "blob:",
                                                 )}
-                                                className="h-[118px] w-full rounded-xl object-cover min-[431px]:h-[136px]"
+                                                className="h-36 w-full rounded-md object-cover"
                                             />
-                                            {!avatarPreviewUrl &&
-                                            existingAvatar ? (
-                                                <span className="absolute bottom-2 left-2 rounded-full bg-[#101a36]/80 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white/90 uppercase">
-                                                    Ảnh hiện tại
-                                                </span>
-                                            ) : null}
-                                        </>
-                                    ) : (
-                                        <span className="grid place-items-center text-[14px] font-extrabold">
-                                            <UploadIcon />
-                                            Tải ảnh lên
-                                            <small className="mt-1 text-[11px] font-semibold text-slate-500">
-                                                JPG, PNG tối đa 2MB
-                                            </small>
+                                        ) : (
+                                            <span className="grid place-items-center gap-1 text-sm font-semibold">
+                                                <UploadIcon />
+                                                Tải ảnh lên
+                                                <small className="text-sm font-normal text-muted">
+                                                    JPG, PNG tối đa 2MB
+                                                </small>
+                                            </span>
+                                        )}
+                                    </button>
+                                    {isExistingAvatar ? (
+                                        <span className="pointer-events-none absolute bottom-4 left-4 rounded-sm bg-ink/80 px-2 py-0.5 text-xs font-semibold text-white">
+                                            Ảnh hiện tại
                                         </span>
-                                    )}
-                                </button>
+                                    ) : null}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <FieldLabel>Thư viện ảnh</FieldLabel>
-                            <div className="rounded-[18px] bg-black/[0.03] p-1.5 ring-1 ring-black/[0.06]">
-                                <div className="grid grid-cols-3 gap-2 rounded-[calc(18px-6px)] bg-white p-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
+                            <div>
+                                <FieldLabel>Thư viện ảnh</FieldLabel>
+                                <div className="grid grid-cols-3 gap-2 rounded-lg border border-line bg-white p-2">
                                     <input
                                         ref={galleryInputRef}
                                         type="file"
@@ -659,29 +765,24 @@ export default function AdminLidClient({
                                         onChange={handleGalleryFileChange}
                                         className="hidden"
                                     />
-                                    {existingGallery.map((img) => (
-                                        <div
-                                            key={img.id}
-                                            className="group relative"
-                                        >
+                                    {existingGallery.map((img, index) => (
+                                        <div key={img.id} className="relative">
                                             <Image
                                                 src={img.imageUrl}
-                                                alt="Ảnh nắp"
-                                                width={96}
-                                                height={86}
-                                                className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                                                alt={`Ảnh nắp ${index + 1}`}
+                                                width={160}
+                                                height={160}
+                                                className="aspect-square w-full rounded-md border border-line object-cover"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    handleDeleteExistingImage(
-                                                        img.id,
-                                                    )
+                                                    setImageDeleteTarget(img.id)
                                                 }
-                                                className="absolute -right-1.5 -top-1.5 grid h-[22px] w-[22px] place-items-center rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[11px] font-bold text-white shadow-md ring-2 ring-white transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-90"
-                                                aria-label="Xóa ảnh"
+                                                className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-md bg-white/90 text-danger shadow-sm transition-colors hover:bg-danger hover:text-white"
+                                                aria-label={`Xóa ảnh nắp ${index + 1}`}
                                             >
-                                                ×
+                                                <DeleteIcon />
                                             </button>
                                         </div>
                                     ))}
@@ -694,13 +795,13 @@ export default function AdminLidClient({
                                             >
                                                 <Image
                                                     src={url}
-                                                    alt="Ảnh nắp"
-                                                    width={96}
-                                                    height={86}
+                                                    alt={`Ảnh mới ${index + 1}`}
+                                                    width={160}
+                                                    height={160}
                                                     unoptimized
-                                                    className="h-[68px] w-full rounded-[10px] border border-emerald-200 object-cover"
+                                                    className="aspect-square w-full rounded-md border border-line object-cover"
                                                 />
-                                                <span className="absolute bottom-0.5 left-0.5 rounded-full bg-emerald-600/80 px-1.5 py-px text-[8px] font-bold text-white uppercase">
+                                                <span className="absolute bottom-1 left-1 rounded-sm bg-ink/80 px-1.5 py-0.5 text-xs font-semibold text-white">
                                                     Mới
                                                 </span>
                                             </div>
@@ -708,53 +809,69 @@ export default function AdminLidClient({
                                     <button
                                         type="button"
                                         onClick={openGalleryPicker}
-                                        className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white/80 text-center text-[12px] font-extrabold text-[#101a36] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97]"
+                                        aria-label="Thêm ảnh khác vào thư viện"
+                                        className="grid aspect-square place-items-center rounded-md border border-dashed border-line-strong bg-white text-center text-sm font-semibold text-ink transition-colors hover:border-primary hover:text-primary"
                                     >
-                                        <span>
-                                            <span className="block text-2xl leading-none">
-                                                +
-                                            </span>
+                                        <span className="grid place-items-center gap-1">
+                                            <PlusIcon />
                                             Ảnh khác
                                         </span>
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </AdminCard>
                     </div>
 
-                    <AdminPrimaryButton
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full rounded-full py-3 text-[16px]"
-                    >
-                        {isSubmitting ? "Đang lưu..." : "Lưu nắp"}
-                    </AdminPrimaryButton>
+                    <div className="admin-form-actions mt-6">
+                        <AdminPrimaryButton
+                            type="button"
+                            variant="secondary"
+                            onClick={closeForm}
+                            className="flex-1 md:flex-none"
+                        >
+                            Hủy
+                        </AdminPrimaryButton>
+                        <AdminPrimaryButton
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 md:flex-none"
+                        >
+                            {isSubmitting ? "Đang lưu..." : "Lưu nắp"}
+                        </AdminPrimaryButton>
+                    </div>
                 </form>
+
+                <ConfirmModal
+                    open={imageDeleteTarget !== null}
+                    title="Xóa ảnh này?"
+                    description="Ảnh sẽ bị xóa ngay khỏi hệ thống."
+                    danger
+                    confirmLabel="Xóa ảnh"
+                    loading={isDeletingImage}
+                    onConfirm={confirmDeleteExistingImage}
+                    onCancel={() => setImageDeleteTarget(null)}
+                />
             </div>
         );
     }
 
     return (
-        <div className="space-y-3 text-[#101a36]">
+        <div className="space-y-4">
             <AdminSectionHeader
                 title="Quản lý nắp"
                 action={
-                    <AdminPrimaryButton
-                        type="button"
-                        onClick={startCreate}
-                        className="h-10 min-h-10 rounded-[13px] px-3 text-[14px]"
-                    >
+                    <AdminPrimaryButton type="button" onClick={startCreate}>
                         <PlusIcon />
                         Thêm
                     </AdminPrimaryButton>
                 }
             />
 
-            <label className="flex h-12 items-center gap-3 rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-slate-400 shadow-sm">
+            <div className="relative md:w-80">
                 <svg
                     viewBox="0 0 24 24"
                     fill="none"
-                    className="h-5 w-5"
+                    className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted"
                     aria-hidden="true"
                 >
                     <path
@@ -764,114 +881,124 @@ export default function AdminLidClient({
                         strokeLinecap="round"
                     />
                 </svg>
-                <input
+                <AdminField
+                    type="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Tìm nắp..."
-                    className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#101a36] outline-none placeholder:text-slate-400"
+                    aria-label="Tìm nắp"
+                    className="pl-10"
                 />
-            </label>
+            </div>
 
-            {message ? (
-                <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">
-                    {message}
-                </AdminCard>
-            ) : null}
-            {error ? (
-                <AdminCard className="border-rose-200 bg-rose-50 p-3 text-[12px] font-bold text-rose-700">
-                    {error}
-                </AdminCard>
-            ) : null}
+            {message ? <Notice tone="success">{message}</Notice> : null}
+            {error ? <Notice tone="danger">{error}</Notice> : null}
 
-            <section className="space-y-2.5">
+            <section aria-label="Danh sách nắp" className="space-y-2">
                 {visibleLids.map((lid) => (
-                    <AdminCard key={lid.id} className="p-3">
-                        <div className="grid grid-cols-[auto_1fr_auto] items-start gap-3">
-                            {lid.avatarImageUrl ? (
-                                <Image
-                                    src={lid.avatarImageUrl}
-                                    alt={lid.name}
-                                    width={72}
-                                    height={72}
-                                    className="h-[64px] w-[64px] rounded-[12px] object-cover"
-                                />
-                            ) : (
-                                <div className="grid h-[64px] w-[64px] place-items-center rounded-[12px] bg-[#f5efe5] text-[#8b95a8]">
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        className="h-7 w-7"
-                                    >
-                                        <path
-                                            d="M6 14h12"
-                                            stroke="currentColor"
-                                            strokeWidth="1.8"
-                                            strokeLinecap="round"
-                                        />
-                                        <path
-                                            d="M7 14c0-4 2.2-7 5-7s5 3 5 7"
-                                            stroke="currentColor"
-                                            strokeWidth="1.8"
-                                            strokeLinecap="round"
-                                        />
-                                        <path
-                                            d="M5 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"
-                                            stroke="currentColor"
-                                            strokeWidth="1.8"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
-                                </div>
-                            )}
-                            <div className="min-w-0">
-                                <h2 className="truncate text-[16px] font-extrabold leading-tight text-[#101a36]">
-                                    {lid.name}
-                                </h2>
-                                <p className="mt-1 text-[12px] font-semibold text-[#3d4860]">
-                                    {lid.categoryName || "Danh mục"}
+                    <AdminCard
+                        key={lid.id}
+                        className="flex items-center gap-3 p-3 md:gap-4"
+                    >
+                        {lid.avatarImageUrl ? (
+                            <Image
+                                src={lid.avatarImageUrl}
+                                alt=""
+                                width={56}
+                                height={56}
+                                className="h-14 w-14 shrink-0 rounded-md object-cover"
+                            />
+                        ) : (
+                            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-surface text-muted">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    className="h-7 w-7"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M6 14h12"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d="M7 14c0-4 2.2-7 5-7s5 3 5 7"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d="M5 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                            <h2 className="truncate text-base font-semibold text-ink">
+                                {lid.name}
+                            </h2>
+                            <p className="truncate text-sm text-body">
+                                {lid.categoryName || "Chưa có danh mục"}
+                            </p>
+                            {lid.description ? (
+                                <p className="truncate text-sm text-muted">
+                                    {lid.description}
                                 </p>
-                                {lid.description ? (
-                                    <p className="mt-1 truncate text-[11px] font-semibold text-slate-500">
-                                        {lid.description}
-                                    </p>
-                                ) : null}
-                                <div className="mt-2 flex flex-wrap gap-1.5">
+                            ) : null}
+                            {lid.variants.length > 0 ? (
+                                <ul
+                                    aria-label="Bảng giá"
+                                    className="mt-2 flex flex-wrap gap-1.5"
+                                >
                                     {lid.variants.map((variant) => (
-                                        <span
+                                        <li
                                             key={variant.id}
-                                            className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-[#3d4860]"
+                                            className="rounded-sm bg-surface px-2 py-0.5 text-xs font-medium text-body"
                                         >
                                             ⌀{variant.diameterMm}mm —{" "}
-                                            {adminFormatMoney(variant.priceTiers[0]?.unitPrice ?? 0)}
-                                        </span>
+                                            {adminFormatMoney(
+                                                variant.priceTiers[0]?.unitPrice ?? 0,
+                                            )}
+                                        </li>
                                     ))}
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <IconButton
-                                    label="Sửa nắp"
-                                    onClick={() => editLid(lid)}
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    label="Xóa nắp"
-                                    onClick={() => setDeleteTarget(lid.id)}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </div>
+                                </ul>
+                            ) : null}
+                        </div>
+                        <div className="flex shrink-0 flex-col gap-2 md:flex-row">
+                            <IconButton
+                                label={`Sửa ${lid.name}`}
+                                onClick={() => editLid(lid)}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                            <IconButton
+                                label={`Xóa ${lid.name}`}
+                                tone="danger"
+                                onClick={() => setDeleteTarget(lid.id)}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
                         </div>
                     </AdminCard>
                 ))}
                 {visibleLids.length === 0 && !isLoadingMore ? (
-                    <AdminCard className="p-4 text-center text-[13px] font-bold text-slate-500">
-                        Chưa có nắp nào.
-                    </AdminCard>
+                    <AdminEmptyState>
+                        {searchTerm.trim()
+                            ? "Không tìm thấy nắp phù hợp."
+                            : "Chưa có nắp nào."}
+                    </AdminEmptyState>
                 ) : null}
                 {isLoadingMore ? (
-                    <div className="flex justify-center py-4">
-                        <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#101a36] border-t-transparent" />
+                    <div role="status" className="flex justify-center py-4">
+                        <span
+                            className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
+                            aria-hidden="true"
+                        />
+                        <span className="sr-only">Đang tải thêm nắp</span>
                     </div>
                 ) : null}
                 {hasMore ? <div ref={scrollSentinelRef} className="h-1" /> : null}
@@ -881,7 +1008,6 @@ export default function AdminLidClient({
                 open={deleteTarget !== null}
                 title="Xóa nắp?"
                 description="Thao tác này không thể hoàn tác."
-                icon="🗑️"
                 danger
                 confirmLabel="Xóa"
                 loading={isSubmitting}

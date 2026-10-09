@@ -1,5 +1,6 @@
 import * as Select from "@radix-ui/react-select";
 import { ReactNode } from "react";
+import type { OrderStatus } from "@/lib/api/orders";
 
 export function adminFormatMoney(value: number) {
     return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value)} đ`;
@@ -17,13 +18,11 @@ export function AdminSectionHeader({
     return (
         <section className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-                <h1 className="text-[21px] font-extrabold leading-tight tracking-tight text-[#101a36]">
+                <h1 className="text-2xl font-semibold leading-tight text-ink">
                     {title}
                 </h1>
                 {subtitle ? (
-                    <p className="mt-1 text-[12px] font-semibold leading-5 text-slate-500">
-                        {subtitle}
-                    </p>
+                    <p className="mt-1 text-sm text-muted">{subtitle}</p>
                 ) : null}
             </div>
             {action ? <div className="shrink-0">{action}</div> : null}
@@ -44,10 +43,11 @@ export function AdminChip({
         <button
             type="button"
             onClick={onClick}
-            className={`h-9 whitespace-nowrap rounded-full px-4 text-[13px] font-bold transition-[transform,background-color,border-color,color] duration-300 ease-[var(--ease-spring)] active:scale-[0.94] break-words ${
+            aria-pressed={!!active}
+            className={`min-h-11 whitespace-nowrap rounded-md border px-4 text-sm font-medium transition-colors md:min-h-10 ${
                 active
-                    ? "bg-[#101a36] text-white shadow-[0_14px_30px_-20px_rgba(6,27,61,0.9)]"
-                    : "border border-[rgba(16,26,54,0.08)] bg-white text-[#1f2f46] shadow-sm"
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-line bg-white text-label hover:border-primary hover:text-primary"
             }`}
         >
             {children}
@@ -55,15 +55,31 @@ export function AdminChip({
     );
 }
 
+const BUTTON_VARIANTS = {
+    primary:
+        "border-transparent bg-primary text-white enabled:hover:bg-primary-hover enabled:active:bg-primary-active",
+    secondary:
+        "border-line-strong bg-white text-ink enabled:hover:border-primary enabled:hover:text-primary",
+    danger: "border-transparent bg-danger text-white enabled:hover:bg-danger/90",
+};
+
 export function AdminPrimaryButton({
     children,
     className = "",
+    variant = "primary",
+    size = "md",
     ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    className?: string;
+    variant?: keyof typeof BUTTON_VARIANTS;
+    size?: "sm" | "md";
+}) {
     return (
         <button
             {...props}
-            className={`inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-[#101a36] px-4 py-2.5 text-[15px] font-extrabold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.16),0_18px_30px_-22px_rgba(6,27,61,0.9)] transition-[transform,background-color,box-shadow] duration-300 ease-[var(--ease-spring)] hover:bg-[#1c2a4d] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            className={`inline-flex items-center justify-center gap-2 rounded-sm border font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                size === "sm" ? "min-h-9 px-3 text-sm" : "min-h-11 px-4 text-base"
+            } ${BUTTON_VARIANTS[variant]} ${className}`}
         >
             {children}
         </button>
@@ -79,21 +95,22 @@ export function AdminCard({
 }) {
     return (
         <article
-            className={`rounded-[20px] border border-[rgba(16,26,54,0.06)] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_18px_32px_-28px_rgba(16,26,54,0.34)] ${className}`}
+            className={`rounded-lg border border-line bg-white shadow-sm ${className}`}
         >
             {children}
         </article>
     );
 }
 
+// No min-height here: inputs/selects add min-h-11, the textarea min-h-20 (two min-h utilities would conflict)
 const fieldClass =
-    "w-full rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-[14px] font-semibold text-[#101a36] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/15";
+    "w-full rounded-sm border border-line-strong bg-white px-3 py-2 text-base font-normal text-ink transition-colors placeholder:text-muted focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger";
 
 export function AdminField({
     className = "",
     ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { className?: string }) {
-    return <input {...props} className={`${fieldClass} ${className}`} />;
+    return <input {...props} className={`${fieldClass} min-h-11 ${className}`} />;
 }
 
 export function AdminTextArea({
@@ -185,7 +202,7 @@ export function AdminSelect({
                 disabled={disabled}
                 name={name}
                 onChange={onChange}
-                className={`${fieldClass} appearance-none ${className}`}
+                className={`${fieldClass} min-h-11 ${className}`}
             >
                 {children}
             </select>
@@ -201,10 +218,10 @@ export function AdminSelect({
             name={name}
         >
             <Select.Trigger
-                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-[13px] border border-[#eadfce] bg-white px-3.5 py-2.5 text-left text-[14px] font-semibold text-[#101a36] outline-none transition data-[placeholder]:text-slate-400 focus:border-[#0f766e] focus:ring-2 focus:ring-[#0f766e]/15 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+                className={`${fieldClass} flex min-h-11 items-center justify-between gap-3 text-left data-placeholder:text-muted ${className}`}
             >
                 <Select.Value placeholder={placeholder} />
-                <Select.Icon className="grid h-5 w-5 shrink-0 place-items-center text-[#4c596c]">
+                <Select.Icon className="grid h-5 w-5 shrink-0 place-items-center text-body">
                     <ChevronDownIcon />
                 </Select.Icon>
             </Select.Trigger>
@@ -213,17 +230,18 @@ export function AdminSelect({
                     position="popper"
                     sideOffset={6}
                     collisionPadding={12}
-                    className="z-[100] max-h-[260px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[16px] border border-[#eadfce] bg-white p-1.5 text-[#101a36] shadow-[0_20px_45px_-24px_rgba(15,23,42,0.45)]"
+                    className="z-[100] max-h-[260px] min-w-(--radix-select-trigger-width) overflow-hidden rounded-md border border-line bg-white p-1 text-ink shadow-lg"
                 >
                     <Select.Viewport className="max-h-[248px] overflow-y-auto">
+                        {/* outline-none: the highlight background is the focus indicator */}
                         {options.map((option) => (
                             <Select.Item
                                 key={option.value}
                                 value={option.value}
                                 disabled={option.disabled}
-                                className="relative flex min-h-10 cursor-default select-none items-center rounded-[11px] py-2 pl-9 pr-3 text-[14px] font-semibold outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-[#101a36] data-[highlighted]:text-white"
+                                className="relative flex min-h-11 cursor-default select-none items-center rounded-sm py-2 pl-9 pr-3 text-sm outline-none data-disabled:pointer-events-none data-disabled:opacity-45 data-highlighted:bg-primary-soft data-highlighted:text-ink md:min-h-10"
                             >
-                                <Select.ItemIndicator className="absolute left-3 grid h-4 w-4 place-items-center text-emerald-600 data-[highlighted]:text-white">
+                                <Select.ItemIndicator className="absolute left-3 grid h-4 w-4 place-items-center text-primary">
                                     <CheckIcon />
                                 </Select.ItemIndicator>
                                 <Select.ItemText>
@@ -238,44 +256,57 @@ export function AdminSelect({
     );
 }
 
+export type AdminTone = "neutral" | "success" | "warning" | "info" | "danger";
+
+const TONE_CLASSES: Record<AdminTone, string> = {
+    success: "bg-success-soft text-success",
+    warning: "bg-warning-soft text-warning",
+    info: "bg-blue-50 text-blue-700",
+    danger: "bg-danger-soft text-danger",
+    neutral: "bg-surface text-label",
+};
+
+export const ORDER_STATUS_TONE: Record<OrderStatus, AdminTone> = {
+    PendingConfirmation: "warning",
+    Confirmed: "info",
+    Shipping: "info",
+    Completed: "success",
+    Cancelled: "neutral",
+};
+
 export function AdminStatusBadge({
     tone = "neutral",
     children,
 }: {
-    tone?: "neutral" | "success" | "warning" | "info" | "danger";
+    tone?: AdminTone;
     children: ReactNode;
 }) {
-    const classes =
-        tone === "success"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : tone === "warning"
-              ? "border-orange-200 bg-orange-50 text-orange-600"
-              : tone === "info"
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : tone === "danger"
-                  ? "border-rose-200 bg-rose-50 text-rose-700"
-                  : "border-slate-200 bg-slate-50 text-slate-600";
-
     return (
         <span
-            className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-extrabold ${classes}`}
+            className={`inline-flex items-center gap-1.5 rounded-sm border border-current/20 px-2 py-0.5 text-xs font-semibold ${TONE_CLASSES[tone]}`}
         >
-            {(tone === "warning" || tone === "info") && (
-                <span
-                    className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${
-                        tone === "warning" ? "bg-orange-500 animate-pulse" : "bg-blue-500 animate-pulse"
-                    }`}
-                />
-            )}
+            <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                aria-hidden="true"
+            />
             {children}
         </span>
     );
 }
 
-export function AdminEmptyState({ children }: { children: ReactNode }) {
+export function AdminEmptyState({
+    children,
+    action,
+}: {
+    children: ReactNode;
+    action?: ReactNode;
+}) {
     return (
-        <div className="rounded-[18px] border border-dashed border-[#eadfce] bg-white/80 p-4 text-center text-[13px] font-semibold text-slate-500">
+        <div className="rounded-lg border border-dashed border-line bg-white p-6 text-center text-sm text-body">
             {children}
+            {action ? (
+                <div className="mt-4 flex justify-center">{action}</div>
+            ) : null}
         </div>
     );
 }

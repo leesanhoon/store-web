@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+} from "react";
+import { flushSync } from "react-dom";
 import {
     CategoryTreeNode,
     getCategoryTree,
@@ -12,53 +20,85 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import {
     AdminCard,
+    AdminEmptyState,
     AdminField,
     AdminPrimaryButton,
     AdminSectionHeader,
     AdminStatusBadge,
     AdminTextArea,
 } from "@/components/admin/admin-ui";
+import { FieldLabel, PlusIcon } from "@/components/admin/shared";
 
 type EditingCategory = {
     id: number | null;
     parentId: number | null;
+    /** Only for the "add child" form title */
+    parentName?: string;
     name: string;
     description: string;
 };
 
+const NOTICE_TONES = {
+    success: "border-success/30 bg-success-soft text-success",
+    danger: "border-danger/30 bg-danger-soft text-danger",
+};
+
+function Notice({
+    tone,
+    children,
+}: {
+    tone: keyof typeof NOTICE_TONES;
+    children: ReactNode;
+}) {
+    return (
+        <div
+            role={tone === "danger" ? "alert" : "status"}
+            className={`rounded-lg border p-3 text-sm font-medium ${NOTICE_TONES[tone]}`}
+        >
+            {children}
+        </div>
+    );
+}
+
+// Row actions: 44px tall on mobile, 36px from 768px
+const ROW_BUTTON =
+    "min-h-11 rounded-sm border bg-white px-3 text-sm font-semibold transition-colors md:min-h-9";
+const ROW_BUTTON_TONES = {
+    neutral: "border-line text-label hover:border-primary hover:text-primary",
+    danger: "border-danger/30 text-danger hover:bg-danger-soft",
+};
+
 function CategoryTreeItem({
     node,
-    depth,
     onEdit,
     onDelete,
     onAddChild,
 }: {
     node: CategoryTreeNode;
-    depth: number;
     onEdit: (node: CategoryTreeNode) => void;
     onDelete: (node: CategoryTreeNode) => void;
-    onAddChild: (parentId: number) => void;
+    onAddChild: (parent: CategoryTreeNode) => void;
 }) {
     const [expanded, setExpanded] = useState(true);
     const hasChildren = node.children.length > 0;
 
     return (
-        <div>
-            <div
-                className="rounded-[18px] border border-[#eadfce] bg-white p-2.5 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.3)]"
-                style={{ marginLeft: depth * 16 }}
-            >
-                <div className="flex items-center gap-2">
+        <li>
+            <div className="rounded-lg border border-line bg-white p-3 shadow-sm">
+                {/* Below 768px the actions wrap onto their own line */}
+                <div className="flex flex-wrap items-center gap-2">
                     {hasChildren ? (
                         <button
                             type="button"
                             onClick={() => setExpanded(!expanded)}
-                            className="grid h-6 w-6 shrink-0 place-items-center rounded text-slate-500"
+                            aria-expanded={expanded}
+                            aria-label={`Danh mục con của ${node.name}`}
+                            className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-muted transition-colors hover:bg-surface hover:text-ink md:h-9 md:w-9"
                         >
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
-                                className={`h-4 w-4 transition ${expanded ? "rotate-90" : ""}`}
+                                className={`h-5 w-5 transition-transform ${expanded ? "rotate-90" : ""}`}
                                 aria-hidden="true"
                             >
                                 <path
@@ -71,13 +111,13 @@ function CategoryTreeItem({
                             </svg>
                         </button>
                     ) : (
-                        <span className="w-6" />
+                        <span className="w-11 shrink-0 md:w-9" aria-hidden="true" />
                     )}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                            <h3 className="truncate text-[14px] font-extrabold text-[#101a36]">
+                            <p className="min-w-0 truncate text-base font-semibold text-ink">
                                 {node.name}
-                            </h3>
+                            </p>
                             {node.parentId == null ? (
                                 <AdminStatusBadge tone="info">
                                     Gốc
@@ -85,16 +125,17 @@ function CategoryTreeItem({
                             ) : null}
                         </div>
                         {node.description ? (
-                            <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-500">
+                            <p className="truncate text-sm text-muted">
                                 {node.description}
                             </p>
                         ) : null}
                     </div>
-                    <div className="flex shrink-0 gap-1.5">
+                    <div className="flex w-full justify-end gap-2 md:w-auto">
                         <button
                             type="button"
-                            onClick={() => onAddChild(node.id)}
-                            className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-[#101a36]"
+                            onClick={() => onAddChild(node)}
+                            aria-label={`Thêm danh mục con cho ${node.name}`}
+                            className={`${ROW_BUTTON} ${ROW_BUTTON_TONES.neutral}`}
                         >
                             + Con
                         </button>
@@ -103,14 +144,16 @@ function CategoryTreeItem({
                                 <button
                                     type="button"
                                     onClick={() => onEdit(node)}
-                                    className="rounded-lg bg-[#f8f0e6] px-2 py-1 text-[10px] font-extrabold text-emerald-700"
+                                    aria-label={`Sửa ${node.name}`}
+                                    className={`${ROW_BUTTON} ${ROW_BUTTON_TONES.neutral}`}
                                 >
                                     Sửa
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => onDelete(node)}
-                                    className="rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-extrabold text-rose-600"
+                                    aria-label={`Xóa ${node.name}`}
+                                    className={`${ROW_BUTTON} ${ROW_BUTTON_TONES.danger}`}
                                 >
                                     Xóa
                                 </button>
@@ -120,24 +163,25 @@ function CategoryTreeItem({
                 </div>
             </div>
             {expanded && hasChildren ? (
-                <div className="mt-1.5 space-y-1.5">
+                <ul className="ml-4 mt-2 space-y-2">
                     {node.children.map((child) => (
                         <CategoryTreeItem
                             key={child.id}
                             node={child}
-                            depth={depth + 1}
                             onEdit={onEdit}
                             onDelete={onDelete}
                             onAddChild={onAddChild}
                         />
                     ))}
-                </div>
+                </ul>
             ) : null}
-        </div>
+        </li>
     );
 }
 
 export default function AdminCategoryPage() {
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const nameFieldId = useId();
     const [tree, setTree] = useState<CategoryTreeNode[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
@@ -146,52 +190,69 @@ export default function AdminCategoryPage() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    const fetchTree = () => {
-        setLoading(true);
-        void getCategoryTree()
-            .then(setTree)
-            .catch((err) =>
-                setLoadError(
-                    err instanceof Error
-                        ? err.message
-                        : "Không thể tải danh mục.",
-                ),
-            )
-            .finally(() => setLoading(false));
-    };
+    // State is only set in the promise callbacks, so the mount effect can call this directly
+    const loadTree = useCallback(
+        () =>
+            getCategoryTree()
+                .then(setTree)
+                .catch((err) =>
+                    setLoadError(
+                        err instanceof Error
+                            ? err.message
+                            : "Không thể tải danh mục.",
+                    ),
+                )
+                .finally(() => setLoading(false)),
+        [],
+    );
 
     useEffect(() => {
-        fetchTree();
-    }, []);
+        void loadTree();
+    }, [loadTree]);
 
-    const startAddRoot = () => {
-        setEditing({ id: null, parentId: null, name: "", description: "" });
-        setMessage("");
-        setError("");
+    const fetchTree = () => {
+        setLoading(true);
+        setLoadError("");
+        void loadTree();
     };
 
-    const startAddChild = (parentId: number) => {
-        setEditing({ id: null, parentId, name: "", description: "" });
-        setMessage("");
-        setError("");
+    // The form renders below the whole tree: render it first, then scroll to it and focus the name field
+    const openForm = (next: EditingCategory) => {
+        flushSync(() => {
+            setEditing(next);
+            setMessage("");
+            setError("");
+        });
+        formRef.current?.scrollIntoView({ block: "center" });
+        document.getElementById(nameFieldId)?.focus({ preventScroll: true });
     };
 
-    const startEdit = (node: CategoryTreeNode) => {
-        setEditing({
+    const startAddRoot = () =>
+        openForm({ id: null, parentId: null, name: "", description: "" });
+
+    const startAddChild = (parent: CategoryTreeNode) =>
+        openForm({
+            id: null,
+            parentId: parent.id,
+            parentName: parent.name,
+            name: "",
+            description: "",
+        });
+
+    const startEdit = (node: CategoryTreeNode) =>
+        openForm({
             id: node.id,
             parentId: node.parentId,
             name: node.name,
             description: node.description,
         });
-        setMessage("");
-        setError("");
-    };
 
     const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(
         null,
     );
+    const deleteChildCount = deleteTarget?.children.length ?? 0;
 
-    const confirmDelete = useCallback(async () => {
+    const confirmDelete = async () => {
         if (!deleteTarget) return;
         setIsSubmitting(true);
         setMessage("");
@@ -208,7 +269,7 @@ export default function AdminCategoryPage() {
             setIsSubmitting(false);
             setDeleteTarget(null);
         }
-    }, [deleteTarget, fetchTree]);
+    };
 
     const handleSave = async () => {
         if (!editing) return;
@@ -247,8 +308,16 @@ export default function AdminCategoryPage() {
         }
     };
 
+    const formTitle = !editing
+        ? ""
+        : editing.id
+          ? "Sửa danh mục"
+          : editing.parentId === null
+            ? "Thêm danh mục gốc"
+            : `Thêm danh mục con cho “${editing.parentName ?? ""}”`;
+
     return (
-        <div className="space-y-3 text-[#101a36]">
+        <div className="space-y-4">
             <AdminSectionHeader
                 action={
                     <AdminPrimaryButton
@@ -256,7 +325,8 @@ export default function AdminCategoryPage() {
                         onClick={startAddRoot}
                         disabled={isSubmitting}
                     >
-                        + Danh mục gốc
+                        <PlusIcon />
+                        Danh mục gốc
                     </AdminPrimaryButton>
                 }
                 title="Quản lý danh mục"
@@ -264,108 +334,104 @@ export default function AdminCategoryPage() {
             />
 
             {loading ? (
-                <AdminCard className="p-3 text-[12px] font-semibold text-slate-500">
+                <p role="status" className="text-sm text-muted">
                     Đang tải danh mục...
-                </AdminCard>
+                </p>
             ) : null}
-            {loadError ? (
-                <AdminCard className="p-3 text-[12px] font-semibold text-rose-700">
-                    {loadError}
-                </AdminCard>
-            ) : null}
-            {message ? (
-                <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">
-                    {message}
-                </AdminCard>
-            ) : null}
-            {error ? (
-                <AdminCard className="border-rose-200 bg-rose-50 p-3 text-[12px] font-bold text-rose-700">
-                    {error}
-                </AdminCard>
-            ) : null}
+            {loadError ? <Notice tone="danger">{loadError}</Notice> : null}
+            {message ? <Notice tone="success">{message}</Notice> : null}
+            {/* While the form is open, errors show inside it (it is usually scrolled into view) */}
+            {error && !editing ? <Notice tone="danger">{error}</Notice> : null}
 
-            <section className="space-y-1.5">
-                {tree.map((root) => (
-                    <CategoryTreeItem
-                        key={root.id}
-                        node={root}
-                        depth={0}
-                        onEdit={startEdit}
-                        onDelete={(n) => {
-                            if (!n.isRoot) setDeleteTarget(n);
-                        }}
-                        onAddChild={startAddChild}
-                    />
-                ))}
+            <section aria-label="Cây danh mục">
+                {tree.length > 0 ? (
+                    <ul className="space-y-2">
+                        {tree.map((root) => (
+                            <CategoryTreeItem
+                                key={root.id}
+                                node={root}
+                                onEdit={startEdit}
+                                onDelete={(n) => {
+                                    if (!n.isRoot) setDeleteTarget(n);
+                                }}
+                                onAddChild={startAddChild}
+                            />
+                        ))}
+                    </ul>
+                ) : null}
                 {!loading && !loadError && tree.length === 0 ? (
-                    <AdminCard className="p-4 text-center text-[12px] font-bold text-slate-500">
-                        Chưa có danh mục nào.
-                    </AdminCard>
+                    <AdminEmptyState>Chưa có danh mục nào.</AdminEmptyState>
                 ) : null}
             </section>
 
             {editing ? (
-                <AdminCard className="space-y-3 p-3.5">
-                    {!editing.id && editing.parentId === null ? (
-                        <h2 className="text-[15px] font-extrabold">
-                            Thêm danh mục gốc
+                <AdminCard>
+                    <form
+                        ref={formRef}
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            void handleSave();
+                        }}
+                        className="space-y-4 p-4"
+                    >
+                        <h2 className="text-lg font-semibold leading-snug text-ink">
+                            {formTitle}
                         </h2>
-                    ) : (
-                        <h2 className="text-[15px] font-extrabold">
-                            {editing.id ? "Sửa danh mục" : "Thêm danh mục con"}
-                        </h2>
-                    )}
-                    <label className="block text-[12px] font-extrabold">
-                        Tên danh mục <span className="text-rose-500">*</span>
-                        <AdminField
-                            value={editing.name}
-                            onChange={(e) =>
-                                setEditing({ ...editing, name: e.target.value })
-                            }
-                            className="mt-1"
-                            placeholder="Tên danh mục"
-                        />
-                    </label>
-                    <label className="block text-[12px] font-extrabold">
-                        Mô tả
-                        <AdminTextArea
-                            rows={2}
-                            value={editing.description}
-                            onChange={(e) =>
-                                setEditing({
-                                    ...editing,
-                                    description: e.target.value,
-                                })
-                            }
-                            className="mt-1"
-                            placeholder="Mô tả danh mục..."
-                        />
-                    </label>
-                    <div className="flex gap-2">
-                        <AdminPrimaryButton
-                            type="button"
-                            onClick={() => void handleSave()}
-                            disabled={isSubmitting}
-                            className="flex-1"
-                        >
-                            {isSubmitting ? "Đang lưu..." : "Lưu"}
-                        </AdminPrimaryButton>
-                        <button
-                            type="button"
-                            onClick={() => setEditing(null)}
-                            className="flex-1 rounded-2xl border border-[#eadfce] bg-white px-4 py-2.5 text-[14px] font-extrabold text-[#101a36]"
-                        >
-                            Hủy
-                        </button>
-                    </div>
+                        {error ? <Notice tone="danger">{error}</Notice> : null}
+                        <label className="block">
+                            <FieldLabel required>Tên danh mục</FieldLabel>
+                            <AdminField
+                                id={nameFieldId}
+                                value={editing.name}
+                                onChange={(e) =>
+                                    setEditing({ ...editing, name: e.target.value })
+                                }
+                                placeholder="Tên danh mục"
+                            />
+                        </label>
+                        <label className="block">
+                            <FieldLabel>Mô tả</FieldLabel>
+                            <AdminTextArea
+                                rows={2}
+                                value={editing.description}
+                                onChange={(e) =>
+                                    setEditing({
+                                        ...editing,
+                                        description: e.target.value,
+                                    })
+                                }
+                                placeholder="Mô tả danh mục..."
+                            />
+                        </label>
+                        <div className="flex justify-end gap-2">
+                            <AdminPrimaryButton
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setEditing(null)}
+                                className="flex-1 md:flex-none"
+                            >
+                                Hủy
+                            </AdminPrimaryButton>
+                            <AdminPrimaryButton
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="flex-1 md:flex-none"
+                            >
+                                {isSubmitting ? "Đang lưu..." : "Lưu"}
+                            </AdminPrimaryButton>
+                        </div>
+                    </form>
                 </AdminCard>
             ) : null}
 
             <ConfirmModal
                 open={deleteTarget !== null}
                 title={`Xóa danh mục "${deleteTarget?.name ?? ""}"?`}
-                description="Thao tác này không thể hoàn tác."
-                icon="🗑️"
+                description={
+                    deleteChildCount > 0
+                        ? `Danh mục này có ${deleteChildCount} danh mục con. Thao tác này không thể hoàn tác.`
+                        : "Thao tác này không thể hoàn tác."
+                }
                 danger
                 confirmLabel="Xóa"
                 loading={isSubmitting}

@@ -1,95 +1,88 @@
 import { connection } from "next/server";
 import Link from "next/link";
-import { getProducts } from "@/lib/api/products";
-import { isLidProduct } from "@/lib/api/products";
-import { getPartners } from "@/lib/api/partners";
+import { getProducts, isLidProduct } from "@/lib/api/products";
 import { getOrders, ORDER_STATUS_LABELS, type OrderSummaryDto, type OrderStatus } from "@/lib/api/orders";
 import {
     AdminCard,
     AdminSectionHeader,
+    AdminStatusBadge,
+    ORDER_STATUS_TONE,
     adminFormatMoney,
 } from "@/components/admin/admin-ui";
 
-const STATUS_DOT: Record<string, string> = {
-    PendingConfirmation: "bg-slate-400",
-    Confirmed: "bg-amber-500",
-    Shipping: "bg-sky-500",
-};
+const QUEUE_PREVIEW = 5;
 
-const STATUS_ACCENT: Record<string, string> = {
-    PendingConfirmation: "border-slate-200",
-    Confirmed: "border-amber-200",
-    Shipping: "border-sky-200",
-};
+const QUICK_ACTIONS = [
+    { href: "/admin/product?mode=create", label: "Thêm sản phẩm" },
+    { href: "/admin/lid?mode=create", label: "Thêm nắp" },
+    { href: "/admin/partner?mode=create", label: "Thêm đối tác" },
+    { href: "/admin/order", label: "Quản lý đơn hàng" },
+    { href: "/admin/category", label: "Quản lý danh mục" },
+];
 
-function PendingOrdersSection({
-    title,
-    orders,
-    total,
+function ChevronRightIcon() {
+    return (
+        <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-muted" aria-hidden="true">
+            <path d="m8 5 5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function OrderQueue({
     status,
+    orders,
     emptyText,
+    className = "",
 }: {
-    title: string;
-    orders: OrderSummaryDto[];
-    total: number;
     status: OrderStatus;
+    orders: OrderSummaryDto[];
     emptyText: string;
+    className?: string;
 }) {
-    const dot = STATUS_DOT[status] ?? "bg-slate-400";
-    const accent = STATUS_ACCENT[status] ?? "border-slate-200";
+    const href = `/admin/order?status=${status}`;
+    const preview = orders.slice(0, QUEUE_PREVIEW);
 
     return (
-        <AdminCard className={`p-3.5 border-l-[3px] ${accent}`}>
-            <div className="flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-[#101a36]">
-                    <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
-                    {title}
-                </h2>
-                {total > 0 && (
-                    <span className="rounded-full bg-[#101a36] px-2 py-0.5 text-[10px] font-extrabold text-white">
-                        {total}
-                    </span>
-                )}
+        <AdminCard className={className}>
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <h2 className="text-lg font-semibold text-ink">{ORDER_STATUS_LABELS[status]}</h2>
+                <AdminStatusBadge tone={ORDER_STATUS_TONE[status]}>{orders.length} đơn</AdminStatusBadge>
             </div>
-            {orders.length === 0 ? (
-                <p className="mt-2.5 rounded-[14px] border border-[#f1e7d8] bg-white px-3 py-4 text-center text-[12px] font-semibold text-slate-500">
-                    {emptyText}
-                </p>
+            {preview.length === 0 ? (
+                <p className="border-t border-line px-4 py-6 text-center text-sm text-body">{emptyText}</p>
             ) : (
-                <div className="mt-2.5 overflow-hidden rounded-[14px] border border-[#f1e7d8] bg-white">
-                    {orders.map((order) => (
-                        <Link
-                            key={order.id}
-                            href="/admin/order"
-                            className="grid grid-cols-[1fr_auto] gap-x-2 gap-y-0.5 border-b border-[#f1e7d8] px-3 py-2.5 last:border-b-0 transition-colors duration-200 active:bg-slate-50"
-                        >
-                            <p className="min-w-0 truncate text-[13px] font-extrabold text-[#101a36]">
-                                #{order.id} — {order.customerName}
-                            </p>
-                            <p className="whitespace-nowrap text-right text-[12px] font-bold text-emerald-600">
-                                {adminFormatMoney(order.totalAmount)}
-                            </p>
-                            <p className="text-[11px] font-semibold text-[#3d4860]">
-                                {new Date(order.createdAtUtc).toLocaleDateString("vi-VN", {
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    year: "numeric",
-                                })}
-                            </p>
-                            <p className="text-right text-[11px] font-semibold text-slate-400">
-                                {ORDER_STATUS_LABELS[order.status]}
-                            </p>
-                        </Link>
+                <ul className="divide-y divide-line border-t border-line">
+                    {preview.map((order) => (
+                        <li key={order.id}>
+                            <Link
+                                href={href}
+                                className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 px-4 py-3 transition-colors hover:bg-surface"
+                            >
+                                <span className="truncate text-sm font-medium text-ink">
+                                    #{order.id} · {order.customerName}
+                                </span>
+                                <span className="whitespace-nowrap text-right text-sm font-semibold text-ink">
+                                    {adminFormatMoney(order.totalAmount)}
+                                </span>
+                                <time dateTime={order.createdAtUtc} className="col-span-2 text-xs text-muted">
+                                    {new Date(order.createdAtUtc).toLocaleDateString("vi-VN", {
+                                        day: "2-digit",
+                                        month: "2-digit",
+                                        year: "numeric",
+                                    })}
+                                </time>
+                            </Link>
+                        </li>
                     ))}
-                    {total > orders.length && (
-                        <Link
-                            href="/admin/order"
-                            className="block border-t border-[#f1e7d8] px-3 py-2.5 text-center text-[12px] font-bold text-[#0f766e] transition-colors active:bg-slate-50"
-                        >
-                            Xem tất cả {total} đơn →
-                        </Link>
-                    )}
-                </div>
+                </ul>
+            )}
+            {orders.length > preview.length && (
+                <Link
+                    href={href}
+                    className="flex min-h-11 items-center justify-center border-t border-line px-4 text-sm font-semibold text-primary transition-colors hover:bg-surface"
+                >
+                    Xem tất cả {orders.length} đơn
+                </Link>
             )}
         </AdminCard>
     );
@@ -97,144 +90,76 @@ function PendingOrdersSection({
 
 export default async function AdminPage() {
     await connection();
-    const [products, partnersResponse, allOrdersResponse] = await Promise.all([
+    const [products, allOrdersResponse] = await Promise.all([
         getProducts().catch(() => []),
-        getPartners({ pageSize: 100 }).catch(() => ({ items: [] })),
         getOrders(1, 100).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100 })),
     ]);
-    const lids = products.filter(isLidProduct);
-    const partnerCount = partnersResponse.items.length;
+    const lidCount = products.filter(isLidProduct).length;
+    const cupCount = products.length - lidCount;
     const allItems = allOrdersResponse.items;
 
     // Backend doesn't filter by status — filter client-side
-    const draftItems = allItems.filter((o) => o.status === "PendingConfirmation");
+    const pendingItems = allItems.filter((o) => o.status === "PendingConfirmation");
     const confirmedItems = allItems.filter((o) => o.status === "Confirmed");
     const shippingItems = allItems.filter((o) => o.status === "Shipping");
 
-    const productsWithVariants = products.filter((p) => p.variants.length > 0);
-
-    const stats = [
-        {
-            label: "Tổng sản phẩm",
-            value: products.length.toString(),
-            delta: products.length ? "Dữ liệu API" : "Chưa có dữ liệu",
-            suffix: "SP",
-        },
-        {
-            label: "Có biến thể",
-            value: productsWithVariants.length.toString(),
-            delta: productsWithVariants.length ? "Đã cấu hình giá" : "Chưa có",
-            suffix: "SP",
-        },
-        {
-            label: "Tổng nắp",
-            value: lids.length.toString(),
-            delta: lids.length ? "Dữ liệu API" : "Chưa có dữ liệu",
-            suffix: "loại",
-        },
-        {
-            label: "Đối tác",
-            value: String(partnerCount),
-            delta: partnerCount > 0 ? "Đang hoạt động" : "Chưa có",
-            suffix: "đối tác",
-        },
-        {
-            label: "Tổng đơn hàng",
-            value: String(allOrdersResponse.totalCount),
-            delta: allOrdersResponse.totalCount > 0 ? "Tất cả trạng thái" : "Chưa có",
-            suffix: "đơn",
-        },
-        {
-            label: "Chờ xác nhận",
-            value: String(draftItems.length),
-            delta: draftItems.length > 0 ? "Cần xử lý" : "Không có",
-            suffix: "đơn",
-        },
+    const kpis = [
+        { label: "Chờ xác nhận", value: pendingItems.length, href: "/admin/order?status=PendingConfirmation" },
+        { label: "Đang giao", value: shippingItems.length, href: "/admin/order?status=Shipping" },
+        { label: "Tổng đơn", value: allOrdersResponse.totalCount, href: "/admin/order" },
+        { label: "Ly / Nắp", value: `${cupCount} / ${lidCount}`, href: "/admin/product" },
     ];
 
     return (
-        <div className="space-y-3 text-[#101a36]">
-            <AdminSectionHeader
-                title="Dashboard tổng quan"
-                // action={
-                //   <button type="button" className="inline-flex h-10 items-center gap-2 rounded-[13px] border border-[#eadfce] bg-white px-3 text-[13px] font-bold text-[#1f2f46] shadow-sm">
-                //     <CalendarIcon />
-                //     Hôm nay
-                //     <span aria-hidden="true" className="text-xl leading-none">›</span>
-                //   </button>
-                // }
-            />
+        <div className="space-y-6">
+            <AdminSectionHeader title="Tổng quan" />
 
-            <section className="grid grid-cols-2 gap-2.5">
-                {stats.map((item) => (
-                    <AdminCard key={item.label} className="min-h-[88px] p-3.5">
-                        <p className="text-[13px] font-bold leading-tight text-[#1f2f46]">
-                            {item.label}
-                        </p>
-                        <div className="mt-3 flex items-end justify-between gap-2">
-                            <div className="min-w-0">
-                                <p className="truncate text-[28px] font-extrabold leading-none tracking-tight text-[#101a36]">
-                                    {item.value}
-                                </p>
-                                <p className="mt-1.5 text-[11px] font-extrabold leading-tight text-emerald-600">
-                                    {item.delta}
-                                </p>
-                            </div>
-                            {item.suffix ? (
-                                <span className="pb-1 text-[12px] font-bold text-[#1f2f46]">
-                                    {item.suffix}
-                                </span>
-                            ) : null}
-                        </div>
-                    </AdminCard>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {kpis.map((kpi) => (
+                    <Link
+                        key={kpi.label}
+                        href={kpi.href}
+                        className="flex min-h-24 flex-col justify-between gap-3 rounded-lg border border-line bg-white p-4 shadow-sm transition-colors hover:border-primary"
+                    >
+                        <span className="flex items-center justify-between gap-2 text-sm font-medium text-label">
+                            {kpi.label}
+                            <ChevronRightIcon />
+                        </span>
+                        <span className="text-3xl font-semibold leading-none text-ink">{kpi.value}</span>
+                    </Link>
                 ))}
-            </section>
+            </div>
 
-            <section className="grid grid-cols-2 gap-2.5">
-                {[
-                    {
-                        href: "/admin/product?mode=create",
-                        label: "Thêm sản phẩm",
-                    },
-                    { href: "/admin/lid?mode=create", label: "Thêm nắp" },
-                    {
-                        href: "/admin/partner?mode=create",
-                        label: "Thêm đối tác",
-                    },
-                    { href: "/admin/order", label: "Quản lý đơn hàng" },
-                    { href: "/admin/category", label: "Quản lý danh mục" },
-                ].map((item) => (
+            <div role="group" aria-label="Thao tác nhanh" className="flex flex-wrap gap-2">
+                {QUICK_ACTIONS.map((item) => (
                     <Link
                         key={item.href}
                         href={item.href}
-                        className="rounded-[16px] border border-[#eadfce] bg-white p-3 flex items-center justify-center text-[11px] font-extrabold text-[#101a36] shadow-sm"
+                        className="inline-flex min-h-11 items-center rounded-sm border border-line-strong bg-white px-3 text-sm font-semibold text-ink transition-colors hover:border-primary hover:text-primary md:min-h-10"
                     >
                         {item.label}
                     </Link>
                 ))}
-            </section>
+            </div>
 
-            <PendingOrdersSection
-                title="Chờ xác nhận"
-                orders={draftItems}
-                total={draftItems.length}
-                status="PendingConfirmation"
-                emptyText="Không có đơn chờ xác nhận"
-            />
-            <PendingOrdersSection
-                title="Đã xác nhận"
-                orders={confirmedItems}
-                total={confirmedItems.length}
-                status="Confirmed"
-                emptyText="Không có đơn đã xác nhận"
-            />
-            <PendingOrdersSection
-                title="Đang giao hàng"
-                orders={shippingItems}
-                total={shippingItems.length}
-                status="Shipping"
-                emptyText="Không có đơn đang giao"
-            />
+            <div className="grid gap-4 lg:grid-cols-2">
+                <OrderQueue
+                    status="PendingConfirmation"
+                    orders={pendingItems}
+                    emptyText="Không có đơn chờ xác nhận"
+                    className="lg:col-span-2"
+                />
+                <OrderQueue
+                    status="Confirmed"
+                    orders={confirmedItems}
+                    emptyText="Không có đơn đã xác nhận"
+                />
+                <OrderQueue
+                    status="Shipping"
+                    orders={shippingItems}
+                    emptyText="Không có đơn đang giao"
+                />
+            </div>
         </div>
     );
 }

@@ -1,45 +1,57 @@
-import MobileAppShell from "@/components/mobile-store/MobileAppShell";
-
+// Also rendered by cart/page.tsx while the cart is read from localStorage
 function SkeletonBlock({ className = "" }: { className?: string }) {
-  return <div className={`skeleton ${className}`} aria-hidden="true" />;
+    return <div className={`skeleton ${className}`} aria-hidden="true" />;
 }
 
 export default function CartLoading() {
-  return (
-    <MobileAppShell>
-      <div className="quote-screen" aria-busy="true">
-        <header className="mobile-topbar">
-          <SkeletonBlock className="h-10 w-10 rounded-full" />
-          <SkeletonBlock className="h-5 w-44 rounded-full" />
-          <SkeletonBlock className="h-10 w-10 rounded-full" />
-        </header>
+    return (
+        <div className="quote-screen" aria-busy="true">
+            <p className="sr-only" role="status">
+                Đang tải giỏ hàng…
+            </p>
+            <header className="mobile-topbar">
+                <SkeletonBlock className="h-7.5 w-40 rounded-sm md:h-10 md:w-56" />
+            </header>
 
-        <section className="quote-stepper">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="grid justify-items-center gap-2">
-              <SkeletonBlock className="h-6 w-6 rounded-full" />
-              <SkeletonBlock className="h-9 w-9 rounded-full" />
-              <SkeletonBlock className="h-3 w-20 rounded-full" />
+            <div className="cart-layout">
+                <div className="cart-items">
+                    <div className="cart-list-header">
+                        <SkeletonBlock className="h-6 w-32 rounded-sm" />
+                        <SkeletonBlock className="h-6 w-20 rounded-sm" />
+                    </div>
+                    <div className="cart-items-list">
+                        {Array.from({ length: 2 }, (_, index) => (
+                            <div key={index} className="cart-item">
+                                <SkeletonBlock className="cart-item-image" />
+                                <div className="cart-item-details">
+                                    <SkeletonBlock className="h-5 w-3/4 rounded-sm" />
+                                    <SkeletonBlock className="h-4 w-1/2 rounded-sm" />
+                                    <SkeletonBlock className="h-4 w-24 rounded-sm" />
+                                    <div className="cart-item-bottom">
+                                        <SkeletonBlock className="h-11 w-36 rounded-sm" />
+                                        <SkeletonBlock className="h-5 w-20 rounded-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="quote-form-card cart-summary-card">
+                    <div className="cart-total-block">
+                        <SkeletonBlock className="h-8 w-full rounded-sm" />
+                        <SkeletonBlock className="h-5 w-48 rounded-sm" />
+                    </div>
+                    <SkeletonBlock className="h-7 w-40 rounded-sm" />
+                    {Array.from({ length: 4 }, (_, index) => (
+                        <div key={index}>
+                            <SkeletonBlock className="h-5 w-28 rounded-sm" />
+                            <SkeletonBlock className="h-11 rounded-sm" />
+                        </div>
+                    ))}
+                    <SkeletonBlock className="h-11 rounded-sm" />
+                </div>
             </div>
-          ))}
-        </section>
-
-        <section className="quote-form-card space-y-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="space-y-2">
-              <SkeletonBlock className="h-4 w-28 rounded-full" />
-              <SkeletonBlock className="h-12 rounded-[16px]" />
-            </div>
-          ))}
-          <div className="grid gap-3 md:grid-cols-2">
-            <SkeletonBlock className="h-[156px] rounded-[18px]" />
-            <SkeletonBlock className="h-[156px] rounded-[18px]" />
-          </div>
-        </section>
-
-        <SkeletonBlock className="h-[132px] rounded-[18px]" />
-        <SkeletonBlock className="h-12 rounded-[16px]" />
-      </div>
-    </MobileAppShell>
-  );
+        </div>
+    );
 }

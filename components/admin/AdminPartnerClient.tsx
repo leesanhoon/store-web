@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, ReactNode, Ref, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import ConfirmModal from "@/components/ui/ConfirmModal";
@@ -28,6 +29,7 @@ import {
     UploadIcon,
     FieldLabel,
     preserveAdminScroll,
+    normalizeSearch,
 } from "@/components/admin/shared";
 
 type PartnerForm = {
@@ -44,7 +46,6 @@ const initialForm: PartnerForm = {
     description: "",
 };
 
-
 function getInitials(name: string) {
     return name
         .split(/\s+/)
@@ -54,20 +55,53 @@ function getInitials(name: string) {
         .toUpperCase();
 }
 
+const NOTICE_TONES = {
+    success: "border-success/30 bg-success-soft text-success",
+    danger: "border-danger/30 bg-danger-soft text-danger",
+};
+
+function Notice({
+    tone,
+    className = "",
+    ref,
+    children,
+}: {
+    tone: keyof typeof NOTICE_TONES;
+    className?: string;
+    ref?: Ref<HTMLDivElement>;
+    children: ReactNode;
+}) {
+    return (
+        <div
+            ref={ref}
+            role={tone === "danger" ? "alert" : "status"}
+            className={`rounded-lg border p-3 text-sm font-medium ${NOTICE_TONES[tone]} ${className}`}
+        >
+            {children}
+        </div>
+    );
+}
+
 function IconButton({
     label,
     onClick,
+    tone = "neutral",
     children,
 }: {
     label: string;
     onClick: () => void;
-    children: React.ReactNode;
+    tone?: "neutral" | "danger";
+    children: ReactNode;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#eadfce] bg-white text-[#4c596c] shadow-sm transition active:scale-[0.96]"
+            className={`grid h-11 w-11 place-items-center rounded-md border bg-white transition-colors ${
+                tone === "danger"
+                    ? "border-danger/30 text-danger hover:bg-danger-soft"
+                    : "border-line text-label hover:border-primary hover:text-primary"
+            }`}
             aria-label={label}
         >
             {children}
@@ -90,6 +124,7 @@ export default function AdminPartnerClient({
     const mode = searchParams.get("mode");
     const avatarInputRef = useRef<HTMLInputElement | null>(null);
     const galleryInputRef = useRef<HTMLInputElement | null>(null);
+    const errorRef = useRef<HTMLDivElement | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [form, setForm] = useState<PartnerForm>(initialForm);
     const [avatarImage, setAvatarImage] = useState<File | null>(null);
@@ -116,14 +151,25 @@ export default function AdminPartnerClient({
         [galleryImages],
     );
 
-    const isFormMode = mode === "create" || selectedId !== null;
+    // (P-fix) `?mode=edit` is required too, so browser Back from the edit form returns to the list
+    const isFormMode =
+        mode === "create" || (mode === "edit" && selectedId !== null);
     const formTitle = selectedId ? "Sửa đối tác" : "Thêm đối tác";
 
+    // Accent-insensitive, same as the product and lid searches
     const visiblePartners = partners.filter((p) => {
         if (!searchTerm.trim()) return true;
-        const text = `${p.name} ${p.address} ${p.description ?? ""}`.toLowerCase();
-        return text.includes(searchTerm.trim().toLowerCase());
+        const text = normalizeSearch(
+            `${p.name} ${p.address} ${p.description ?? ""}`,
+        );
+        return text.includes(normalizeSearch(searchTerm.trim()));
     });
+
+    // The banner sits above the form while the save button is in the sticky bar: render it now, then bring it into view
+    const showError = (text: string) => {
+        flushSync(() => setError(text));
+        errorRef.current?.scrollIntoView({ block: "center" });
+    };
 
     const openAvatarPicker = () => {
         preserveAdminScroll();
@@ -185,7 +231,7 @@ export default function AdminPartnerClient({
     const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!form.name.trim() || !form.address.trim()) {
-            setError("Vui lòng nhập tên và địa chỉ đối tác.");
+            showError("Vui lòng nhập tên và địa chỉ đối tác.");
             return;
         }
 
@@ -214,7 +260,7 @@ export default function AdminPartnerClient({
             await mutate();
             closeForm();
         } catch (err) {
-            setError(
+            showError(
                 err instanceof Error
                     ? err.message
                     : "Không thể lưu đối tác.",
@@ -226,7 +272,7 @@ export default function AdminPartnerClient({
 
     const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-    const confirmDelete = useCallback(async () => {
+    const confirmDelete = async () => {
         if (deleteTarget === null) return;
         setIsSubmitting(true);
         setMessage("");
@@ -246,7 +292,7 @@ export default function AdminPartnerClient({
             setIsSubmitting(false);
             setDeleteTarget(null);
         }
-    }, [deleteTarget, selectedId, closeForm, mutate]);
+    };
 
     if (isFormMode) {
         const editingPartner = selectedId
@@ -255,14 +301,18 @@ export default function AdminPartnerClient({
         const existingAvatar = editingPartner?.avatarImageUrl ?? null;
         const existingGallery =
             editingPartner?.galleryImages.map((g) => g.imageUrl) ?? [];
+        const displayAvatarUrl = avatarPreviewUrl || existingAvatar || "";
+        const isExistingAvatar = !avatarPreviewUrl && !!existingAvatar;
+        // Newly picked files are previewed instead of the current gallery
+        const showsNewGallery = galleryPreviewUrls.length > 0;
 
         return (
-            <div className="space-y-3 text-[#101a36]">
-                <div className="flex items-center gap-3">
+            <div>
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
                         onClick={closeForm}
-                        className="grid h-10 w-10 place-items-center rounded-full text-[#101a36]"
+                        className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink transition-colors hover:bg-primary-soft hover:text-primary"
                         aria-label="Quay lại"
                     >
                         <svg
@@ -280,199 +330,225 @@ export default function AdminPartnerClient({
                             />
                         </svg>
                     </button>
-                    <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">
+                    <h1 className="text-2xl font-semibold leading-tight text-ink">
                         {formTitle}
                     </h1>
                 </div>
 
                 {message ? (
-                    <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[13px] font-bold text-emerald-700">
+                    <Notice tone="success" className="mt-4">
                         {message}
-                    </AdminCard>
+                    </Notice>
                 ) : null}
                 {error ? (
-                    <AdminCard className="border-rose-200 bg-rose-50 p-3 text-[13px] font-bold text-rose-700">
+                    <Notice ref={errorRef} tone="danger" className="mt-4">
                         {error}
-                    </AdminCard>
+                    </Notice>
                 ) : null}
 
-                <form onSubmit={onSubmit} className="space-y-4">
-                    <label className="block">
-                        <FieldLabel required>Tên đối tác</FieldLabel>
-                        <AdminField
-                            value={form.name}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    name: e.target.value,
-                                }))
-                            }
-                            placeholder="VD: Phúc Long Coffee"
-                        />
-                    </label>
-
-                    <label className="block">
-                        <FieldLabel required>Địa chỉ</FieldLabel>
-                        <AdminField
-                            value={form.address}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    address: e.target.value,
-                                }))
-                            }
-                            placeholder="VD: 123 Trần Hưng Đạo, Quảng Ngãi"
-                        />
-                    </label>
-
-                    <label className="block">
-                        <FieldLabel>Số điện thoại</FieldLabel>
-                        <AdminField
-                            type="tel"
-                            value={form.phoneNumber}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    phoneNumber: e.target.value,
-                                }))
-                            }
-                            placeholder="VD: 0987 654 321"
-                        />
-                    </label>
-
-                    <label className="block">
-                        <FieldLabel>Mô tả</FieldLabel>
-                        <AdminTextArea
-                            rows={3}
-                            value={form.description}
-                            onChange={(e) =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    description: e.target.value,
-                                }))
-                            }
-                            placeholder="Mô tả ngắn về đối tác..."
-                        />
-                    </label>
-
-                    <div>
-                        <FieldLabel>Ảnh đại diện</FieldLabel>
-                        <input
-                            ref={avatarInputRef}
-                            type="file"
-                            accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
-                            onChange={handleAvatarFileChange}
-                            className="hidden"
-                        />
-                        <button
-                            type="button"
-                            onClick={openAvatarPicker}
-                            className="grid min-h-[136px] w-full place-items-center rounded-[14px] border border-dashed border-[#8a99ad] bg-white/60 p-3 text-center text-[#3d4860] transition active:scale-[0.99]"
-                        >
-                            {avatarPreviewUrl ? (
-                                <Image
-                                    src={avatarPreviewUrl}
-                                    alt="Ảnh đại diện xem trước"
-                                    width={220}
-                                    height={180}
-                                    unoptimized
-                                    className="h-[118px] w-full rounded-xl object-cover"
+                <form onSubmit={onSubmit} className="mt-4">
+                    <div className="lg:grid lg:grid-cols-3 lg:items-start lg:gap-6">
+                        <AdminCard className="min-w-0 space-y-4 p-4 lg:col-span-2">
+                            <label className="block">
+                                <FieldLabel required>Tên đối tác</FieldLabel>
+                                <AdminField
+                                    value={form.name}
+                                    onChange={(e) =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            name: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="VD: Phúc Long Coffee"
                                 />
-                            ) : existingAvatar ? (
-                                <Image
-                                    src={existingAvatar}
-                                    alt="Ảnh đại diện hiện tại"
-                                    width={220}
-                                    height={180}
-                                    className="h-[118px] w-full rounded-xl object-cover"
-                                />
-                            ) : (
-                                <span className="grid place-items-center text-[14px] font-extrabold">
-                                    <UploadIcon />
-                                    Tải ảnh lên
-                                    <small className="mt-1 text-[11px] font-semibold text-slate-500">
-                                        JPG, PNG tối đa 2MB
-                                    </small>
-                                </span>
-                            )}
-                        </button>
-                    </div>
+                            </label>
 
-                    <div>
-                        <FieldLabel>Thư viện ảnh sản phẩm</FieldLabel>
-                        <input
-                            ref={galleryInputRef}
-                            type="file"
-                            accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
-                            multiple
-                            onChange={handleGalleryFileChange}
-                            className="hidden"
-                        />
-                        <div className="grid grid-cols-3 gap-2 rounded-[14px] border border-[#eadfce] bg-white p-2">
-                            {(galleryPreviewUrls.length > 0
-                                ? galleryPreviewUrls
-                                : existingGallery
-                            )
-                                .slice(0, 5)
-                                .map((src, index) => (
-                                    <Image
-                                        key={`${src}-${index}`}
-                                        src={src}
-                                        alt="Ảnh sản phẩm"
-                                        width={96}
-                                        height={86}
-                                        unoptimized={src.startsWith("blob:")}
-                                        className="h-[68px] w-full rounded-[10px] border border-[#f1e7d8] object-cover"
+                            <label className="block">
+                                <FieldLabel required>Địa chỉ</FieldLabel>
+                                <AdminField
+                                    value={form.address}
+                                    onChange={(e) =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            address: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="VD: 123 Trần Hưng Đạo, Quảng Ngãi"
+                                />
+                            </label>
+
+                            <label className="block">
+                                <FieldLabel>Số điện thoại</FieldLabel>
+                                <AdminField
+                                    type="tel"
+                                    value={form.phoneNumber}
+                                    onChange={(e) =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            phoneNumber: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="VD: 0987 654 321"
+                                />
+                            </label>
+
+                            <label className="block">
+                                <FieldLabel>Mô tả</FieldLabel>
+                                <AdminTextArea
+                                    rows={3}
+                                    value={form.description}
+                                    onChange={(e) =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            description: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="Mô tả ngắn về đối tác..."
+                                />
+                            </label>
+                        </AdminCard>
+
+                        <AdminCard className="mt-4 grid min-w-0 gap-4 p-4 md:grid-cols-2 lg:mt-0 lg:grid-cols-1">
+                            <div>
+                                <FieldLabel>Ảnh đại diện</FieldLabel>
+                                <div className="relative">
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+                                        onChange={handleAvatarFileChange}
+                                        className="hidden"
                                     />
-                                ))}
-                            <button
-                                type="button"
-                                onClick={openGalleryPicker}
-                                className="grid h-[68px] place-items-center rounded-[10px] border border-dashed border-[#d6c9b8] bg-white text-center text-[12px] font-extrabold text-[#101a36] transition active:scale-[0.98]"
-                            >
-                                <span>
-                                    <span className="block text-2xl leading-none">
-                                        +
-                                    </span>
-                                    Ảnh khác
-                                </span>
-                            </button>
-                        </div>
+                                    <button
+                                        type="button"
+                                        onClick={openAvatarPicker}
+                                        aria-label={
+                                            displayAvatarUrl
+                                                ? "Đổi ảnh đại diện"
+                                                : undefined
+                                        }
+                                        className="grid min-h-40 w-full place-items-center rounded-lg border border-dashed border-line-strong bg-white p-2 text-center text-ink transition-colors hover:border-primary hover:text-primary"
+                                    >
+                                        {displayAvatarUrl ? (
+                                            <Image
+                                                src={displayAvatarUrl}
+                                                alt=""
+                                                width={400}
+                                                height={300}
+                                                unoptimized={displayAvatarUrl.startsWith(
+                                                    "blob:",
+                                                )}
+                                                className="h-36 w-full rounded-md object-cover"
+                                            />
+                                        ) : (
+                                            <span className="grid place-items-center gap-1 text-sm font-semibold">
+                                                <UploadIcon />
+                                                Tải ảnh lên
+                                                <small className="text-sm font-normal text-muted">
+                                                    JPG, PNG tối đa 2MB
+                                                </small>
+                                            </span>
+                                        )}
+                                    </button>
+                                    {isExistingAvatar ? (
+                                        <span className="pointer-events-none absolute bottom-4 left-4 rounded-sm bg-ink/80 px-2 py-0.5 text-xs font-semibold text-white">
+                                            Ảnh hiện tại
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </div>
+
+                            <div>
+                                <FieldLabel>Thư viện ảnh sản phẩm</FieldLabel>
+                                <div className="grid grid-cols-3 gap-2 rounded-lg border border-line bg-white p-2">
+                                    <input
+                                        ref={galleryInputRef}
+                                        type="file"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+                                        multiple
+                                        onChange={handleGalleryFileChange}
+                                        className="hidden"
+                                    />
+                                    {(showsNewGallery
+                                        ? galleryPreviewUrls
+                                        : existingGallery
+                                    )
+                                        .slice(0, 5)
+                                        .map((src, index) => (
+                                            <div
+                                                key={`${src}-${index}`}
+                                                className="relative"
+                                            >
+                                                <Image
+                                                    src={src}
+                                                    alt={`${showsNewGallery ? "Ảnh mới" : "Ảnh sản phẩm"} ${index + 1}`}
+                                                    width={160}
+                                                    height={160}
+                                                    unoptimized={src.startsWith("blob:")}
+                                                    className="aspect-square w-full rounded-md border border-line object-cover"
+                                                />
+                                                {showsNewGallery ? (
+                                                    <span className="absolute bottom-1 left-1 rounded-sm bg-ink/80 px-1.5 py-0.5 text-xs font-semibold text-white">
+                                                        Mới
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    <button
+                                        type="button"
+                                        onClick={openGalleryPicker}
+                                        aria-label="Thêm ảnh khác vào thư viện"
+                                        className="grid aspect-square place-items-center rounded-md border border-dashed border-line-strong bg-white text-center text-sm font-semibold text-ink transition-colors hover:border-primary hover:text-primary"
+                                    >
+                                        <span className="grid place-items-center gap-1">
+                                            <PlusIcon />
+                                            Ảnh khác
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </AdminCard>
                     </div>
 
-                    <AdminPrimaryButton
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full rounded-full py-3 text-[16px]"
-                    >
-                        {isSubmitting ? "Đang lưu..." : "Lưu đối tác"}
-                    </AdminPrimaryButton>
+                    <div className="admin-form-actions mt-6">
+                        <AdminPrimaryButton
+                            type="button"
+                            variant="secondary"
+                            onClick={closeForm}
+                            className="flex-1 md:flex-none"
+                        >
+                            Hủy
+                        </AdminPrimaryButton>
+                        <AdminPrimaryButton
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 md:flex-none"
+                        >
+                            {isSubmitting ? "Đang lưu..." : "Lưu đối tác"}
+                        </AdminPrimaryButton>
+                    </div>
                 </form>
             </div>
         );
     }
 
     return (
-        <div className="space-y-3 text-[#101a36]">
+        <div className="space-y-4">
             <AdminSectionHeader
                 title="Quản lý đối tác"
                 action={
-                    <AdminPrimaryButton
-                        type="button"
-                        onClick={startCreate}
-                        className="h-10 min-h-10 rounded-[13px] px-3 text-[14px]"
-                    >
+                    <AdminPrimaryButton type="button" onClick={startCreate}>
                         <PlusIcon />
                         Thêm
                     </AdminPrimaryButton>
                 }
             />
 
-            <label className="flex h-12 items-center gap-3 rounded-[14px] border border-[#eadfce] bg-white px-3.5 text-slate-400 shadow-sm">
+            <div className="relative md:w-80">
                 <svg
                     viewBox="0 0 24 24"
                     fill="none"
-                    className="h-5 w-5"
+                    className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted"
                     aria-hidden="true"
                 >
                     <path
@@ -482,73 +558,75 @@ export default function AdminPartnerClient({
                         strokeLinecap="round"
                     />
                 </svg>
-                <input
+                <AdminField
+                    type="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Tìm đối tác..."
-                    className="min-w-0 flex-1 bg-transparent text-[14px] font-semibold text-[#101a36] outline-none placeholder:text-slate-400"
+                    aria-label="Tìm đối tác"
+                    className="pl-10"
                 />
-            </label>
+            </div>
 
-            {message ? (
-                <AdminCard className="border-emerald-200 bg-emerald-50 p-3 text-[12px] font-bold text-emerald-700">
-                    {message}
-                </AdminCard>
-            ) : null}
-            {error ? (
-                <AdminCard className="border-rose-200 bg-rose-50 p-3 text-[12px] font-bold text-rose-700">
-                    {error}
-                </AdminCard>
-            ) : null}
+            {message ? <Notice tone="success">{message}</Notice> : null}
+            {error ? <Notice tone="danger">{error}</Notice> : null}
 
-            <section className="space-y-2.5">
-                {visiblePartners.map((partner) => (
-                    <AdminCard key={partner.id} className="p-3">
-                        <div className="grid grid-cols-[64px_1fr_auto] items-center gap-3">
-                            <div className="grid h-[60px] w-[60px] place-items-center overflow-hidden rounded-[16px] border border-[rgba(16,26,54,0.06)] bg-gradient-to-br from-[#101a36] to-[#0f766e]">
+            <section aria-label="Danh sách đối tác" className="space-y-2">
+                {visiblePartners.map((partner) => {
+                    const meta = [
+                        partner.galleryImages.length > 0
+                            ? `${partner.galleryImages.length} ảnh`
+                            : "",
+                        partner.phoneNumber ?? "",
+                    ]
+                        .filter(Boolean)
+                        .join(" · ");
+                    return (
+                        <AdminCard
+                            key={partner.id}
+                            className="flex items-center gap-3 p-3 md:gap-4"
+                        >
+                            <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-primary-soft text-primary">
                                 {partner.avatarImageUrl ? (
                                     <Image
                                         src={partner.avatarImageUrl}
-                                        alt={partner.name}
-                                        width={120}
-                                        height={120}
+                                        alt=""
+                                        width={112}
+                                        height={112}
                                         className="h-full w-full object-cover"
                                     />
                                 ) : (
-                                    <span className="text-[18px] font-black text-white">
+                                    <span
+                                        className="text-lg font-semibold"
+                                        aria-hidden="true"
+                                    >
                                         {getInitials(partner.name)}
                                     </span>
                                 )}
                             </div>
-                            <div className="min-w-0">
-                                <h2 className="truncate text-[15px] font-extrabold leading-tight text-[#101a36]">
+                            <div className="min-w-0 flex-1">
+                                <h2 className="truncate text-base font-semibold text-ink">
                                     {partner.name}
                                 </h2>
-                                <p className="mt-0.5 truncate text-[12px] font-semibold text-[#3d4860]">
+                                <p className="truncate text-sm text-body">
                                     {partner.address}
                                 </p>
-                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                    {partner.galleryImages.length > 0 ? (
-                                        <span className="rounded-lg bg-[#f8f0e6] px-2 py-0.5 text-[10px] font-extrabold text-[#3d4860]">
-                                            {partner.galleryImages.length} ảnh
-                                        </span>
-                                    ) : null}
-                                    {partner.phoneNumber ? (
-                                        <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">
-                                            {partner.phoneNumber}
-                                        </span>
-                                    ) : null}
-                                </div>
+                                {meta ? (
+                                    <p className="truncate text-sm text-muted">
+                                        {meta}
+                                    </p>
+                                ) : null}
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex shrink-0 flex-col gap-2 md:flex-row">
                                 <IconButton
-                                    label="Sửa đối tác"
+                                    label={`Sửa ${partner.name}`}
                                     onClick={() => editPartner(partner)}
                                 >
                                     <EditIcon />
                                 </IconButton>
                                 <IconButton
-                                    label="Xóa đối tác"
+                                    label={`Xóa ${partner.name}`}
+                                    tone="danger"
                                     onClick={() =>
                                         setDeleteTarget(partner.id)
                                     }
@@ -556,13 +634,19 @@ export default function AdminPartnerClient({
                                     <DeleteIcon />
                                 </IconButton>
                             </div>
-                        </div>
-                    </AdminCard>
-                ))}
+                        </AdminCard>
+                    );
+                })}
                 {visiblePartners.length === 0 ? (
                     <AdminEmptyState>
-                        Chưa có đối tác nào. Nhấn &ldquo;Thêm&rdquo; để tạo
-                        đối tác mới.
+                        {searchTerm.trim() ? (
+                            "Không tìm thấy đối tác phù hợp."
+                        ) : (
+                            <>
+                                Chưa có đối tác nào. Nhấn &ldquo;Thêm&rdquo; để
+                                tạo đối tác mới.
+                            </>
+                        )}
                     </AdminEmptyState>
                 ) : null}
             </section>
@@ -571,7 +655,6 @@ export default function AdminPartnerClient({
                 open={deleteTarget !== null}
                 title="Xóa đối tác?"
                 description="Thao tác này không thể hoàn tác."
-                icon="🗑️"
                 danger
                 confirmLabel="Xóa"
                 loading={isSubmitting}

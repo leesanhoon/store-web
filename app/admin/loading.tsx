@@ -2,30 +2,34 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
   return <div className={`skeleton ${className}`} aria-hidden="true" />;
 }
 
+// Generic page-header + list-rows skeleton: every admin route falls back to it
 export default function AdminLoading() {
   return (
-    <div className="space-y-3 text-[#101a36]" aria-busy="true">
-      <div className="flex items-center justify-between gap-3">
+    <div className="space-y-4" aria-busy="true">
+      <p role="status" className="sr-only">
+        Đang tải…
+      </p>
+
+      <div className="flex items-center justify-between gap-4">
         <div className="min-w-0 space-y-2">
-          <SkeletonBlock className="h-6 w-40 rounded-full" />
-          <SkeletonBlock className="h-3 w-52 rounded-full" />
+          <SkeletonBlock className="h-7 w-44 rounded-sm" />
+          <SkeletonBlock className="h-4 w-56 max-w-full rounded-sm" />
         </div>
-        <SkeletonBlock className="h-10 w-24 rounded-[13px]" />
+        <SkeletonBlock className="h-11 w-28 shrink-0 rounded-sm" />
       </div>
 
-      <section className="grid grid-cols-2 gap-2.5">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="admin-card space-y-3 p-3.5">
-            <SkeletonBlock className="h-4 w-24 rounded-full" />
-            <SkeletonBlock className="h-8 w-20 rounded-full" />
-            <SkeletonBlock className="h-3 w-16 rounded-full" />
+      <div className="admin-card divide-y divide-line">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-3 p-4">
+            <SkeletonBlock className="h-12 w-12 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <SkeletonBlock className="h-4 w-1/2 rounded-sm" />
+              <SkeletonBlock className="h-3 w-1/3 rounded-sm" />
+            </div>
+            <SkeletonBlock className="h-9 w-20 shrink-0 rounded-sm" />
           </div>
         ))}
-      </section>
-
-      <SkeletonBlock className="h-11 rounded-[16px]" />
-      <SkeletonBlock className="h-[180px] rounded-[18px]" />
-      <SkeletonBlock className="h-[200px] rounded-[18px]" />
+      </div>
     </div>
   );
 }

@@ -1,8 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties, ReactNode } from "react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+} from "react";
+import { CheckIcon, CloseIcon } from "@/components/mobile-store/icons";
 import type {
     PriceTierDto,
     ProductDto,
@@ -14,9 +23,17 @@ import {
     CartUnit,
     defaultCartConfiguration,
 } from "@/lib/cart";
-import { formatCurrency, getVariantLabel } from "@/lib/products/display";
+import {
+    formatCurrency,
+    getMinMoq,
+    getVariantLabel,
+} from "@/lib/products/display";
 
 const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
+const TOAST_MS = 4000;
+
+const formatQuantity = (value: number) =>
+    new Intl.NumberFormat("vi-VN").format(value);
 
 type CartProduct = {
     productId: number;
@@ -30,18 +47,10 @@ type CartProduct = {
     imageSrc?: string | null;
 };
 
-type OpenPayload = CartProduct & { anchorRect?: DOMRect | null };
-type FlyToken = {
-    id: number;
-    name: string;
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
-};
-
 type CartConfiguratorContextValue = {
-    openConfigurator: (product: OpenPayload) => void;
+    openConfigurator: (product: CartProduct) => void;
+    /** Shows the "added to cart" toast (also used by add flows outside the dialog). */
+    notifyAdded: (name: string) => void;
 };
 const CartConfiguratorContext =
     createContext<CartConfiguratorContextValue | null>(null);
@@ -81,7 +90,7 @@ function getPriceTierForQuantity(
     );
 }
 
-function inferCupModel(product?: OpenPayload | null) {
+function inferCupModel(product?: CartProduct | null) {
     const text =
         `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
     if (text.includes("pp")) return "PP";
@@ -89,7 +98,7 @@ function inferCupModel(product?: OpenPayload | null) {
     return "PET";
 }
 
-function inferMaterial(product?: OpenPayload | null) {
+function inferMaterial(product?: CartProduct | null) {
     const text =
         `${product?.name ?? ""} ${product?.categoryName ?? ""}`.toLowerCase();
     if (text.includes("pp")) return "PP";
@@ -97,7 +106,7 @@ function inferMaterial(product?: OpenPayload | null) {
     return "PET";
 }
 
-function inferSize(product?: OpenPayload | null) {
+function inferSize(product?: CartProduct | null) {
     const text = `${product?.name ?? ""} ${product?.categoryName ?? ""}`;
     return (
         text
@@ -112,7 +121,7 @@ export default function CartConfiguratorProvider({
     children: ReactNode;
 }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [activeProduct, setActiveProduct] = useState<OpenPayload | null>(
+    const [activeProduct, setActiveProduct] = useState<CartProduct | null>(
         null,
     );
     const [configuration, setConfiguration] =
@@ -127,9 +136,9 @@ export default function CartConfiguratorProvider({
     const [selectedLidPriceId, setSelectedLidPriceId] = useState<number | null>(
         null,
     );
-    const [flyToken, setFlyToken] = useState<FlyToken | null>(null);
-    const confirmRef = useRef<HTMLButtonElement>(null);
-    const flyTokenIdRef = useRef(0);
+    const [toast, setToast] = useState<{ name: string } | null>(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const sheetBodyRef = useRef<HTMLDivElement>(null);
 
     const selectedVariant =
         activeProduct?.variants?.find(
@@ -152,6 +161,10 @@ export default function CartConfiguratorProvider({
         selectedLid?.variants.find((v) => v.id === selectedLidPriceId) ?? null;
     const lidUnitPrice = selectedLidVariant?.priceTiers[0]?.unitPrice ?? 0;
     const totalUnitPrice = activeUnitPrice + lidUnitPrice;
+    // Display only: the add flow below still rounds quantity to whole thousands
+    const minOrderQuantity = getMinMoq({
+        variants: selectedVariant ? [selectedVariant] : [],
+    });
 
     const getMatchingLidVariants = (lid: ProductDto) => {
         if (!selectedVariant) return lid.variants;
@@ -160,7 +173,7 @@ export default function CartConfiguratorProvider({
         );
     };
 
-    const openConfigurator = (product: OpenPayload) => {
+    const openConfigurator = (product: CartProduct) => {
         const firstVariant = product.variants?.[0] ?? null;
         const firstTier = getFirstPriceTier(firstVariant);
         const rawQty =
@@ -272,6 +285,9 @@ export default function CartConfiguratorProvider({
         }));
     };
 
+    // A new object per call, so adding the same item again restarts the timer
+    const notifyAdded = (name: string) => setToast({ name });
+
     const handleConfirm = () => {
         if (!activeProduct) return;
 
@@ -325,199 +341,231 @@ export default function CartConfiguratorProvider({
             });
         }
 
-        const rect = confirmRef.current?.getBoundingClientRect();
-        if (activeProduct.anchorRect && rect) {
-            flyTokenIdRef.current += 1;
-            setFlyToken({
-                id: flyTokenIdRef.current,
-                name: activeProduct.name,
-                fromX:
-                    activeProduct.anchorRect.left +
-                    activeProduct.anchorRect.width / 2,
-                fromY:
-                    activeProduct.anchorRect.top +
-                    activeProduct.anchorRect.height / 2,
-                toX: rect.left + rect.width / 2,
-                toY: rect.top + rect.height / 2,
-            });
-        }
-
+        notifyAdded(activeProduct.name);
         setIsOpen(false);
     };
 
+    const close = () => setIsOpen(false);
+
+    // React state drives the native dialog; showModal() gives focus trap, Escape and focus return
     useEffect(() => {
-        if (!flyToken) return;
-        const timeout = window.setTimeout(() => setFlyToken(null), 750);
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        if (isOpen && !dialog.open) {
+            dialog.showModal();
+            sheetBodyRef.current?.scrollTo(0, 0);
+        } else if (!isOpen && dialog.open) {
+            dialog.close();
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!toast) return;
+        const timeout = window.setTimeout(() => setToast(null), TOAST_MS);
         return () => window.clearTimeout(timeout);
-    }, [flyToken]);
+    }, [toast]);
 
     return (
-        <CartConfiguratorContext.Provider value={{ openConfigurator }}>
+        <CartConfiguratorContext.Provider
+            value={{ openConfigurator, notifyAdded }}
+        >
             {children}
-            {isOpen && activeProduct ? (
-                <div
-                    className="cart-configurator-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Cấu hình sản phẩm"
-                >
-                    <button
-                        type="button"
-                        className="cart-configurator-backdrop"
-                        aria-label="Đóng cấu hình"
-                        onClick={() => setIsOpen(false)}
-                    />
-                    <section className="product-config-sheet">
-                        <div className="sheet-handle" />
-                        <div className="sheet-product-summary">
-                            <div className="sheet-product-image">
+            <dialog
+                ref={dialogRef}
+                className="product-config-sheet"
+                aria-labelledby="config-title"
+                onClose={close}
+                onClick={(event) => {
+                    // Only the backdrop targets the dialog itself (it has no padding)
+                    if (event.target === event.currentTarget) close();
+                }}
+            >
+                {activeProduct ? (
+                    <>
+                        <header className="sheet-header">
+                            <h2 id="config-title">{activeProduct.name}</h2>
+                            <button
+                                type="button"
+                                className="icon-button ghost"
+                                aria-label="Đóng"
+                                onClick={close}
+                            >
+                                <CloseIcon width={22} height={22} />
+                            </button>
+                        </header>
+
+                        <div ref={sheetBodyRef} className="sheet-body">
+                            <div className="sheet-product-summary">
                                 {activeProduct.imageSrc ? (
-                                    <Image
-                                        src={activeProduct.imageSrc}
-                                        alt={activeProduct.name}
-                                        width={220}
-                                        height={220}
-                                    />
+                                    <div className="sheet-product-image">
+                                        <Image
+                                            src={activeProduct.imageSrc}
+                                            alt=""
+                                            width={220}
+                                            height={220}
+                                        />
+                                    </div>
                                 ) : null}
+                                <div>
+                                    <p className="sheet-price">
+                                        {formatCurrency(totalUnitPrice)} / ly
+                                    </p>
+                                    {minOrderQuantity ? (
+                                        <p className="sheet-moq">
+                                            Đặt tối thiểu{" "}
+                                            {formatQuantity(minOrderQuantity)}{" "}
+                                            ly
+                                        </p>
+                                    ) : null}
+                                    <p className="sheet-specs-row">
+                                        <span>{configuration.size}</span>
+                                        <span>
+                                            {inferMaterial(activeProduct)}
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h2>{activeProduct.name}</h2>
-                                <p className="sheet-price">
-                                    {formatCurrency(totalUnitPrice)} / ly
-                                </p>
-                                <p className="sheet-moq">
-                                    Đặt tối thiểu 1000 ly
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="sheet-specs-row">
-                            <span>{configuration.size}</span>
-                            <span>{inferMaterial(activeProduct)}</span>
-                        </div>
+                            {activeProduct.variants?.length ? (
+                                <ControlGroup label="Dung tích">
+                                    <div className="sheet-variant-options">
+                                        {activeProduct.variants.map(
+                                            (variant) => (
+                                                <button
+                                                    key={variant.id}
+                                                    type="button"
+                                                    aria-pressed={
+                                                        selectedVariant?.id ===
+                                                        variant.id
+                                                    }
+                                                    onClick={() =>
+                                                        selectVariant(variant)
+                                                    }
+                                                >
+                                                    <strong>
+                                                        {getVariantLabel(
+                                                            variant,
+                                                        )}
+                                                    </strong>
+                                                    <span>
+                                                        Từ{" "}
+                                                        {formatCurrency(
+                                                            getFirstPriceTier(
+                                                                variant,
+                                                            )?.unitPrice ??
+                                                                activeProduct.price,
+                                                        )}
+                                                        {" / ly"}
+                                                    </span>
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                </ControlGroup>
+                            ) : null}
 
-                        {activeProduct.variants?.length ? (
-                            <div className="sheet-control-group">
-                                <h3>Biến thể</h3>
-                                <div className="sheet-variant-options">
-                                    {activeProduct.variants.map((variant) => (
+                            {selectedVariant?.priceTiers?.length ? (
+                                <ControlGroup label="Số lượng & đơn giá">
+                                    <div className="sheet-tier-options">
+                                        {selectedVariant.priceTiers.map(
+                                            (tier) => (
+                                                <button
+                                                    key={tier.id}
+                                                    type="button"
+                                                    aria-pressed={
+                                                        selectedTier?.id ===
+                                                        tier.id
+                                                    }
+                                                    onClick={() =>
+                                                        selectPriceTier(tier)
+                                                    }
+                                                >
+                                                    <span>
+                                                        Từ{" "}
+                                                        {formatQuantity(
+                                                            tier.minQuantity,
+                                                        )}{" "}
+                                                        ly
+                                                    </span>
+                                                    <strong>
+                                                        {formatCurrency(
+                                                            tier.unitPrice,
+                                                        )}
+                                                        {" / ly"}
+                                                    </strong>
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                </ControlGroup>
+                            ) : null}
+
+                            <ControlGroup
+                                label="Loại in"
+                                hint="Phí in sẽ được báo trong báo giá"
+                            >
+                                <div className="sheet-segmented-options">
+                                    {printMethodOptions.map((option) => (
                                         <button
-                                            key={variant.id}
+                                            key={option}
                                             type="button"
-                                            onClick={() =>
-                                                selectVariant(variant)
+                                            aria-pressed={
+                                                configuration.printMethod ===
+                                                option
                                             }
-                                            className={
-                                                selectedVariant?.id ===
-                                                variant.id
-                                                    ? "active"
-                                                    : undefined
+                                            onClick={() =>
+                                                updateConfiguration(
+                                                    "printMethod",
+                                                    option,
+                                                )
                                             }
                                         >
-                                            <strong>
-                                                {getVariantLabel(variant)}
-                                            </strong>
-                                            <span>
-                                                Từ{" "}
-                                                {formatCurrency(
-                                                    getFirstPriceTier(variant)
-                                                        ?.unitPrice ??
-                                                        activeProduct.price,
-                                                )}
-                                            </span>
+                                            {option}
                                         </button>
                                     ))}
                                 </div>
-                            </div>
-                        ) : null}
+                            </ControlGroup>
 
-                        {selectedVariant?.priceTiers?.length ? (
-                            <div className="sheet-control-group">
-                                <h3>Bậc giá</h3>
-                                <div className="sheet-tier-options">
-                                    {selectedVariant.priceTiers.map((tier) => (
-                                        <button
-                                            key={tier.id}
-                                            type="button"
-                                            onClick={() =>
-                                                selectPriceTier(tier)
-                                            }
-                                            className={
-                                                selectedTier?.id === tier.id
-                                                    ? "active"
-                                                    : undefined
-                                            }
-                                        >
-                                            <span>
-                                                Từ{" "}
-                                                {new Intl.NumberFormat(
-                                                    "vi-VN",
-                                                ).format(tier.minQuantity)}{" "}
-                                                ly
-                                            </span>
-                                            <strong>
-                                                {formatCurrency(tier.unitPrice)}
-                                            </strong>
-                                        </button>
-                                    ))}
+                            <ControlGroup label="Nắp đi kèm">
+                                <div className="sheet-segmented-options sheet-lid-options">
+                                    <button
+                                        type="button"
+                                        aria-pressed={!selectedLidId}
+                                        onClick={() => selectLid(null)}
+                                    >
+                                        Không nắp
+                                    </button>
+                                    {(activeProduct.compatibleLids ?? []).map(
+                                        (lid) => (
+                                            <button
+                                                key={lid.id}
+                                                type="button"
+                                                aria-pressed={
+                                                    selectedLidId === lid.id
+                                                }
+                                                onClick={() => selectLid(lid)}
+                                            >
+                                                {lid.name}
+                                            </button>
+                                        ),
+                                    )}
                                 </div>
-                            </div>
-                        ) : null}
-
-                        <OptionGroup
-                            label="Loại in"
-                            options={printMethodOptions}
-                            value={configuration.printMethod}
-                            onChange={(value) =>
-                                updateConfiguration("printMethod", value)
-                            }
-                        />
-
-                        <div className="sheet-control-group">
-                            <h3>Nắp đi kèm</h3>
-                            <div className="sheet-segmented-options sheet-lid-options">
-                                <button
-                                    type="button"
-                                    onClick={() => selectLid(null)}
-                                    className={
-                                        !selectedLidId ? "active" : undefined
-                                    }
-                                >
-                                    Không nắp
-                                </button>
-                                {(activeProduct.compatibleLids ?? []).map(
-                                    (lid) => (
-                                        <button
-                                            key={lid.id}
-                                            type="button"
-                                            onClick={() => selectLid(lid)}
-                                            className={
-                                                selectedLidId === lid.id
-                                                    ? "active"
-                                                    : undefined
-                                            }
-                                        >
-                                            {lid.name}
-                                        </button>
-                                    ),
-                                )}
-                            </div>
-                            {selectedLid &&
-                            getMatchingLidVariants(selectedLid).length > 0 ? (
-                                <div className="sheet-tier-options">
-                                    {getMatchingLidVariants(selectedLid).map(
-                                        (variant) => (
+                                {selectedLid &&
+                                getMatchingLidVariants(selectedLid).length >
+                                    0 ? (
+                                    <div className="sheet-tier-options">
+                                        {getMatchingLidVariants(
+                                            selectedLid,
+                                        ).map((variant) => (
                                             <button
                                                 key={variant.id}
                                                 type="button"
-                                                onClick={() =>
-                                                    selectLidVariant(variant)
-                                                }
-                                                className={
+                                                aria-pressed={
                                                     selectedLidPriceId ===
                                                     variant.id
-                                                        ? "active"
-                                                        : undefined
+                                                }
+                                                onClick={() =>
+                                                    selectLidVariant(variant)
                                                 }
                                             >
                                                 <span>
@@ -529,112 +577,120 @@ export default function CartConfiguratorProvider({
                                                         variant.priceTiers[0]
                                                             ?.unitPrice ?? 0,
                                                     )}
+                                                    {" / nắp"}
                                                 </strong>
                                             </button>
-                                        ),
-                                    )}
+                                        ))}
+                                    </div>
+                                ) : null}
+                            </ControlGroup>
+
+                            {lidUnitPrice > 0 ? (
+                                <div className="sheet-price-breakdown">
+                                    <div>
+                                        <span>Ly</span>
+                                        <span>
+                                            {formatCurrency(activeUnitPrice)}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span>
+                                            + Nắp ({selectedLid?.name})
+                                        </span>
+                                        <span>
+                                            {formatCurrency(lidUnitPrice)}
+                                        </span>
+                                    </div>
+                                    <div className="total">
+                                        <span>Tổng/ly</span>
+                                        <strong>
+                                            {formatCurrency(totalUnitPrice)}
+                                        </strong>
+                                    </div>
                                 </div>
                             ) : null}
+
+                            <label className="sheet-note">
+                                <span>Ghi chú</span>
+                                <textarea
+                                    rows={3}
+                                    value={configuration.note ?? ""}
+                                    onChange={(event) =>
+                                        updateConfiguration(
+                                            "note",
+                                            event.target.value,
+                                        )
+                                    }
+                                    placeholder="Ghi chú thêm..."
+                                />
+                            </label>
                         </div>
 
-                        {lidUnitPrice > 0 ? (
-                            <div className="sheet-price-breakdown">
-                                <div>
-                                    <span>Ly</span>
-                                    <span>
-                                        {formatCurrency(activeUnitPrice)}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span>+ Nắp ({selectedLid?.name})</span>
-                                    <span>{formatCurrency(lidUnitPrice)}</span>
-                                </div>
-                                <div className="total">
-                                    <span>Tổng/ly</span>
-                                    <strong>
-                                        {formatCurrency(totalUnitPrice)}
-                                    </strong>
-                                </div>
-                            </div>
-                        ) : null}
+                        <footer className="sheet-footer">
+                            <p className="sheet-footer-summary">
+                                {formatQuantity(configuration.quantity)} ly ×{" "}
+                                {formatCurrency(totalUnitPrice)}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleConfirm}
+                                className="button-primary sheet-submit"
+                            >
+                                Thêm vào giỏ ·{" "}
+                                {formatCurrency(
+                                    totalUnitPrice * configuration.quantity,
+                                )}
+                            </button>
+                        </footer>
+                    </>
+                ) : null}
+            </dialog>
 
-                        <label className="sheet-note">
-                            <span>Ghi chú</span>
-                            <textarea
-                                rows={3}
-                                value={configuration.note ?? ""}
-                                onChange={(event) =>
-                                    updateConfiguration(
-                                        "note",
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="Ghi chú thêm..."
-                            />
-                        </label>
-
-                        <button
-                            ref={confirmRef}
-                            type="button"
-                            onClick={handleConfirm}
-                            className="sheet-submit"
-                        >
-                            Thêm vào giỏ hàng -{" "}
-                            {formatCurrency(
-                                totalUnitPrice * configuration.quantity,
-                            )}
-                        </button>
-                    </section>
-                </div>
-            ) : null}
-            {flyToken ? (
-                <div
-                    key={flyToken.id}
-                    className="pointer-events-none fixed z-[90] rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-xl"
-                    style={
-                        {
-                            "--from-x": `${flyToken.fromX}px`,
-                            "--from-y": `${flyToken.fromY}px`,
-                            "--to-x": `${flyToken.toX}px`,
-                            "--to-y": `${flyToken.toY}px`,
-                            animation:
-                                "fly-to-cart 700ms cubic-bezier(.22,1,.36,1) forwards",
-                        } as CSSProperties
-                    }
-                >
-                    {flyToken.name}
-                </div>
-            ) : null}
+            <div className="toast" role="status" aria-live="polite">
+                {toast ? (
+                    <div className="toast-card">
+                        <CheckIcon
+                            className="toast-icon"
+                            width={20}
+                            height={20}
+                        />
+                        <p>Đã thêm {toast.name} vào giỏ</p>
+                        <Link href="/cart" onClick={() => setToast(null)}>
+                            Xem giỏ hàng
+                        </Link>
+                    </div>
+                ) : null}
+            </div>
         </CartConfiguratorContext.Provider>
     );
 }
 
-function OptionGroup<T extends string>({
+function ControlGroup({
     label,
-    options,
-    value,
-    onChange,
+    hint,
+    children,
 }: {
     label: string;
-    options: T[];
-    value: T;
-    onChange: (value: T) => void;
+    hint?: string;
+    children: ReactNode;
 }) {
+    const id = useId();
     return (
-        <div className="sheet-control-group">
-            <h3>{label}</h3>
-            <div className="sheet-segmented-options">
-                {options.map((option) => (
-                    <button
-                        key={option}
-                        type="button"
-                        onClick={() => onChange(option)}
-                        className={value === option ? "active" : undefined}
-                    >
-                        {option}
-                    </button>
-                ))}
-            </div>
+        <div
+            className="sheet-control-group"
+            role="group"
+            aria-labelledby={`${id}-label`}
+            aria-describedby={hint ? `${id}-hint` : undefined}
+        >
+            <p id={`${id}-label`} className="sheet-group-label">
+                {label}
+            </p>
+            {children}
+            {hint ? (
+                <p id={`${id}-hint`} className="sheet-hint">
+                    {hint}
+                </p>
+            ) : null}
         </div>
     );
 }

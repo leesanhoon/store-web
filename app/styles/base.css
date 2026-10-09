@@ -1,0 +1,302 @@
+/* Element defaults live in the base layer so Tailwind utilities on an element still win */
+@layer base {
+  html {
+    overflow-x: clip;
+    scroll-padding-top: calc(var(--header-h) + 16px);
+    scrollbar-gutter: stable;
+  }
+
+  /* Scroll lock for native <dialog>; must sit on html once html overflow is non-visible */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  body {
+    background: #fff;
+    color: var(--color-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  h1,
+  h2 {
+    font-weight: 400;
+  }
+
+  h3 {
+    font-weight: 500;
+  }
+
+  h4 {
+    font-weight: 600;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--color-line) 0%, var(--color-surface) 50%, var(--color-line) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.15s var(--ease-out-soft, ease-in-out) infinite;
+}
+
+/* One focus ring for every control */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--color-dark-accent);
+}
+
+.button-primary,
+.button-secondary,
+.button-on-dark {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-soft),
+    border-color var(--dur-fast) var(--ease-out-soft),
+    color var(--dur-fast) var(--ease-out-soft);
+}
+
+.button-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+@media (hover: hover) {
+  .button-primary:where(:not(:disabled)):hover {
+    background: var(--color-primary-hover);
+  }
+}
+
+.button-primary:where(:not(:disabled)):active {
+  background: var(--color-primary-active);
+}
+
+.button-secondary {
+  border-color: var(--color-line-strong);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+@media (hover: hover) {
+  .button-secondary:where(:not(:disabled)):hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+.button-on-dark {
+  background: var(--color-dark-accent);
+  color: var(--color-dark);
+}
+
+@media (hover: hover) {
+  .button-on-dark:where(:not(:disabled)):hover {
+    background: color-mix(in srgb, var(--color-dark-accent) 80%, white);
+  }
+}
+
+:is(.button-primary, .button-secondary, .button-on-dark):disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (min-width: 768px) {
+  .button-primary,
+  .button-secondary,
+  .button-on-dark {
+    min-height: 40px;
+  }
+}
+
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-sm focus:bg-ink focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white;
+}
+
+/* ── Sections & Headings ── */
+
+.mobile-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mobile-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mobile-section-heading h2 {
+  color: var(--color-ink);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.mobile-section-heading a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mobile-section-heading a:hover {
+  color: var(--color-primary-hover);
+}
+
+@media (min-width: 768px) {
+  .mobile-section-heading h2 {
+    font-size: 32px;
+  }
+}
+
+.mobile-alert {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: 12px 16px;
+  color: var(--color-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.quantity-dropdown {
+  position: relative;
+  width: 210px;
+}
+
+/* Shared form-control look: quote forms (cart, track order) and quantity selects */
+.quantity-dropdown select,
+.quote-form-card input,
+.quote-form-card select,
+.quote-form-card textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  padding: 8px 12px;
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.quantity-dropdown select {
+  padding-right: 36px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%23061b31' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 12px center;
+  background-size: 16px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.quote-form-card input::placeholder,
+.quote-form-card textarea::placeholder {
+  color: var(--color-muted);
+}
+
+:is(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.detail-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 24px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  padding: 0 8px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.quote-form-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 768px) {
+  .quote-form-card {
+    padding: 24px;
+  }
+}
+
+.quote-form-card label,
+.quote-form-card > div {
+  display: grid;
+  gap: 8px;
+}
+
+.quote-form-card label > span {
+  color: var(--color-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.quote-form-card .req {
+  color: var(--color-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

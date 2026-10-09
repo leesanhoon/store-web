@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useMemo, useState } from "react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import { clearAdminToken } from "@/lib/admin-auth";
 
 export function PlusIcon() {
     return (
@@ -90,19 +93,91 @@ export function FieldLabel({
     required?: boolean;
 }) {
     return (
-        <span className="mb-1.5 block text-[13px] font-extrabold text-[#101a36]">
-            {children}{" "}
-            {required ? <span className="text-red-500">*</span> : null}
+        <span className="mb-1.5 block text-sm font-medium text-label">
+            {children}
+            {required ? (
+                <>
+                    {" "}
+                    <span className="text-danger" aria-hidden="true">
+                        *
+                    </span>
+                    <span className="sr-only">(bắt buộc)</span>
+                </>
+            ) : null}
         </span>
     );
 }
 
+export function LogoutIcon() {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path
+                d="M10 5H6v14h4"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M14 8l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M18 12H9"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </svg>
+    );
+}
+
+/** Logout trigger that asks for confirmation first (sidebar footer + mobile "Thêm" page). */
+export function AdminLogoutButton({
+    children,
+    className = "",
+}: {
+    children: ReactNode;
+    className?: string;
+}) {
+    const router = useRouter();
+    const [confirming, setConfirming] = useState(false);
+
+    return (
+        <>
+            <button
+                type="button"
+                className={className}
+                onClick={() => setConfirming(true)}
+            >
+                {children}
+            </button>
+            <ConfirmModal
+                open={confirming}
+                title="Đăng xuất khỏi trang quản trị?"
+                confirmLabel="Đăng xuất"
+                onCancel={() => setConfirming(false)}
+                onConfirm={() => {
+                    clearAdminToken();
+                    router.replace("/account");
+                }}
+            />
+        </>
+    );
+}
+
+// The window is the scroll container (no inner admin scroller any more)
 export function preserveAdminScroll() {
-    const scroller = document.getElementById("admin-main-content");
-    const scrollTop = scroller?.scrollTop ?? 0;
-    const restore = () => {
-        if (scroller) scroller.scrollTop = scrollTop;
-    };
+    const scrollY = window.scrollY;
+    const restore = () => window.scrollTo({ top: scrollY });
     window.requestAnimationFrame(restore);
     window.setTimeout(restore, 120);
     window.setTimeout(restore, 320);
