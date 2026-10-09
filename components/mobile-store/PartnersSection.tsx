@@ -1,50 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRightIcon } from "@/components/mobile-store/icons";
 import type { PartnerDto } from "@/lib/api/partners";
+import { SITE } from "@/lib/site";
 
 type Props = {
     partners: PartnerDto[];
 };
-
-type DisplayPartner = {
-    id: number | string;
-    name: string;
-    imageUrl: string | null;
-    href: string;
-    imageCount: number;
-};
-
-const DEMO_PARTNERS: DisplayPartner[] = [
-    {
-        id: "phuc-long",
-        name: "Phúc Long",
-        imageUrl: null,
-        href: "/products",
-        imageCount: 0,
-    },
-    {
-        id: "daily-bean",
-        name: "Daily Bean",
-        imageUrl: null,
-        href: "/products",
-        imageCount: 0,
-    },
-    {
-        id: "milk-lab",
-        name: "Milk Lab",
-        imageUrl: null,
-        href: "/products",
-        imageCount: 0,
-    },
-    {
-        id: "brew-corner",
-        name: "Brew Corner",
-        imageUrl: null,
-        href: "/products",
-        imageCount: 0,
-    },
-];
 
 function getInitials(name: string) {
     return name
@@ -55,7 +16,7 @@ function getInitials(name: string) {
         .toUpperCase();
 }
 
-function toDisplayPartners(partners: PartnerDto[]): DisplayPartner[] {
+function toDisplayPartners(partners: PartnerDto[]) {
     return partners.map((p) => {
         const firstGallery =
             p.galleryImages.length > 0
@@ -74,71 +35,68 @@ function toDisplayPartners(partners: PartnerDto[]): DisplayPartner[] {
 }
 
 export default function PartnersSection({ partners }: Props) {
-    const items =
-        partners.length > 0 ? toDisplayPartners(partners) : DEMO_PARTNERS;
+    if (partners.length === 0) return null;
 
     return (
-        <section className="mobile-section">
-            <div className="mobile-section-heading">
-                <h2>Đối tác tin dùng</h2>
-                <Link href="/products">Xem sản phẩm</Link>
-            </div>
-
-            <div className="partners-grid" aria-label="Đối tác nổi bật">
-                {items.map((item) => (
-                    <Link
-                        key={item.id}
-                        href={item.href}
-                        className="partner-tile"
-                    >
-                        <div className="partner-tile-shell">
-                            <div className="partner-tile-image">
-                                {item.imageUrl ? (
-                                    <Image
-                                        src={item.imageUrl}
-                                        alt={`Sản phẩm ${item.name}`}
-                                        width={400}
-                                        height={300}
-                                        className="partner-tile-img"
-                                    />
-                                ) : (
-                                    <div className="partner-tile-placeholder">
-                                        <span>{getInitials(item.name)}</span>
-                                    </div>
-                                )}
-                                {item.imageCount > 0 ? (
-                                    <span className="partner-tile-badge">
-                                        {item.imageCount} ảnh
-                                    </span>
-                                ) : null}
-                            </div>
-                            <div className="partner-tile-footer">
-                                <span className="partner-tile-name">
-                                    {item.name}
-                                </span>
-                                <span className="partner-tile-arrow">
-                                    <ChevronRightIcon className="h-3.5 w-3.5" />
-                                </span>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
-            </div>
-
-            <div className="partners-cta-panel">
-                <div className="partners-cta-copy">
-                    <strong>Bạn là chủ quán F&B?</strong>
-                    <p>
-                        Liên hệ để nhận tư vấn mẫu ly, báo giá sỉ và hỗ trợ
-                        thiết kế logo miễn phí.
-                    </p>
+        <section className="home-section">
+            <div className="site-container">
+                <div className="mobile-section-heading">
+                    <h2>Đối tác tin dùng</h2>
                 </div>
-                <Link href="/products" className="partners-cta-btn">
-                    <span>Yêu cầu báo giá</span>
-                    <span className="partners-cta-icon">
-                        <ChevronRightIcon className="h-4 w-4" />
-                    </span>
-                </Link>
+
+                <ul className="partners-grid">
+                    {toDisplayPartners(partners).map((item) => (
+                        <li key={item.id}>
+                            <Link href={item.href} className="partner-tile">
+                                <span className="partner-tile-image">
+                                    {item.imageUrl ? (
+                                        <Image
+                                            src={item.imageUrl}
+                                            alt=""
+                                            width={400}
+                                            height={300}
+                                            sizes="(min-width:1024px) 260px, (min-width:768px) 25vw, 50vw"
+                                        />
+                                    ) : (
+                                        <span aria-hidden="true">
+                                            {getInitials(item.name)}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="partner-tile-body">
+                                    <span className="partner-tile-name">
+                                        {item.name}
+                                    </span>
+                                    {item.imageCount > 0 ? (
+                                        <span className="partner-tile-meta">
+                                            {item.imageCount} ảnh mẫu
+                                        </span>
+                                    ) : null}
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+
+                <div className="partners-cta-panel">
+                    <div>
+                        <h3>Bạn là chủ quán F&amp;B?</h3>
+                        <p>
+                            Liên hệ để nhận tư vấn mẫu ly, báo giá sỉ và hỗ trợ
+                            thiết kế logo miễn phí.
+                        </p>
+                    </div>
+                    {SITE.zaloHref ? (
+                        <a
+                            href={SITE.zaloHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="button-primary"
+                        >
+                            Đặt mẫu tương tự
+                        </a>
+                    ) : null}
+                </div>
             </div>
         </section>
     );

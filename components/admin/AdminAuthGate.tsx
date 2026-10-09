@@ -24,10 +24,10 @@ export default function AdminAuthGate({ children }: { children: ReactNode }) {
 
   if (!allowed) {
     return (
-      <div className="grid min-h-[320px] place-items-center px-6 text-center text-[#101a36]">
+      <div role="status" className="grid min-h-[320px] place-items-center px-6 text-center">
         <div>
-          <p className="text-[15px] font-extrabold">Đang kiểm tra đăng nhập</p>
-          <p className="mt-2 text-[12px] font-semibold text-slate-500">Vui lòng đăng nhập để vào quản trị.</p>
+          <p className="text-base font-semibold text-ink">Đang kiểm tra đăng nhập</p>
+          <p className="mt-2 text-sm text-muted">Vui lòng đăng nhập để vào quản trị.</p>
         </div>
       </div>
     );

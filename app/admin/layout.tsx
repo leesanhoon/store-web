@@ -2,24 +2,42 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ReactNode, Suspense } from "react";
 import AdminAuthGate from "@/components/admin/AdminAuthGate";
-import { clearAdminToken } from "@/lib/admin-auth";
+import { AdminLogoutButton, LogoutIcon } from "@/components/admin/shared";
 
 const adminNav = [
     { href: "/admin", label: "Tổng quan", icon: "home" },
-    { href: "/admin/product", label: "Sản phẩm", icon: "box" },
     { href: "/admin/order", label: "Đơn hàng", icon: "order" },
-    { href: "/admin/manage", label: "Quản lý", icon: "grid" },
+    { href: "/admin/product", label: "Sản phẩm", icon: "box" },
+    { href: "/admin/lid", label: "Nắp", icon: "lid" },
+    { href: "/admin/partner", label: "Đối tác", icon: "partner" },
+    { href: "/admin/category", label: "Danh mục", icon: "grid" },
 ];
+
+// Below 1024px: the first 4 sections + "Thêm" (the manage hub links the rest and logout)
+const mobileNav = [
+    ...adminNav.slice(0, 4),
+    { href: "/admin/manage", label: "Thêm", icon: "more" },
+];
+
+const MORE_ROUTES = ["/admin/manage", "/admin/partner", "/admin/category"];
+
+function isActive(pathname: string, href: string) {
+    if (href === "/admin") return pathname === href;
+    if (href === "/admin/manage") {
+        return MORE_ROUTES.some((route) => pathname.startsWith(route));
+    }
+    return pathname.startsWith(href);
+}
 
 function NavIcon({ name }: { name: string }) {
     return (
         <svg
             viewBox="0 0 24 24"
             fill="none"
-            className="h-[21px] w-[21px]"
+            className="h-5 w-5 shrink-0"
             aria-hidden="true"
         >
             {name === "home" ? (
@@ -149,170 +167,108 @@ function NavIcon({ name }: { name: string }) {
                         strokeWidth="1.8"
                     />
                 </>
+            ) : name === "external" ? (
+                <path
+                    d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
             ) : (
-                <>
-                    <path
-                        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                    />
-                    <path
-                        d="M19 13.5v-3l-2-.5a6 6 0 0 0-.7-1.6l1.1-1.8-2.1-2.1-1.8 1.1a6 6 0 0 0-1.6-.7L11.5 3h-3L8 4.9a6 6 0 0 0-1.6.7L4.6 4.5 2.5 6.6l1.1 1.8a6 6 0 0 0-.7 1.6L1 10.5v3l1.9.5c.2.6.4 1.1.7 1.6l-1.1 1.8 2.1 2.1 1.8-1.1c.5.3 1 .5 1.6.7l.5 1.9h3l.5-1.9c.6-.2 1.1-.4 1.6-.7l1.8 1.1 2.1-2.1-1.1-1.8c.3-.5.5-1 .7-1.6l1.9-.5Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
-                </>
+                <path
+                    d="M5 12h.01M12 12h.01M19 12h.01"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                />
             )}
         </svg>
     );
 }
 
-function LogoutIcon() {
+function AdminLogo() {
     return (
-        <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-6 w-6"
-            aria-hidden="true"
-        >
-            <path
-                d="M10 5H6v14h4"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M14 8l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M18 12H9"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
-}
-
-function AdminChrome() {
-    return (
-        <div className="admin-chrome">
-            <span>9:41</span>
-            <span className="flex items-center gap-1.5">
-                <span className="signal-bars">
-                    <i />
-                    <i />
-                    <i />
-                </span>
-                <span className="wifi-dot" />
-                <span className="battery-icon" />
-            </span>
-        </div>
-    );
-}
-
-function AdminLayoutInner({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const mode = searchParams.get("mode");
-
-    const logout = () => {
-        clearAdminToken();
-        router.replace("/account");
-    };
-
-    return (
-        <div className="admin-stage">
-            <div className="admin-phone">
-                <AdminAuthGate>
-                    <AdminChrome />
-                    <header className="admin-topbar">
-                        <button
-                            type="button"
-                            className="admin-icon-button"
-                            aria-label="Đăng xuất"
-                            onClick={logout}
-                        >
-                            <LogoutIcon />
-                        </button>
-
-                        <Link
-                            href="/admin"
-                            className="flex items-center justify-center gap-2 text-[#101a36]"
-                        >
-                            <Image
-                                src="/images/logo.png"
-                                alt="In ly DTP - CN Quảng Ngãi"
-                                width={42}
-                                height={26}
-                                className="h-6 w-auto object-contain"
-                                priority
-                            />
-                            <span className="text-[19px] font-extrabold leading-none tracking-tight">
-                                In ly DTP - CN Quảng Ngãi
-                            </span>
-                        </Link>
-
-                        <span
-                            className="admin-icon-button"
-                            aria-hidden="true"
-                        />
-                    </header>
-
-                    <main id="admin-main-content" className="admin-content">
-                        {children}
-                    </main>
-
-                    <nav
-                        className="admin-bottom-nav"
-                        aria-label="Admin navigation"
-                    >
-                        {adminNav.map((item) => {
-                            const manageRoutes = [
-                                "/admin/lid",
-                                "/admin/partner",
-                                "/admin/category",
-                            ];
-                            const active =
-                                item.href === "/admin"
-                                    ? pathname === item.href
-                                    : item.href === "/admin/manage"
-                                      ? manageRoutes.some((r) =>
-                                            pathname.startsWith(r),
-                                        ) || pathname === "/admin/manage"
-                                      : pathname.startsWith(item.href) && !mode;
-
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    aria-current={active ? "page" : undefined}
-                                    className={active ? "active" : undefined}
-                                >
-                                    <NavIcon name={item.icon} />
-                                    <span>{item.label}</span>
-                                </Link>
-                            );
-                        })}
-                    </nav>
-                </AdminAuthGate>
-            </div>
-        </div>
+        <Image
+            src="/images/logo.png"
+            alt=""
+            width={49}
+            height={32}
+            className="h-8 w-auto shrink-0"
+            priority
+        />
     );
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
+
     return (
-        <Suspense fallback={null}>
-            <AdminLayoutInner>{children}</AdminLayoutInner>
-        </Suspense>
+        <div className="admin-shell">
+            <a href="#admin-main-content" className="skip-link">
+                Bỏ qua tới nội dung chính
+            </a>
+
+            <aside className="admin-sidebar">
+                <Link href="/admin" className="admin-sidebar-brand">
+                    <AdminLogo />
+                    <span>Quản trị</span>
+                </Link>
+
+                <nav className="admin-sidebar-nav" aria-label="Điều hướng quản trị">
+                    {adminNav.map((item) => (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                            className="admin-sidebar-link"
+                        >
+                            <NavIcon name={item.icon} />
+                            <span>{item.label}</span>
+                        </Link>
+                    ))}
+                </nav>
+
+                <div className="admin-sidebar-footer">
+                    <Link href="/" className="admin-sidebar-link">
+                        <NavIcon name="external" />
+                        <span>Xem cửa hàng</span>
+                    </Link>
+                    <AdminLogoutButton className="admin-sidebar-link">
+                        <LogoutIcon />
+                        <span>Đăng xuất</span>
+                    </AdminLogoutButton>
+                </div>
+            </aside>
+
+            <div className="admin-body">
+                <header className="admin-topbar">
+                    <Link href="/admin" className="admin-topbar-brand">
+                        <AdminLogo />
+                        <span>In ly DTP - CN Quảng Ngãi</span>
+                    </Link>
+                </header>
+
+                <main id="admin-main-content" className="admin-content">
+                    {/* Gate only the content so the shell stays visible during the auth check */}
+                    <Suspense fallback={null}>
+                        <AdminAuthGate>{children}</AdminAuthGate>
+                    </Suspense>
+                </main>
+
+                <nav className="admin-bottom-nav" aria-label="Điều hướng quản trị">
+                    {mobileNav.map((item) => (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                        >
+                            <NavIcon name={item.icon} />
+                            <span>{item.label}</span>
+                        </Link>
+                    ))}
+                </nav>
+            </div>
+        </div>
     );
 }

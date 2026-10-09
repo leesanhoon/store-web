@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
 import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import type { CartUnit } from "@/lib/cart";
@@ -31,11 +30,9 @@ export default function AddToCartButton({
   imageSrc,
 }: Props) {
   const { openConfigurator } = useCartConfigurator();
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <button
-      ref={buttonRef}
       type="button"
       onClick={() =>
         openConfigurator({
@@ -48,7 +45,6 @@ export default function AddToCartButton({
           unit,
           imageSrc,
           defaultQuantity: quantity,
-          anchorRect: buttonRef.current?.getBoundingClientRect() ?? null,
         })
       }
       className="button-primary w-full"

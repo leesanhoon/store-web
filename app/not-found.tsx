@@ -1,30 +1,14 @@
-import Link from "next/link";
-import MobileAppShell from "@/components/mobile-store/MobileAppShell";
+import NotFoundContent, { notFoundMetadata } from "@/components/NotFoundContent";
+import SiteChrome from "@/components/mobile-store/SiteChrome";
 
-export const metadata = {
-  title: "Không tìm thấy trang",
-};
+export const metadata = notFoundMetadata;
 
+// Unmatched URLs render this boundary outside app/(public)/layout.tsx, so it brings its own chrome.
+// notFound() thrown inside (public) uses app/(public)/not-found.tsx instead (the layout already has the chrome).
 export default function NotFound() {
   return (
-    <MobileAppShell>
-      <div className="notfound-screen">
-        <span className="notfound-code">404</span>
-        <h1 className="notfound-title">Không tìm thấy trang này</h1>
-        <p className="notfound-copy">
-          Liên kết có thể đã thay đổi hoặc sản phẩm không còn được hiển thị.
-          Bạn có thể quay lại danh mục để tiếp tục chọn mẫu ly.
-        </p>
-        <div className="notfound-actions">
-          <Link href="/" className="button-primary">
-            Về trang chủ
-            <span className="cta-arrow" aria-hidden>↗</span>
-          </Link>
-          <Link href="/products" className="button-secondary">
-            Xem danh mục sản phẩm
-          </Link>
-        </div>
-      </div>
-    </MobileAppShell>
+    <SiteChrome>
+      <NotFoundContent />
+    </SiteChrome>
   );
 }

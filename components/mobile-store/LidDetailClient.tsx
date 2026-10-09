@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useState } from "react";
+import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
 import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import { addToCart, defaultCartConfiguration } from "@/lib/cart";
 import { formatCurrency } from "@/lib/products/display";
+import { SITE } from "@/lib/site";
 
 const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
-const CONTACT_VALUE = "contact";
+const MAX_QUANTITY = QUANTITY_OPTIONS[QUANTITY_OPTIONS.length - 1];
 
 type Props = {
     product: ProductDto;
@@ -14,14 +16,15 @@ type Props = {
 };
 
 export default function LidDetailClient({ product, imageSrc }: Props) {
+    const { notifyAdded } = useCartConfigurator();
+    const sizeHeadingId = useId();
+    const quantityId = useId();
     const sortedVariants = [...product.variants].sort(
         (a, b) => b.diameterMm - a.diameterMm,
     );
     const [selectedVariant, setSelectedVariant] =
         useState<ProductVariantDto | null>(sortedVariants[0] ?? null);
     const [quantity, setQuantity] = useState(1000);
-    const [added, setAdded] = useState(false);
-    const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
     const getUnitPrice = (variant: ProductVariantDto | null) =>
         variant?.priceTiers[0]?.unitPrice ?? 0;
@@ -57,28 +60,26 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
             },
         });
 
-        setAdded(true);
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => setAdded(false), 2000);
+        notifyAdded(product.name);
     };
 
     return (
         <>
             {sortedVariants.length > 0 ? (
-                <section className="detail-section">
-                    <div className="mobile-section-heading">
-                        <h3>Chọn kích thước</h3>
-                    </div>
-                    <div className="lid-size-options">
+                <div className="detail-section">
+                    <h2 id={sizeHeadingId} className="detail-subheading">
+                        Chọn kích thước
+                    </h2>
+                    <div
+                        role="group"
+                        aria-labelledby={sizeHeadingId}
+                        className="lid-size-options"
+                    >
                         {sortedVariants.map((variant) => (
                             <button
                                 key={variant.id}
                                 type="button"
-                                className={
-                                    selectedVariant?.id === variant.id
-                                        ? "active"
-                                        : undefined
-                                }
+                                aria-pressed={selectedVariant?.id === variant.id}
                                 onClick={() => setSelectedVariant(variant)}
                             >
                                 <strong>
@@ -86,43 +87,44 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                                         `⌀${variant.diameterMm}mm`}
                                 </strong>
                                 <span>
-                                    {formatCurrency(getUnitPrice(variant))}
+                                    {formatCurrency(getUnitPrice(variant))} /nắp
                                 </span>
                             </button>
                         ))}
                     </div>
-                </section>
+                </div>
             ) : null}
 
-            <section className="detail-section">
-                <div className="mobile-section-heading">
-                    <h3>Số lượng</h3>
-                </div>
+            <div className="detail-section">
+                <label htmlFor={quantityId} className="detail-subheading">
+                    Số lượng
+                </label>
                 <div className="quantity-dropdown">
                     <select
-                        value={quantity <= 10000 ? quantity : CONTACT_VALUE}
-                        onChange={(e) => {
-                            if (e.target.value === CONTACT_VALUE) {
-                                window.open(
-                                    "https://zalo.me/0905123456",
-                                    "_blank",
-                                );
-                                return;
-                            }
-                            setQuantity(Number(e.target.value));
-                        }}
+                        id={quantityId}
+                        value={quantity}
+                        onChange={(e) => setQuantity(Number(e.target.value))}
                     >
                         {QUANTITY_OPTIONS.map((qty) => (
                             <option key={qty} value={qty}>
-                                {qty.toLocaleString("vi-VN")} ly
+                                {qty.toLocaleString("vi-VN")} nắp
                             </option>
                         ))}
-                        <option value={CONTACT_VALUE}>
-                            Trên 10.000 — Liên hệ
-                        </option>
                     </select>
                 </div>
-            </section>
+                {SITE.zaloHref ? (
+                    <p className="detail-note">
+                        Cần trên {MAX_QUANTITY.toLocaleString("vi-VN")} nắp?{" "}
+                        <a
+                            href={SITE.zaloHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Nhắn Zalo
+                        </a>
+                    </p>
+                ) : null}
+            </div>
 
             <div className="detail-sticky-cta">
                 <button
@@ -131,11 +133,9 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                     disabled={!selectedVariant}
                     className="button-primary w-full"
                 >
-                    {added
-                        ? "Đã thêm vào giỏ hàng ✓"
-                        : selectedVariant
-                          ? `Thêm vào giỏ hàng - ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
-                          : "Chọn kích thước"}
+                    {selectedVariant
+                        ? `Thêm vào giỏ · ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
+                        : "Chọn kích thước"}
                 </button>
             </div>
         </>

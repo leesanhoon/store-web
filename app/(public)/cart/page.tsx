@@ -2,26 +2,58 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ChangeEvent,
+    type FormEvent,
+} from "react";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay, { InlineSpinner } from "@/components/ui/LoadingOverlay";
-import MobileAppShell from "@/components/mobile-store/MobileAppShell";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
-import { TrashIcon } from "@/components/mobile-store/icons";
+import {
+    CartIcon,
+    ChatIcon,
+    CheckIcon,
+    CopyIcon,
+    PhoneIcon,
+    TrashIcon,
+} from "@/components/mobile-store/icons";
 import {
     clearCart,
-    formatUnit,
     getCartItemKey,
-    getCartItems,
     removeCartItem,
     updateCartItemQuantity,
     type CartItem,
 } from "@/lib/cart";
 import { createOrder, type CreateOrderRequest } from "@/lib/api/orders";
 import { formatCurrency } from "@/lib/products/display";
+import { SITE } from "@/lib/site";
+import { useCartItems } from "@/lib/use-cart";
+import CartLoading from "./loading";
 
-const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
-const CONTACT_VALUE = "contact";
+const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000];
+const PHONE_PATTERN = /^(0|\+84)\d{9}$/;
+const SUBMIT_ERROR =
+    "Không gửi được yêu cầu báo giá. Vui lòng thử lại sau ít phút.";
+
+const NEXT_STEPS = [
+    {
+        title: "Xác nhận yêu cầu",
+        text: "Chúng tôi sẽ liên hệ qua số điện thoại để xác nhận đơn hàng. Phí in sẽ được báo trong báo giá.",
+    },
+    {
+        title: "Duyệt thiết kế miễn phí",
+        text: "Bạn xem và duyệt mẫu logo trên ly trước khi sản xuất.",
+    },
+    {
+        title: "Sản xuất & giao 3-5 ngày",
+        text: "In nhanh 3-5 ngày, giao toàn quốc.",
+    },
+];
 
 type OrderForm = {
     fullName: string;
@@ -29,6 +61,8 @@ type OrderForm = {
     businessName: string;
     note: string;
 };
+
+type FieldErrors = Partial<Record<keyof OrderForm, string>>;
 
 const initialForm: OrderForm = {
     fullName: "",
@@ -46,58 +80,90 @@ function getItemSubtotal(item: CartItem) {
     return getItemUnitPrice(item) * item.quantity;
 }
 
+function validateForm(form: OrderForm): FieldErrors {
+    const errors: FieldErrors = {};
+    if (!form.fullName.trim()) errors.fullName = "Vui lòng nhập họ tên.";
+    const phone = form.phone.replace(/[\s.]/g, "");
+    if (!phone) errors.phone = "Vui lòng nhập số điện thoại.";
+    else if (!PHONE_PATTERN.test(phone))
+        errors.phone = "Số điện thoại chưa đúng, ví dụ 0912 345 678.";
+    return errors;
+}
+
+function RequiredMark() {
+    return (
+        <>
+            {" "}
+            <span className="req" aria-hidden="true">
+                *
+            </span>
+            <span className="sr-only">(bắt buộc)</span>
+        </>
+    );
+}
+
 export default function CartPage() {
-    const [items, setItems] = useState<CartItem[]>(() => getCartItems());
+    const items = useCartItems();
     const [form, setForm] = useState<OrderForm>(initialForm);
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [submitting, setSubmitting] = useState(false);
     const [successOrderId, setSuccessOrderId] = useState<number | null>(null);
+    const [copied, setCopied] = useState(false);
     const [error, setError] = useState("");
     const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const nameRef = useRef<HTMLInputElement>(null);
+    const phoneRef = useRef<HTMLInputElement>(null);
+    const successHeadingRef = useRef<HTMLHeadingElement>(null);
 
     const totalAmount = useMemo(
-        () => items.reduce((sum, item) => sum + getItemSubtotal(item), 0),
+        () => (items ?? []).reduce((sum, item) => sum + getItemSubtotal(item), 0),
         [items],
     );
 
-    const reloadCart = () => setItems(getCartItems());
+    // The submit button that had focus is gone; land screen readers on the result
+    useEffect(() => {
+        if (successOrderId !== null) successHeadingRef.current?.focus();
+    }, [successOrderId]);
 
     const handleQuantityChange = (item: CartItem, newQuantity: number) => {
         const key = getCartItemKey(item);
         if (newQuantity < 1000) return;
         updateCartItemQuantity(key, newQuantity);
-        reloadCart();
-    };
-
-    const handleRemoveItem = (item: CartItem) => {
-        setRemoveTarget(item);
     };
 
     const confirmRemove = useCallback(() => {
         if (!removeTarget) return;
         removeCartItem(getCartItemKey(removeTarget));
-        reloadCart();
         setRemoveTarget(null);
     }, [removeTarget]);
 
-    const handleClear = () => {
-        setShowClearConfirm(true);
-    };
-
     const confirmClear = useCallback(() => {
         clearCart();
-        setItems([]);
         setShowClearConfirm(false);
     }, []);
 
-    const canSubmit =
-        items.length > 0 &&
-        form.fullName.trim().length > 0 &&
-        form.phone.trim().length > 0 &&
-        !submitting;
+    const updateField =
+        (field: keyof OrderForm) =>
+        (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            const { value } = event.target;
+            setForm((current) => ({ ...current, [field]: value }));
+            setFieldErrors((current) =>
+                current[field] ? { ...current, [field]: undefined } : current,
+            );
+        };
 
-    const handleSubmit = async () => {
-        if (!canSubmit) return;
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!items?.length || submitting) return;
+
+        const errors = validateForm(form);
+        setFieldErrors(errors);
+        if (errors.fullName || errors.phone) {
+            (errors.fullName ? nameRef : phoneRef).current?.focus();
+            return;
+        }
+
         setSubmitting(true);
         setError("");
 
@@ -129,284 +195,384 @@ export default function CartPage() {
             const result = await createOrder(payload);
             setSuccessOrderId(result.id);
             clearCart();
-            setItems([]);
             setForm(initialForm);
         } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Không thể gửi báo giá. Vui lòng thử lại.",
-            );
+            console.error("[cart] Không gửi được yêu cầu báo giá", err);
+            setError(SUBMIT_ERROR);
         } finally {
             setSubmitting(false);
         }
     };
 
+    const copyOrderId = async (orderId: number) => {
+        try {
+            await navigator.clipboard.writeText(String(orderId));
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+        } catch {
+            // Clipboard blocked (permissions or insecure context): the id stays visible to copy by hand
+        }
+    };
+
     if (successOrderId !== null) {
         return (
-            <MobileAppShell>
-                <div className="quote-screen">
-                    <MobileTopBar
-                        title="Đặt hàng thành công"
-                        backHref="/products"
-                        backLabel="Quay lại danh mục"
-                    />
-                    <section className="cart-success">
-                        <div className="cart-success-icon">✓</div>
-                        <h2>Đặt hàng thành công</h2>
+            <div className="quote-screen">
+                <section
+                    className="cart-success"
+                    aria-labelledby="cart-success-title"
+                >
+                    <span className="cart-success-icon">
+                        <CheckIcon className="h-7 w-7" />
+                    </span>
+                    <h1
+                        id="cart-success-title"
+                        ref={successHeadingRef}
+                        tabIndex={-1}
+                    >
+                        Đã gửi yêu cầu báo giá
+                    </h1>
+
+                    <div className="cart-success-id">
                         <p>
                             Mã đơn hàng của bạn:{" "}
                             <strong>#{successOrderId}</strong>
                         </p>
-                        <p>
-                            Chúng tôi sẽ liên hệ qua số điện thoại để xác nhận
-                            đơn hàng.
-                        </p>
-                        <Link href="/products" className="button-primary">
-                            Tiếp tục mua sắm
+                        <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => copyOrderId(successOrderId)}
+                        >
+                            {copied ? (
+                                <CheckIcon className="h-5 w-5" />
+                            ) : (
+                                <CopyIcon className="h-5 w-5" />
+                            )}
+                            <span aria-live="polite">
+                                {copied ? "Đã sao chép" : "Sao chép mã"}
+                            </span>
+                        </button>
+                    </div>
+
+                    <h2 className="cart-section-title">Bước tiếp theo</h2>
+                    <ol className="cart-next-steps">
+                        {NEXT_STEPS.map((step) => (
+                            <li key={step.title}>
+                                <strong>{step.title}</strong>
+                                <span>{step.text}</span>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <div className="cart-actions">
+                        {/* id only: the phone number never goes in a URL */}
+                        <Link
+                            href={`/track-order?id=${successOrderId}`}
+                            className="button-primary"
+                        >
+                            Theo dõi đơn
                         </Link>
-                    </section>
-                </div>
-            </MobileAppShell>
+                        {SITE.zaloHref ? (
+                            <a
+                                href={SITE.zaloHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="button-secondary"
+                            >
+                                <ChatIcon className="h-5 w-5" />
+                                Nhắn Zalo
+                            </a>
+                        ) : null}
+                        {SITE.phoneHref ? (
+                            <a href={SITE.phoneHref} className="button-secondary">
+                                <PhoneIcon className="h-5 w-5" />
+                                Gọi {SITE.phoneDisplay}
+                            </a>
+                        ) : null}
+                    </div>
+                </section>
+            </div>
         );
     }
 
-    return (
-        <MobileAppShell>
-            <div className="quote-screen">
-                <MobileTopBar
-                    title="Giỏ hàng"
-                    backHref="/products"
-                    backLabel="Quay lại danh mục"
-                />
+    if (items === null) return <CartLoading />;
 
-                {items.length === 0 ? (
-                    <section className="cart-empty">
-                        <p>Giỏ hàng trống</p>
+    return (
+        <div className="quote-screen">
+            <MobileTopBar title="Giỏ hàng" />
+
+            {items.length === 0 ? (
+                <section className="cart-empty" aria-labelledby="cart-empty-title">
+                    <span className="cart-empty-icon">
+                        <CartIcon className="h-7 w-7" />
+                    </span>
+                    <h2 id="cart-empty-title" className="cart-section-title">
+                        Giỏ hàng trống
+                    </h2>
+                    <p>Chọn mẫu ly trong danh mục để gửi yêu cầu báo giá.</p>
+                    <div className="cart-actions">
                         <Link href="/products" className="button-primary">
                             Xem sản phẩm
                         </Link>
-                    </section>
-                ) : (
-                    <>
-                        <section className="cart-items-list">
+                        {SITE.zaloHref ? (
+                            <a
+                                href={SITE.zaloHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="button-secondary"
+                            >
+                                <ChatIcon className="h-5 w-5" />
+                                Nhắn Zalo
+                            </a>
+                        ) : null}
+                    </div>
+                </section>
+            ) : (
+                <div className="cart-layout">
+                    <section
+                        className="cart-items"
+                        aria-labelledby="cart-items-title"
+                    >
+                        <div className="cart-list-header">
+                            <h2 id="cart-items-title" className="cart-section-title">
+                                Sản phẩm ({items.length})
+                            </h2>
+                            <button
+                                type="button"
+                                className="cart-clear-btn"
+                                onClick={() => setShowClearConfirm(true)}
+                            >
+                                Xóa tất cả
+                            </button>
+                        </div>
+
+                        <ul className="cart-items-list">
                             {items.map((item) => {
-                                const unitPrice = getItemUnitPrice(item);
-                                const subtotal = getItemSubtotal(item);
                                 const key = getCartItemKey(item);
+                                const unitLabel = item.isLidOnly ? "nắp" : "ly";
+                                const href = `/product/${
+                                    item.isLidOnly
+                                        ? (item.lidOnlyId ?? item.productId)
+                                        : item.productId
+                                }`;
+                                const quantityOptions = [
+                                    ...new Set([...QUANTITY_OPTIONS, item.quantity]),
+                                ].sort((a, b) => a - b);
+
                                 return (
-                                    <article key={key} className="cart-item">
+                                    <li key={key} className="cart-item">
                                         <div className="cart-item-image">
                                             {item.imageSrc ? (
                                                 <Image
                                                     src={item.imageSrc}
-                                                    alt={item.name}
-                                                    width={80}
-                                                    height={80}
+                                                    alt=""
+                                                    width={96}
+                                                    height={96}
                                                 />
-                                            ) : (
-                                                <div className="cart-item-placeholder" />
-                                            )}
+                                            ) : null}
                                         </div>
                                         <div className="cart-item-details">
                                             <div className="cart-item-header">
-                                                <strong>{item.name}</strong>
+                                                <h3 className="cart-item-name">
+                                                    <Link href={href}>{item.name}</Link>
+                                                </h3>
                                                 <button
                                                     type="button"
-                                                    className="cart-item-remove"
-                                                    aria-label="Xóa"
-                                                    onClick={() =>
-                                                        handleRemoveItem(item)
-                                                    }
+                                                    className="icon-button ghost cart-item-remove"
+                                                    aria-label={`Xóa ${item.name}`}
+                                                    onClick={() => setRemoveTarget(item)}
                                                 >
-                                                    <TrashIcon className="h-4 w-4" />
+                                                    <TrashIcon className="h-5 w-5" />
                                                 </button>
                                             </div>
-                                            <span className="cart-item-config">
+                                            <p className="cart-item-config">
                                                 {item.isLidOnly
                                                     ? `Nắp ly · ${item.configuration.size}`
                                                     : `${item.configuration.size} · ${item.configuration.printMethod}${
-                                                          item.configuration
-                                                              .lidOption &&
-                                                          item.configuration
-                                                              .lidOption !==
-                                                              "Không nắp"
+                                                          item.configuration.lidOption &&
+                                                          item.configuration.lidOption !== "Không nắp"
                                                               ? ` · ${item.configuration.lidOption}`
                                                               : ""
                                                       }`}
-                                            </span>
-                                            <span className="cart-item-unit-price">
-                                                {formatCurrency(
-                                                    1000 * item.price,
-                                                )}{" "}
-                                                / {formatUnit(item.unit)}
-                                            </span>
+                                            </p>
+                                            <p className="cart-item-unit-price">
+                                                {formatCurrency(getItemUnitPrice(item))} / {unitLabel}
+                                            </p>
                                             <div className="cart-item-bottom">
                                                 <div className="quantity-dropdown cart-quantity">
                                                     <select
-                                                        value={
-                                                            item.quantity <=
-                                                            10000
-                                                                ? item.quantity
-                                                                : CONTACT_VALUE
-                                                        }
-                                                        onChange={(e) => {
-                                                            if (
-                                                                e.target
-                                                                    .value ===
-                                                                CONTACT_VALUE
-                                                            ) {
-                                                                window.open(
-                                                                    "https://zalo.me/0905123456",
-                                                                    "_blank",
-                                                                );
-                                                                return;
-                                                            }
+                                                        value={item.quantity}
+                                                        aria-label={`Số lượng ${item.name}`}
+                                                        onChange={(e) =>
                                                             handleQuantityChange(
                                                                 item,
-                                                                Number(
-                                                                    e.target
-                                                                        .value,
-                                                                ),
-                                                            );
-                                                        }}
+                                                                Number(e.target.value),
+                                                            )
+                                                        }
                                                     >
-                                                        {QUANTITY_OPTIONS.map(
-                                                            (qty) => (
-                                                                <option
-                                                                    key={qty}
-                                                                    value={qty}
-                                                                >
-                                                                    {qty.toLocaleString(
-                                                                        "vi-VN",
-                                                                    )}
-                                                                </option>
-                                                            ),
-                                                        )}
-                                                        <option
-                                                            value={
-                                                                CONTACT_VALUE
-                                                            }
-                                                        >
-                                                            Trên 10.000 — Liên
-                                                            hệ
-                                                        </option>
+                                                        {quantityOptions.map((qty) => (
+                                                            <option key={qty} value={qty}>
+                                                                {qty.toLocaleString("vi-VN")} {unitLabel}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                 </div>
-                                                <strong className="cart-item-subtotal">
-                                                    {formatCurrency(subtotal)}
-                                                </strong>
+                                                <p className="cart-item-subtotal">
+                                                    <span className="sr-only">Thành tiền: </span>
+                                                    {formatCurrency(getItemSubtotal(item))}
+                                                </p>
                                             </div>
                                         </div>
-                                    </article>
+                                    </li>
                                 );
                             })}
+                        </ul>
 
-                            <button
-                                type="button"
-                                onClick={handleClear}
-                                className="cart-clear-btn"
-                            >
-                                Xóa toàn bộ giỏ hàng
-                            </button>
-                        </section>
+                        {SITE.zaloHref ? (
+                            <p className="cart-bulk-note">
+                                Cần số lượng lớn hơn?{" "}
+                                <a
+                                    href={SITE.zaloHref}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Nhắn Zalo
+                                </a>
+                            </p>
+                        ) : null}
+                    </section>
 
-                        <section className="cart-summary">
-                            <div className="cart-summary-row">
-                                <span>Tổng cộng ({items.length} sản phẩm)</span>
+                    <form
+                        className="quote-form-card cart-summary-card"
+                        aria-labelledby="cart-form-title"
+                        onSubmit={handleSubmit}
+                        noValidate
+                    >
+                        <div className="cart-total-block">
+                            <p className="cart-total">
+                                <span>Tạm tính ({items.length} sản phẩm)</span>
                                 <strong>{formatCurrency(totalAmount)}</strong>
-                            </div>
-                        </section>
+                            </p>
+                            <p className="cart-total-note">
+                                Phí in sẽ được báo trong báo giá.
+                            </p>
+                        </div>
 
-                        <section className="quote-form-card">
-                            <h3 className="cart-form-title">
-                                Thông tin đặt hàng
-                            </h3>
+                        <h2 id="cart-form-title" className="cart-section-title">
+                            Thông tin liên hệ
+                        </h2>
+
+                        <div>
                             <label>
-                                <span>Họ tên *</span>
+                                <span>
+                                    Họ tên
+                                    <RequiredMark />
+                                </span>
                                 <input
+                                    ref={nameRef}
+                                    name="name"
+                                    autoComplete="name"
                                     value={form.fullName}
-                                    onChange={(e) =>
-                                        setForm((f) => ({
-                                            ...f,
-                                            fullName: e.target.value,
-                                        }))
-                                    }
+                                    onChange={updateField("fullName")}
                                     placeholder="Nhập họ tên"
-                                />
-                            </label>
-                            <label>
-                                <span>Số điện thoại *</span>
-                                <input
-                                    value={form.phone}
-                                    onChange={(e) =>
-                                        setForm((f) => ({
-                                            ...f,
-                                            phone: e.target.value,
-                                        }))
+                                    aria-invalid={fieldErrors.fullName ? true : undefined}
+                                    aria-describedby={
+                                        fieldErrors.fullName ? "cart-name-error" : undefined
                                     }
-                                    placeholder="Nhập số điện thoại"
-                                    inputMode="tel"
                                 />
                             </label>
-                            <label>
-                                <span>Tên quán / doanh nghiệp</span>
-                                <input
-                                    value={form.businessName}
-                                    onChange={(e) =>
-                                        setForm((f) => ({
-                                            ...f,
-                                            businessName: e.target.value,
-                                        }))
-                                    }
-                                    placeholder="Nhập tên quán (nếu có)"
-                                />
-                            </label>
-                            <label>
-                                <span>Ghi chú</span>
-                                <textarea
-                                    value={form.note}
-                                    onChange={(e) =>
-                                        setForm((f) => ({
-                                            ...f,
-                                            note: e.target.value,
-                                        }))
-                                    }
-                                    placeholder="Ghi chú thêm về đơn hàng..."
-                                    rows={3}
-                                />
-                            </label>
-                        </section>
-
-                        <div className="quote-actions">
-                            <button
-                                type="button"
-                                disabled={!canSubmit}
-                                onClick={handleSubmit}
-                                className="button-primary w-full"
-                            >
-                                {submitting ? (
-                                    <span className="inline-flex items-center gap-2">
-                                        <InlineSpinner className="h-4 w-4" />{" "}
-                                        Đang gửi...
-                                    </span>
-                                ) : (
-                                    `Gửi báo giá · ${formatCurrency(totalAmount)}`
-                                )}
-                            </button>
-                            {error ? (
-                                <p className="cart-error">{error}</p>
+                            {fieldErrors.fullName ? (
+                                <p id="cart-name-error" className="field-error">
+                                    {fieldErrors.fullName}
+                                </p>
                             ) : null}
                         </div>
-                    </>
-                )}
-            </div>
+                        <div>
+                            <label>
+                                <span>
+                                    Số điện thoại
+                                    <RequiredMark />
+                                </span>
+                                <input
+                                    ref={phoneRef}
+                                    type="tel"
+                                    name="tel"
+                                    autoComplete="tel"
+                                    value={form.phone}
+                                    onChange={updateField("phone")}
+                                    placeholder="Ví dụ 0912 345 678"
+                                    aria-invalid={fieldErrors.phone ? true : undefined}
+                                    aria-describedby={
+                                        fieldErrors.phone ? "cart-phone-error" : undefined
+                                    }
+                                />
+                            </label>
+                            {fieldErrors.phone ? (
+                                <p id="cart-phone-error" className="field-error">
+                                    {fieldErrors.phone}
+                                </p>
+                            ) : null}
+                        </div>
+                        <label>
+                            <span>Tên quán / doanh nghiệp</span>
+                            <input
+                                name="organization"
+                                autoComplete="organization"
+                                value={form.businessName}
+                                onChange={updateField("businessName")}
+                                placeholder="Nhập tên quán (nếu có)"
+                            />
+                        </label>
+                        <label>
+                            <span>Ghi chú</span>
+                            <textarea
+                                name="note"
+                                value={form.note}
+                                onChange={updateField("note")}
+                                placeholder="Ghi chú thêm về đơn hàng..."
+                                rows={3}
+                            />
+                        </label>
+
+                        {error ? (
+                            <p role="alert" className="cart-error">
+                                {error}
+                                {SITE.zaloHref ? (
+                                    <>
+                                        {" "}
+                                        <a
+                                            href={SITE.zaloHref}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Nhắn Zalo
+                                        </a>
+                                    </>
+                                ) : null}
+                            </p>
+                        ) : null}
+
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="button-primary w-full"
+                        >
+                            {submitting ? (
+                                <>
+                                    <InlineSpinner className="h-4 w-4" />
+                                    Đang gửi...
+                                </>
+                            ) : (
+                                `Gửi yêu cầu báo giá · ${formatCurrency(totalAmount)}`
+                            )}
+                        </button>
+                    </form>
+                </div>
+            )}
 
             <ConfirmModal
                 open={removeTarget !== null}
                 title="Xóa sản phẩm?"
                 description={`Bạn muốn xóa "${removeTarget?.name ?? ""}" khỏi giỏ hàng?`}
-                icon="🗑️"
                 danger
                 confirmLabel="Xóa"
                 onConfirm={confirmRemove}
@@ -416,13 +582,12 @@ export default function CartPage() {
                 open={showClearConfirm}
                 title="Xóa toàn bộ giỏ hàng?"
                 description="Tất cả sản phẩm trong giỏ hàng sẽ bị xóa."
-                icon="🗑️"
                 danger
                 confirmLabel="Xóa tất cả"
                 onConfirm={confirmClear}
                 onCancel={() => setShowClearConfirm(false)}
             />
-            <LoadingOverlay open={submitting} message="Đang gửi đơn hàng..." />
-        </MobileAppShell>
+            <LoadingOverlay open={submitting} message="Đang gửi yêu cầu báo giá..." />
+        </div>
     );
 }

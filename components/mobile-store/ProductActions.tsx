@@ -1,20 +1,13 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { HeartIcon, ShareIcon } from "@/components/mobile-store/icons";
-import { isWishlisted, subscribeWishlist, toggleWishlist } from "@/lib/wishlist";
+import { useEffect, useState } from "react";
+import { ShareIcon } from "@/components/mobile-store/icons";
 
 type Props = {
-  productId: number;
   name: string;
 };
 
-export default function ProductActions({ productId, name }: Props) {
-  const liked = useSyncExternalStore(
-    subscribeWishlist,
-    () => isWishlisted(productId),
-    () => false,
-  );
+export default function ProductActions({ name }: Props) {
   const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
@@ -45,23 +38,13 @@ export default function ProductActions({ productId, name }: Props) {
 
   return (
     <div className="detail-actions">
-      <button
-        type="button"
-        aria-label={liked ? "Bỏ yêu thích" : "Yêu thích"}
-        aria-pressed={liked}
-        className={liked ? "active" : undefined}
-        onClick={() => toggleWishlist(productId)}
-      >
-        <HeartIcon className="h-6 w-6" style={liked ? { fill: "currentColor" } : undefined} />
-      </button>
       <button type="button" aria-label="Chia sẻ" onClick={handleShare}>
         <ShareIcon className="h-6 w-6" />
       </button>
-      {shareMessage ? (
-        <span role="status" className="detail-share-toast">
-          {shareMessage}
-        </span>
-      ) : null}
+      {/* Always mounted so screen readers announce the message when it appears */}
+      <span role="status" className={shareMessage ? "detail-share-toast" : "sr-only"}>
+        {shareMessage}
+      </span>
     </div>
   );
 }

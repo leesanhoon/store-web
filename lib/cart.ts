@@ -46,7 +46,7 @@ export type QuoteRequest = {
 
 export const CART_CHANGED_EVENT = "dtp-cart-changed";
 
-const CART_KEY = "dtp_cart_items";
+export const CART_KEY = "dtp_cart_items";
 const QUOTE_KEY = "dtp_quote_requests";
 
 export const defaultCartConfiguration: CartConfiguration = {
@@ -212,8 +212,4 @@ export function createQuoteRequest(payload: Omit<QuoteRequest, "id" | "createdAt
   const requests = [request, ...getQuoteRequests()];
   saveQuoteRequests(requests);
   return request;
-}
-
-export function formatUnit(unit: CartUnit) {
-  return unit === "thung" ? "Thùng" : "Cây";
 }

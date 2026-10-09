@@ -1,0 +1,240 @@
+/* Admin shell: sidebar at >=1024px; sticky topbar + fixed bottom nav below. The document scrolls. */
+.admin-shell {
+  min-height: 100dvh;
+  background: var(--color-surface);
+  color: var(--color-body);
+}
+
+.admin-body {
+  min-width: 0;
+}
+
+/* Sidebar (shown at >=1024px) */
+.admin-sidebar {
+  display: none;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-sidebar-nav,
+.admin-sidebar-footer {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-line);
+  padding-top: 16px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+  color: var(--color-label);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-soft),
+    color var(--dur-fast) var(--ease-out-soft);
+}
+
+@media (hover: hover) {
+  .admin-sidebar-link:hover {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+}
+
+.admin-sidebar-link[aria-current="page"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Topbar (below 1024px) */
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: 56px;
+  align-items: center;
+  border-bottom: 1px solid var(--color-line);
+  background: color-mix(in srgb, #fff 85%, transparent);
+  padding: 0 16px;
+  backdrop-filter: blur(12px);
+}
+
+.admin-topbar-brand {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-topbar-brand span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bottom padding clears the fixed 64px bottom nav */
+.admin-content {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 16px 16px calc(16px + 64px + env(safe-area-inset-bottom));
+}
+
+/* Bottom nav (below 1024px) */
+.admin-bottom-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--color-line);
+  background: #fff;
+  padding: 0 4px env(safe-area-inset-bottom);
+}
+
+.admin-bottom-nav a {
+  display: flex;
+  min-width: 0;
+  height: 64px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: var(--radius-md);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.admin-bottom-nav a:focus-visible {
+  outline-offset: -4px;
+}
+
+.admin-bottom-nav a span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bottom-nav a[aria-current="page"] {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Sticky save bar for admin forms; sits above the bottom nav on mobile */
+.admin-form-actions {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--color-line);
+  background: #fff;
+  padding: 12px 16px;
+}
+
+@media (min-width: 1024px) {
+  .admin-shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100dvh;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-line);
+    background: #fff;
+    padding: 24px 16px;
+  }
+
+  .admin-topbar,
+  .admin-bottom-nav {
+    display: none;
+  }
+
+  .admin-content {
+    padding: 32px;
+  }
+
+  .admin-form-actions {
+    bottom: 0;
+  }
+}
+
+.admin-product-form {
+  padding-bottom: 2px;
+}
+
+.admin-card {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-manage-card {
+  display: flex;
+  width: 100%;
+  min-height: 72px;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--dur-fast) var(--ease-out-soft);
+}
+
+@media (hover: hover) {
+  .admin-manage-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.admin-manage-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
