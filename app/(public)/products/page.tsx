@@ -9,8 +9,15 @@ import {
     getCatalogCategoryTree,
     getCatalogProducts,
 } from "@/lib/data/catalog";
+import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Sản phẩm" };
+// No data needed, so static metadata. The canonical drops ?category=/?q= variants.
+export const metadata: Metadata = {
+    title: "Sản phẩm",
+    description:
+        "Ly nhựa PET, PP, ly giấy và nắp ly in logo. Chọn mẫu, gửi yêu cầu và nhận báo giá nhanh.",
+    alternates: SITE.url ? { canonical: "/products" } : undefined,
+};
 
 function collectChildCategories(tree: CategoryTreeNode[]) {
     const children: { id: number; name: string }[] = [];

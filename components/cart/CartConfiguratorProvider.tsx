@@ -28,7 +28,9 @@ import {
     getMinMoq,
     getVariantLabel,
 } from "@/lib/products/display";
+import { PRICE_HIDDEN_LABEL, SITE } from "@/lib/site";
 
+export const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
 const printMethodOptions = ["Không in", "In 1 màu", "In nhiều màu"];
 const TOAST_MS = 4000;
 
@@ -69,6 +71,9 @@ const initialConfiguration: ConfigState = {
     ...defaultCartConfiguration,
     quantity: 1000,
 };
+
+const getLidVariantLabel = (variant: ProductVariantDto) =>
+    variant.sizeName || `${variant.diameterMm}mm`;
 
 function getFirstPriceTier(variant?: ProductVariantDto | null) {
     return variant?.priceTiers?.[0] ?? null;
@@ -146,10 +151,14 @@ export default function CartConfiguratorProvider({
         ) ??
         activeProduct?.variants?.[0] ??
         null;
+    // Hidden prices have no tier buttons: the tier follows the quantity picked in the select
     const selectedTier =
-        selectedVariant?.priceTiers.find(
-            (tier) => tier.minQuantity === selectedTierMinQuantity,
-        ) ?? getPriceTierForQuantity(selectedVariant, configuration.quantity);
+        (SITE.showPrices
+            ? selectedVariant?.priceTiers.find(
+                  (tier) => tier.minQuantity === selectedTierMinQuantity,
+              )
+            : undefined) ??
+        getPriceTierForQuantity(selectedVariant, configuration.quantity);
     const activeUnitPrice =
         selectedTier?.unitPrice ?? activeProduct?.price ?? 0;
 
@@ -407,10 +416,17 @@ export default function CartConfiguratorProvider({
                                     </div>
                                 ) : null}
                                 <div>
-                                    <p className="sheet-price">
-                                        {formatCurrency(totalUnitPrice)} / ly
-                                    </p>
-                                    {minOrderQuantity ? (
+                                    {SITE.showPrices ? (
+                                        <p className="sheet-price">
+                                            {formatCurrency(totalUnitPrice)} /
+                                            ly
+                                        </p>
+                                    ) : (
+                                        <p className="sheet-price price-quote">
+                                            {PRICE_HIDDEN_LABEL}
+                                        </p>
+                                    )}
+                                    {minOrderQuantity && minOrderQuantity > 1 ? (
                                         <p className="sheet-moq">
                                             Đặt tối thiểu{" "}
                                             {formatQuantity(minOrderQuantity)}{" "}
@@ -447,16 +463,18 @@ export default function CartConfiguratorProvider({
                                                             variant,
                                                         )}
                                                     </strong>
-                                                    <span>
-                                                        Từ{" "}
-                                                        {formatCurrency(
-                                                            getFirstPriceTier(
-                                                                variant,
-                                                            )?.unitPrice ??
-                                                                activeProduct.price,
-                                                        )}
-                                                        {" / ly"}
-                                                    </span>
+                                                    {SITE.showPrices ? (
+                                                        <span>
+                                                            Từ{" "}
+                                                            {formatCurrency(
+                                                                getFirstPriceTier(
+                                                                    variant,
+                                                                )?.unitPrice ??
+                                                                    activeProduct.price,
+                                                            )}
+                                                            {" / ly"}
+                                                        </span>
+                                                    ) : null}
                                                 </button>
                                             ),
                                         )}
@@ -464,7 +482,8 @@ export default function CartConfiguratorProvider({
                                 </ControlGroup>
                             ) : null}
 
-                            {selectedVariant?.priceTiers?.length ? (
+                            {SITE.showPrices &&
+                            selectedVariant?.priceTiers?.length ? (
                                 <ControlGroup label="Số lượng & đơn giá">
                                     <div className="sheet-tier-options">
                                         {selectedVariant.priceTiers.map(
@@ -499,6 +518,18 @@ export default function CartConfiguratorProvider({
                                     </div>
                                 </ControlGroup>
                             ) : null}
+
+                            {SITE.showPrices ? null : (
+                                <QuantitySelect
+                                    value={configuration.quantity}
+                                    onChange={(quantity) =>
+                                        setConfiguration((current) => ({
+                                            ...current,
+                                            quantity,
+                                        }))
+                                    }
+                                />
+                            )}
 
                             <ControlGroup
                                 label="Loại in"
@@ -568,24 +599,37 @@ export default function CartConfiguratorProvider({
                                                     selectLidVariant(variant)
                                                 }
                                             >
-                                                <span>
-                                                    {variant.sizeName ||
-                                                        `${variant.diameterMm}mm`}
-                                                </span>
-                                                <strong>
-                                                    {formatCurrency(
-                                                        variant.priceTiers[0]
-                                                            ?.unitPrice ?? 0,
-                                                    )}
-                                                    {" / nắp"}
-                                                </strong>
+                                                {SITE.showPrices ? (
+                                                    <>
+                                                        <span>
+                                                            {getLidVariantLabel(
+                                                                variant,
+                                                            )}
+                                                        </span>
+                                                        <strong>
+                                                            {formatCurrency(
+                                                                variant
+                                                                    .priceTiers[0]
+                                                                    ?.unitPrice ??
+                                                                    0,
+                                                            )}
+                                                            {" / nắp"}
+                                                        </strong>
+                                                    </>
+                                                ) : (
+                                                    <strong>
+                                                        {getLidVariantLabel(
+                                                            variant,
+                                                        )}
+                                                    </strong>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
                                 ) : null}
                             </ControlGroup>
 
-                            {lidUnitPrice > 0 ? (
+                            {SITE.showPrices && lidUnitPrice > 0 ? (
                                 <div className="sheet-price-breakdown">
                                     <div>
                                         <span>Ly</span>
@@ -627,19 +671,24 @@ export default function CartConfiguratorProvider({
                         </div>
 
                         <footer className="sheet-footer">
-                            <p className="sheet-footer-summary">
-                                {formatQuantity(configuration.quantity)} ly ×{" "}
-                                {formatCurrency(totalUnitPrice)}
-                            </p>
+                            {SITE.showPrices ? (
+                                <p className="sheet-footer-summary">
+                                    {formatQuantity(configuration.quantity)} ly
+                                    ×{" "}
+                                    {formatCurrency(totalUnitPrice)}
+                                </p>
+                            ) : null}
                             <button
                                 type="button"
                                 onClick={handleConfirm}
                                 className="button-primary sheet-submit"
                             >
-                                Thêm vào giỏ ·{" "}
-                                {formatCurrency(
-                                    totalUnitPrice * configuration.quantity,
-                                )}
+                                {SITE.showPrices
+                                    ? `Thêm vào giỏ · ${formatCurrency(
+                                          totalUnitPrice *
+                                              configuration.quantity,
+                                      )}`
+                                    : "Thêm vào giỏ"}
                             </button>
                         </footer>
                     </>
@@ -662,6 +711,37 @@ export default function CartConfiguratorProvider({
                 ) : null}
             </div>
         </CartConfiguratorContext.Provider>
+    );
+}
+
+function QuantitySelect({
+    value,
+    onChange,
+}: {
+    value: number;
+    onChange: (quantity: number) => void;
+}) {
+    // Keep the current quantity selectable even when it is not a standard option
+    const options = [...new Set([...QUANTITY_OPTIONS, value])].sort(
+        (a, b) => a - b,
+    );
+
+    return (
+        <ControlGroup label="Số lượng">
+            <div className="quantity-dropdown">
+                <select
+                    value={value}
+                    aria-label="Số lượng"
+                    onChange={(event) => onChange(Number(event.target.value))}
+                >
+                    {options.map((quantity) => (
+                        <option key={quantity} value={quantity}>
+                            {formatQuantity(quantity)} ly
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </ControlGroup>
     );
 }
 

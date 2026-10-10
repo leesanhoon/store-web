@@ -19,7 +19,9 @@ import { useCartItems } from "@/lib/use-cart";
 
 const headerLinks = [
   { href: "/products", label: "Sản phẩm" },
+  { href: "/gioi-thieu", label: "Giới thiệu" },
   { href: "/gallery", label: "Mẫu thực tế" },
+  { href: "/lien-he", label: "Liên hệ" },
   { href: "/track-order", label: "Tra cứu đơn" },
 ];
 
@@ -28,17 +30,21 @@ const bottomNavItems = [
   { href: "/products", label: "Sản phẩm", icon: GridIcon },
   { href: "/cart", label: "Giỏ hàng", icon: CartIcon },
   { href: "/track-order", label: "Tra cứu", icon: SearchIcon },
+  { href: "/lien-he", label: "Liên hệ", icon: PhoneIcon },
 ];
 
 const productLinks = [
   { href: "/products", label: "Tất cả sản phẩm" },
-  { href: { pathname: "/products", query: { category: "Nắp ly" } }, label: "Nắp ly" },
+  // Lọc theo từ khóa vì tên danh mục thật do API trả về; mọi nắp đều có "Nắp" trong tên hoặc danh mục
+  { href: { pathname: "/products", query: { q: "Nắp" } }, label: "Nắp ly" },
   { href: "/cart", label: "Giỏ hàng" },
 ];
 
 const supportLinks = [
-  { href: "/track-order", label: "Tra cứu đơn" },
+  { href: "/gioi-thieu", label: "Giới thiệu" },
   { href: "/gallery", label: "Mẫu thực tế" },
+  { href: "/track-order", label: "Tra cứu đơn" },
+  { href: "/lien-he", label: "Liên hệ" },
 ];
 
 function isActive(pathname: string, href: string) {

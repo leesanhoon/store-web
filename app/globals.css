@@ -8,6 +8,7 @@
 @import "./styles/product.css";
 @import "./styles/cart.css";
 @import "./styles/pages.css";
+@import "./styles/content.css";
 @import "./styles/admin.css";
 
 /* static: emit every token, including ones only read through var() */

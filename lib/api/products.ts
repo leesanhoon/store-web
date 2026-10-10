@@ -70,6 +70,9 @@ export type UpdateProductPayload = {
 
 type CollectionResponse<T> = T[] | { items?: T[]; value?: T[]; Value?: T[]; totalCount?: number; page?: number; pageSize?: number };
 
+const LIST_PAGE_SIZE = 100;
+const LIST_MAX_PAGES = 50;
+
 const SUPPORTED_PRODUCT_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 function unwrapCollection<T>(response: CollectionResponse<T>) {
@@ -148,9 +151,26 @@ export function normalizeProductApiError(error: unknown) {
     return error.message || "Không thể lưu sản phẩm.";
 }
 
+async function getAllProducts() {
+    const items: ProductDto[] = [];
+    for (let page = 1; page <= LIST_MAX_PAGES; page++) {
+        const query = buildPaginationQuery({ page, pageSize: LIST_PAGE_SIZE });
+        const response = await apiClient.get<CollectionResponse<ProductDto>>(`/api/v1/Products${query}`);
+        if (Array.isArray(response)) {
+            return response.map(normalizeProduct);
+        }
+        const batch = unwrapCollection(response);
+        items.push(...batch);
+        const isLastPage = typeof response.totalCount === "number" ? items.length >= response.totalCount : batch.length < LIST_PAGE_SIZE;
+        if (batch.length === 0 || isLastPage) break;
+    }
+    return items.map(normalizeProduct);
+}
+
 export async function getProducts(): Promise<ProductDto[]>;
 export async function getProducts(params: PaginationParams): Promise<PaginatedResponse<ProductDto>>;
 export async function getProducts(params?: PaginationParams) {
+    if (!params) return getAllProducts();
     const query = buildPaginationQuery(params);
     const response = await apiClient.get<CollectionResponse<ProductDto>>(`/api/v1/Products${query}`);
     if (params?.page && !Array.isArray(response)) {

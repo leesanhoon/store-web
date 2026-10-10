@@ -216,6 +216,14 @@
   font-size: 14px;
 }
 
+/* Replaces a price while NEXT_PUBLIC_SHOW_PRICES is off: one quiet line instead of a headline number */
+:is(.mobile-product-price, .detail-price, .sheet-price).price-quote {
+  color: var(--color-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .detail-description {
   color: var(--color-body);
   font-size: 16px;

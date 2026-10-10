@@ -4,6 +4,7 @@ import Link from "next/link";
 import PartnersSection from "@/components/mobile-store/PartnersSection";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import { CheckIcon, ChevronRightIcon } from "@/components/mobile-store/icons";
+import JsonLd, { getSiteJsonLd } from "@/components/seo/JsonLd";
 import type { CategoryTreeNode } from "@/lib/api/categories";
 import { isLidProduct } from "@/lib/api/products";
 import { getCatalogCategoryTree, getCatalogProducts } from "@/lib/data/catalog";
@@ -69,6 +70,8 @@ export default async function Home() {
 
     return (
         <div className="home-screen">
+            {/* First child: shell.css keys off the last band being :last-child. */}
+            <JsonLd data={getSiteJsonLd()} />
             <section className="home-section home-hero">
                 <div className="site-container home-hero-inner">
                     <div>

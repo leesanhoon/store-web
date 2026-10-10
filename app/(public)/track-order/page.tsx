@@ -102,10 +102,13 @@ function OrderItemRow({ item }: { item: OrderItemDto }) {
     <li className="py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 font-semibold text-ink">{item.productName}</p>
-        <span className="shrink-0 font-semibold text-price">{formatCurrency(item.unitPrice * item.quantity)}</span>
+        {SITE.showPrices ? (
+          <span className="shrink-0 font-semibold text-price">{formatCurrency(item.unitPrice * item.quantity)}</span>
+        ) : null}
       </div>
       <p className="mt-1 text-sm text-body">
-        Số lượng: {item.quantity.toLocaleString("vi-VN")} · Đơn giá: {formatCurrency(item.unitPrice)}
+        Số lượng: {item.quantity.toLocaleString("vi-VN")}
+        {SITE.showPrices ? ` · Đơn giá: ${formatCurrency(item.unitPrice)}` : null}
         {item.lidName ? ` · Nắp: ${item.lidName}` : null}
       </p>
     </li>
@@ -361,31 +364,35 @@ export default function TrackOrderPage({ searchParams }: { searchParams: Promise
                   </div>
                 </section>
 
-                {/* ── Total + note ── */}
-                <section className={CARD}>
-                  {order.items.length > 1 && (
-                    <ul className="mb-3 grid gap-1.5 border-b border-dashed border-line pb-3">
-                      {order.items.map((item, i) => (
-                        <li key={i} className="flex items-center justify-between gap-3 text-sm text-body">
-                          <span className="min-w-0 truncate">{item.productName}</span>
-                          <span className="shrink-0 font-semibold">{formatCurrency(item.unitPrice * item.quantity)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                {/* ── Total + note (the total is hidden together with prices) ── */}
+                {(SITE.showPrices || order.note) && (
+                  <section className={CARD}>
+                    {SITE.showPrices && order.items.length > 1 && (
+                      <ul className="mb-3 grid gap-1.5 border-b border-dashed border-line pb-3">
+                        {order.items.map((item, i) => (
+                          <li key={i} className="flex items-center justify-between gap-3 text-sm text-body">
+                            <span className="min-w-0 truncate">{item.productName}</span>
+                            <span className="shrink-0 font-semibold">{formatCurrency(item.unitPrice * item.quantity)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold text-label">Tổng cộng</span>
-                    <span className="text-2xl font-semibold text-price">{formatCurrency(order.totalAmount)}</span>
-                  </div>
+                    {SITE.showPrices && (
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-semibold text-label">Tổng cộng</span>
+                        <span className="text-2xl font-semibold text-price">{formatCurrency(order.totalAmount)}</span>
+                      </div>
+                    )}
 
-                  {order.note && (
-                    <div className="mt-4 rounded-md bg-surface p-4">
-                      <p className="text-sm font-semibold text-label">Ghi chú</p>
-                      <p className="mt-1 break-words text-sm text-body">{order.note}</p>
-                    </div>
-                  )}
-                </section>
+                    {order.note && (
+                      <div className={`rounded-md bg-surface p-4 ${SITE.showPrices ? "mt-4" : ""}`}>
+                        <p className="text-sm font-semibold text-label">Ghi chú</p>
+                        <p className="mt-1 break-words text-sm text-body">{order.note}</p>
+                      </div>
+                    )}
+                  </section>
+                )}
 
                 <HelpCard />
               </div>

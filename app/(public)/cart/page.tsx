@@ -11,6 +11,7 @@ import {
     type ChangeEvent,
     type FormEvent,
 } from "react";
+import { QUANTITY_OPTIONS } from "@/components/cart/CartConfiguratorProvider";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import LoadingOverlay, { InlineSpinner } from "@/components/ui/LoadingOverlay";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
@@ -35,7 +36,6 @@ import { SITE } from "@/lib/site";
 import { useCartItems } from "@/lib/use-cart";
 import CartLoading from "./loading";
 
-const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000];
 const PHONE_PATTERN = /^(0|\+84)\d{9}$/;
 const SUBMIT_ERROR =
     "Không gửi được yêu cầu báo giá. Vui lòng thử lại sau ít phút.";
@@ -78,6 +78,18 @@ function getItemUnitPrice(item: CartItem) {
 
 function getItemSubtotal(item: CartItem) {
     return getItemUnitPrice(item) * item.quantity;
+}
+
+/** "3.000 ly · 1.000 nắp": cups and lids are counted separately, as in the rows. */
+function getQuantitySummary(items: CartItem[]) {
+    const totals = new Map<string, number>();
+    for (const item of items) {
+        const unitLabel = item.isLidOnly ? "nắp" : "ly";
+        totals.set(unitLabel, (totals.get(unitLabel) ?? 0) + item.quantity);
+    }
+    return [...totals]
+        .map(([unitLabel, quantity]) => `${quantity.toLocaleString("vi-VN")} ${unitLabel}`)
+        .join(" · ");
 }
 
 function validateForm(form: OrderForm): FieldErrors {
@@ -394,9 +406,11 @@ export default function CartPage() {
                                                               : ""
                                                       }`}
                                             </p>
-                                            <p className="cart-item-unit-price">
-                                                {formatCurrency(getItemUnitPrice(item))} / {unitLabel}
-                                            </p>
+                                            {SITE.showPrices ? (
+                                                <p className="cart-item-unit-price">
+                                                    {formatCurrency(getItemUnitPrice(item))} / {unitLabel}
+                                                </p>
+                                            ) : null}
                                             <div className="cart-item-bottom">
                                                 <div className="quantity-dropdown cart-quantity">
                                                     <select
@@ -416,10 +430,12 @@ export default function CartPage() {
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <p className="cart-item-subtotal">
-                                                    <span className="sr-only">Thành tiền: </span>
-                                                    {formatCurrency(getItemSubtotal(item))}
-                                                </p>
+                                                {SITE.showPrices ? (
+                                                    <p className="cart-item-subtotal">
+                                                        <span className="sr-only">Thành tiền: </span>
+                                                        {formatCurrency(getItemSubtotal(item))}
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         </div>
                                     </li>
@@ -449,8 +465,17 @@ export default function CartPage() {
                     >
                         <div className="cart-total-block">
                             <p className="cart-total">
-                                <span>Tạm tính ({items.length} sản phẩm)</span>
-                                <strong>{formatCurrency(totalAmount)}</strong>
+                                {SITE.showPrices ? (
+                                    <>
+                                        <span>Tạm tính ({items.length} sản phẩm)</span>
+                                        <strong>{formatCurrency(totalAmount)}</strong>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Số lượng ({items.length} sản phẩm)</span>
+                                        <strong>{getQuantitySummary(items)}</strong>
+                                    </>
+                                )}
                             </p>
                             <p className="cart-total-note">
                                 Phí in sẽ được báo trong báo giá.
@@ -561,8 +586,10 @@ export default function CartPage() {
                                     <InlineSpinner className="h-4 w-4" />
                                     Đang gửi...
                                 </>
-                            ) : (
+                            ) : SITE.showPrices ? (
                                 `Gửi yêu cầu báo giá · ${formatCurrency(totalAmount)}`
+                            ) : (
+                                "Gửi yêu cầu báo giá"
                             )}
                         </button>
                     </form>

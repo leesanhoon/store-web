@@ -1,4 +1,5 @@
 import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
+import { PRICE_HIDDEN_LABEL, SITE } from "@/lib/site";
 
 export type ProductDisplayInfo = {
   cupType: string;
@@ -83,6 +84,11 @@ export function formatPriceRange(product: Pick<ProductDto, "variants">): string 
   const min = getMinPrice(product);
   if (min === null) return "Liên hệ";
   return `Từ ${formatCurrency(min)}`;
+}
+
+export function formatPriceLabel(value: number | null): string {
+  if (!SITE.showPrices) return PRICE_HIDDEN_LABEL;
+  return value === null ? "Liên hệ" : formatCurrency(value);
 }
 
 export function getVariantLabel(variant: ProductVariantDto): string {

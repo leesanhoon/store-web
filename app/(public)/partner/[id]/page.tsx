@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
 import {
     CalendarIcon,
@@ -12,10 +14,45 @@ import type { PartnerDto } from "@/lib/api/partners";
 import { getCatalogPartner } from "@/lib/data/partners";
 import { SITE } from "@/lib/site";
 
-async function loadPartner(id: string) {
+// cache(): generateMetadata and the page share one backend request.
+const loadPartner = cache(async (id: string) => {
     const partnerId = Number(id);
     if (!Number.isInteger(partnerId) || partnerId === 0) return null;
     return getCatalogPartner(partnerId);
+});
+
+const META_DESCRIPTION_MAX = 155;
+
+function getMetaDescription(partner: PartnerDto) {
+    const text = (partner.description ?? "").replace(/\s+/g, " ").trim();
+    if (!text) return `${partner.name} là đối tác F&B của ${SITE.name}.`;
+    return text.length > META_DESCRIPTION_MAX
+        ? `${text.slice(0, META_DESCRIPTION_MAX - 1).trimEnd()}…`
+        : text;
+}
+
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+    const { id } = await params;
+    // A failing API must not break metadata: the page itself still reports the error.
+    const partner = await loadPartner(id).catch(() => null);
+    if (!partner) return {};
+
+    return {
+        title: partner.name,
+        description: getMetaDescription(partner),
+        alternates: SITE.url
+            ? { canonical: `/partner/${partner.id}` }
+            : undefined,
+        openGraph: {
+            images: partner.avatarImageUrl
+                ? [partner.avatarImageUrl]
+                : undefined,
+        },
+    };
 }
 
 // The avatar already sits in the profile card, so it is not repeated in the photo grid.
