@@ -1,0 +1,118 @@
+{
+  "families": {
+    "lid|ukp|nắp bằng": {
+      "action": "skip"
+    },
+    "lid||nắp bằng": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp bằng dày": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp bằng mỏng": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp cầu": {
+      "action": "skip"
+    },
+    "lid||nắp cầu": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp cầu có che": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp cầu có đục x": {
+      "action": "skip"
+    },
+    "lid||nắp cầu loại thường": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp cầu đen có che": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp tim trong": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp tim đen": {
+      "action": "skip"
+    },
+    "lid||nắp tim đài loan": {
+      "action": "skip"
+    },
+    "lid|ukp|nắp uống trực tiếp": {
+      "action": "skip"
+    },
+    "lid||nắp uống trực tiếp": {
+      "action": "skip"
+    },
+    "lid||nắp uống trực tiếp có nút bật": {
+      "action": "skip"
+    },
+    "cup||nắp tim||ukp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup||nắp tim đài loan||ht|": {
+      "action": "skip"
+    },
+    "cup|pet|||mvp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pet|||ukp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pet|||ukp|dày loại 2": {
+      "action": "skip"
+    },
+    "cup|pet|||ukp|dày xuất khẩu": {
+      "action": "skip"
+    },
+    "cup|pet||đen|ukp|dày": {
+      "action": "skip"
+    },
+    "cup|pp|bầu||mvp|": {
+      "action": "skip"
+    },
+    "cup|pp|bầu||mvp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|bầu||ukp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|bầu||ukp|dày loại 2": {
+      "action": "skip"
+    },
+    "cup|pp|bầu||ukp|mỏng": {
+      "action": "skip"
+    },
+    "cup|pp|||mvp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|tim||mvp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|tim||ukp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|tim||ukp|dày loại 2": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|dày": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|dày loại 1": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|dày loại 2": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|mỏng": {
+      "action": "skip"
+    },
+    "cup|pp|||ukp|yếu": {
+      "action": "skip"
+    }
+  }
+}

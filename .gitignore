@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# old-site import script (generated output and cached images)
+/scripts/import-old-site/out/
+/scripts/import-old-site/data/images/
