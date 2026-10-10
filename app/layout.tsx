@@ -1,7 +1,9 @@
 ﻿import type { Metadata, Viewport } from "next";
 import { Source_Sans_3 } from "next/font/google";
 import Script from "next/script";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import CartConfiguratorProvider from "@/components/cart/CartConfiguratorProvider";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -11,6 +13,8 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
+    // Omitted (never a placeholder domain) until NEXT_PUBLIC_SITE_URL is set.
+    metadataBase: SITE.url ? new URL(SITE.url) : undefined,
     title: {
         default: "In ly DTP - CN Quảng Ngãi",
         template: "%s | In ly DTP - CN Quảng Ngãi",
@@ -74,6 +78,7 @@ export default function RootLayout({
             })();
           `}
                 </Script>
+                <GoogleAnalytics />
                 <CartConfiguratorProvider>{children}</CartConfiguratorProvider>
             </body>
         </html>

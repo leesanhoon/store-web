@@ -29,9 +29,8 @@ Customers browse the catalog, configure print options, build a cart, and submit 
 # 1. Install
 npm install
 
-# 2. (Optional) Configure API endpoint
-cp .env.example .env.local
-# Edit NEXT_PUBLIC_API_BASE_URL if needed
+# 2. (Optional) Override defaults in .env.local (gitignored, see Environment Variables)
+#    e.g. NEXT_PUBLIC_SHOW_PRICES=true
 
 # 3. Run
 npm run dev
@@ -59,6 +58,15 @@ The app connects to the hosted backend by default (`https://backend-api-dotnet9.
 | `NEXT_PUBLIC_API_BASE_URL` | Backend API base URL | `https://backend-api-dotnet9.onrender.com` |
 | `NEXT_PUBLIC_API_URL` | Fallback base URL | same as above |
 | `NEXT_PUBLIC_API_LOGGING` | Set `"1"` to log requests as curl commands | off |
+| `NEXT_PUBLIC_SITE_URL` | Public origin of the storefront on its own domain (e.g. `https://example.vn`); a trailing `/` is stripped. Feeds canonical URLs, sitemap and JSON-LD (`SITE.url`) | empty |
+| `NEXT_PUBLIC_SHOW_PRICES` | Set `"true"` to show prices on the storefront (`SITE.showPrices`). Any other value hides them behind "Liên hệ để nhận báo giá" | prices hidden |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement id (format `G-XXXXXXXXXX`). Loads gtag via `components/analytics/GoogleAnalytics.tsx`; any other value loads nothing | off |
+
+Notes:
+
+- Variables are read from `.env*` files, which are **gitignored** — there is no `.env.example`. Create `.env.local` for local overrides and set them in the hosting dashboard for deployments.
+- `NEXT_PUBLIC_*` values are inlined at build time: change them, then rebuild (`npm run build`).
+- Hiding prices is UI-only: the public API still returns prices, and the admin panel always shows them.
 
 ---
 
@@ -186,6 +194,6 @@ store-web/
     │   └── gallery.ts              # Gallery + home features
     ├── data/                       # Server-component data helpers
     ├── cart.ts                     # Cart state (localStorage)
-    ├── site.ts                     # Contact data (phone, Zalo, address, hours)
+    ├── site.ts                     # Contact data (phone, Zalo, address, hours), site URL, price-visibility flag
     └── admin-auth.ts               # Demo admin auth
 ```

@@ -8,6 +8,7 @@ import {
     getMinPrice,
     getProductImageSrc,
 } from "@/lib/products/display";
+import { PRICE_HIDDEN_LABEL, SITE } from "@/lib/site";
 
 type Props = {
     product: ProductDto;
@@ -25,11 +26,11 @@ export default function ProductCard({
     const imageSrc = isLid
         ? getCatalogItemImage({ kind: "lid", data: product })
         : getProductImageSrc(product);
-    const minPrice = getMinPrice(product);
+    const minPrice = SITE.showPrices ? getMinPrice(product) : null;
     const minMoq = getMinMoq(product);
     const detail = isLid
         ? getLidSizes(product)
-        : minMoq
+        : minMoq && minMoq > 1
           ? `Tối thiểu ${minMoq.toLocaleString("vi-VN")} ly`
           : "";
 
@@ -52,16 +53,22 @@ export default function ProductCard({
             </div>
             <div className="mobile-product-body">
                 <h3>{product.name}</h3>
-                <p className="mobile-product-price">
-                    {minPrice === null ? (
-                        "Liên hệ"
-                    ) : (
-                        <>
-                            Từ {formatCurrency(minPrice)}{" "}
-                            <span>/{isLid ? "nắp" : "ly"}</span>
-                        </>
-                    )}
-                </p>
+                {SITE.showPrices ? (
+                    <p className="mobile-product-price">
+                        {minPrice === null ? (
+                            "Liên hệ"
+                        ) : (
+                            <>
+                                Từ {formatCurrency(minPrice)}{" "}
+                                <span>/{isLid ? "nắp" : "ly"}</span>
+                            </>
+                        )}
+                    </p>
+                ) : (
+                    <p className="mobile-product-price price-quote">
+                        {PRICE_HIDDEN_LABEL}
+                    </p>
+                )}
                 {!compact && detail ? (
                     <p className="mobile-product-moq">{detail}</p>
                 ) : null}

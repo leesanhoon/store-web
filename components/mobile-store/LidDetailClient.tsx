@@ -1,13 +1,15 @@
 "use client";
 
 import { useId, useState } from "react";
-import { useCartConfigurator } from "@/components/cart/CartConfiguratorProvider";
+import {
+    QUANTITY_OPTIONS,
+    useCartConfigurator,
+} from "@/components/cart/CartConfiguratorProvider";
 import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import { addToCart, defaultCartConfiguration } from "@/lib/cart";
 import { formatCurrency } from "@/lib/products/display";
 import { SITE } from "@/lib/site";
 
-const QUANTITY_OPTIONS = [1000, 3000, 5000, 10000, 20000] as const;
 const MAX_QUANTITY = QUANTITY_OPTIONS[QUANTITY_OPTIONS.length - 1];
 
 type Props = {
@@ -86,9 +88,12 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                                     {variant.sizeName ||
                                         `⌀${variant.diameterMm}mm`}
                                 </strong>
-                                <span>
-                                    {formatCurrency(getUnitPrice(variant))} /nắp
-                                </span>
+                                {SITE.showPrices ? (
+                                    <span>
+                                        {formatCurrency(getUnitPrice(variant))}{" "}
+                                        /nắp
+                                    </span>
+                                ) : null}
                             </button>
                         ))}
                     </div>
@@ -133,9 +138,11 @@ export default function LidDetailClient({ product, imageSrc }: Props) {
                     disabled={!selectedVariant}
                     className="button-primary w-full"
                 >
-                    {selectedVariant
-                        ? `Thêm vào giỏ · ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
-                        : "Chọn kích thước"}
+                    {!selectedVariant
+                        ? "Chọn kích thước"
+                        : SITE.showPrices
+                          ? `Thêm vào giỏ · ${formatCurrency(getUnitPrice(selectedVariant) * quantity)}`
+                          : "Thêm vào giỏ"}
                 </button>
             </div>
         </>

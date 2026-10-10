@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductImageGallery from "@/components/mobile-store/ProductImageGallery";
 import MobileTopBar from "@/components/mobile-store/MobileTopBar";
@@ -8,6 +10,7 @@ import ProductActions from "@/components/mobile-store/ProductActions";
 import ProductCard from "@/components/mobile-store/ProductCard";
 import { ChatIcon, CheckIcon } from "@/components/mobile-store/icons";
 import LidDetailClient from "@/components/mobile-store/LidDetailClient";
+import JsonLd, { getProductJsonLd } from "@/components/seo/JsonLd";
 import type { ProductDto, ProductVariantDto } from "@/lib/api/products";
 import { getCompatibleLids, isLidProduct } from "@/lib/api/products";
 import { getCatalogProduct, getCatalogProducts } from "@/lib/data/catalog";
@@ -20,12 +23,50 @@ import {
     getProductImageSrc,
     getVariantLabel,
 } from "@/lib/products/display";
-import { SITE } from "@/lib/site";
+import { PRICE_HIDDEN_LABEL, SITE } from "@/lib/site";
 
-async function loadProduct(id: string) {
+// cache(): generateMetadata and the page share one backend request.
+const loadProduct = cache(async (id: string) => {
     const productId = Number(id);
     if (!Number.isInteger(productId) || productId === 0) return null;
     return getCatalogProduct(productId);
+});
+
+const META_DESCRIPTION_MAX = 155;
+
+function getMetaDescription(product: ProductDto) {
+    const text = (product.description ?? "").replace(/\s+/g, " ").trim();
+    if (!text) {
+        const category = product.categoryName ? ` - ${product.categoryName}` : "";
+        return `${product.name}${category}. Gửi yêu cầu để nhận báo giá.`;
+    }
+    return text.length > META_DESCRIPTION_MAX
+        ? `${text.slice(0, META_DESCRIPTION_MAX - 1).trimEnd()}…`
+        : text;
+}
+
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+    const { id } = await params;
+    // A failing API must not break metadata: the page itself still reports the error.
+    const product = await loadProduct(id).catch(() => null);
+    if (!product) return {};
+
+    return {
+        title: product.name,
+        description: getMetaDescription(product),
+        alternates: SITE.url
+            ? { canonical: `/product/${product.id}` }
+            : undefined,
+        openGraph: {
+            images: product.avatarImageUrl
+                ? [product.avatarImageUrl]
+                : undefined,
+        },
+    };
 }
 
 async function loadRelatedProducts(currentProduct: ProductDto) {
@@ -149,6 +190,7 @@ export default async function ProductDetailPage({
 
     return (
         <div className="product-detail-screen">
+            <JsonLd data={getProductJsonLd(product)} />
             <MobileTopBar
                 title="Sản phẩm"
                 titleAs="p"
@@ -176,21 +218,24 @@ export default async function ProductDetailPage({
                             </span>
                         ) : null}
                         <h1>{product.name}</h1>
-                        {isLid ? null : (
-                            <>
+                        {SITE.showPrices ? (
+                            isLid ? null : (
                                 <p className="detail-price">
                                     {formatPriceRange(product)}
                                     {minPrice !== null ? (
                                         <span> /ly</span>
                                     ) : null}
                                 </p>
-                                {minMoq ? (
-                                    <p className="detail-moq">
-                                        Tối thiểu{" "}
-                                        {minMoq.toLocaleString("vi-VN")} ly
-                                    </p>
-                                ) : null}
-                            </>
+                            )
+                        ) : (
+                            <p className="detail-price price-quote">
+                                {PRICE_HIDDEN_LABEL}
+                            </p>
+                        )}
+                        {isLid || !minMoq || minMoq <= 1 ? null : (
+                            <p className="detail-moq">
+                                Tối thiểu {minMoq.toLocaleString("vi-VN")} ly
+                            </p>
                         )}
                     </div>
 
@@ -256,7 +301,7 @@ export default async function ProductDetailPage({
                                 </div>
                             ) : null}
 
-                            {pricedVariants.length > 0 ? (
+                            {SITE.showPrices && pricedVariants.length > 0 ? (
                                 <div className="detail-section">
                                     <h2 className="detail-subheading">
                                         Bảng giá theo số lượng
